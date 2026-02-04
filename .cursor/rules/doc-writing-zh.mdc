@@ -1,7 +1,7 @@
 ---
 description: 文档正文使用中文，专有名词与代码保留英文
 globs: **/*.md
-alwaysApply: false
+alwaysApply: true
 ---
 
 # 文档语言规范
