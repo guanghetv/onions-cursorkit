@@ -48,6 +48,11 @@ else
     date +"%Y%m%d%H%M%S"
   }
 
+  is_ssh_repo() {
+    local repo="$1"
+    [[ "$repo" =~ ^git@[^:]+:.+(\.git)?$ ]] || [[ "$repo" =~ ^ssh://[^/]+/.+ ]]
+  }
+
   fetch_source_repo() {
     local repo="$1"
     local dest="$2"
@@ -121,6 +126,7 @@ show_help() {
 选项:
   --target <path>   目标项目路径（默认当前目录）
   --only <scope>    仅同步指定范围（commands,rules,skills）
+  --repo <url>      安装源仓库地址（仅支持 SSH）
   --dry-run         仅输出操作，不写入文件
   --force           冲突时直接覆盖
   --backup          冲突时备份原文件再写入
@@ -128,6 +134,8 @@ show_help() {
 
 示例:
   install/cursor
+  install/cursor --repo git@gitlab.yc345.tv:backend/cursorkit.git
+  install/cursor --repo ssh://git@gitlab.yc345.tv/backend/cursorkit.git
   install/cursor --target /path/to/project
   install/cursor --target /path/to/project --only rules
   install/cursor --target /path/to/project --dry-run
@@ -136,6 +144,7 @@ EOF
 
 TARGET=""
 ONLY=""
+REPO_URL=""
 DRY_RUN="false"
 FORCE="false"
 BACKUP="false"
@@ -148,6 +157,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --only)
       ONLY="${2:-}"
+      shift 2
+      ;;
+    --repo)
+      REPO_URL="${2:-}"
       shift 2
       ;;
     --dry-run)
@@ -206,7 +219,12 @@ fi
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-REPO_URL="https://gitlab.yc345.tv/backend/cursorkit.git"
+if [[ -z "$REPO_URL" ]]; then
+  REPO_URL="${CURSORKIT_REPO_URL:-git@gitlab.yc345.tv:backend/cursorkit.git}"
+fi
+if ! is_ssh_repo "$REPO_URL"; then
+  die "仅支持 SSH 仓库地址（例如 git@host:org/repo.git 或 ssh://git@host/org/repo.git），HTTPS 等方式不受支持。可改用 git remote 备选流程。"
+fi
 fetch_source_repo "$REPO_URL" "$TMP_DIR/repo"
 
 BACKUP_ROOT=""

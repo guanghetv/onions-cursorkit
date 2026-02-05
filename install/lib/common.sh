@@ -42,6 +42,11 @@ now_timestamp() {
   date +"%Y%m%d%H%M%S"
 }
 
+is_ssh_repo() {
+  local repo="$1"
+  [[ "$repo" =~ ^git@[^:]+:.+(\.git)?$ ]] || [[ "$repo" =~ ^ssh://[^/]+/.+ ]]
+}
+
 fetch_source_repo() {
   local repo="$1"
   local dest="$2"
