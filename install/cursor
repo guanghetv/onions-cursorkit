@@ -1,0 +1,234 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMMON_PATH="$SCRIPT_DIR/lib/common.sh"
+
+if [[ -f "$COMMON_PATH" ]]; then
+  source "$COMMON_PATH"
+else
+  log_info() {
+    printf '[info] %s\n' "$*"
+  }
+
+  log_warn() {
+    printf '[warn] %s\n' "$*"
+  }
+
+  log_error() {
+    printf '[error] %s\n' "$*" >&2
+  }
+
+  die() {
+    log_error "$*"
+    exit 1
+  }
+
+  require_cmd() {
+    local cmd="$1"
+    command -v "$cmd" >/dev/null 2>&1 || die "缺少必要命令: $cmd"
+  }
+
+  ensure_writable_dir() {
+    local dir="$1"
+    if [[ ! -d "$dir" ]]; then
+      die "目标路径不存在: $dir"
+    fi
+    if [[ ! -w "$dir" ]]; then
+      die "目标路径不可写: $dir"
+    fi
+  }
+
+  abs_path() {
+    local dir="$1"
+    (cd "$dir" && pwd)
+  }
+
+  now_timestamp() {
+    date +"%Y%m%d%H%M%S"
+  }
+
+  fetch_source_repo() {
+    local repo="$1"
+    local dest="$2"
+    require_cmd git
+    log_info "拉取安装源: $repo"
+    git clone --depth 1 "$repo" "$dest" >/dev/null 2>&1 || die "拉取安装源失败"
+  }
+
+  sync_file() {
+    local src="$1"
+    local dest="$2"
+    local dry_run="$3"
+    local force="$4"
+    local backup="$5"
+    local backup_path="$6"
+
+    if [[ -f "$dest" ]]; then
+      if cmp -s "$src" "$dest"; then
+        log_info "已一致，跳过: $dest"
+        return 0
+      fi
+      if [[ "$force" == "true" ]]; then
+        log_warn "覆盖文件: $dest"
+        [[ "$dry_run" == "true" ]] || cp "$src" "$dest"
+        return 0
+      fi
+      if [[ "$backup" == "true" ]]; then
+        log_warn "冲突备份: $dest -> $backup_path"
+        if [[ "$dry_run" == "false" ]]; then
+          mkdir -p "$(dirname "$backup_path")"
+          cp "$dest" "$backup_path"
+          cp "$src" "$dest"
+        fi
+        return 0
+      fi
+      die "文件冲突: $dest（使用 --force 或 --backup）"
+    fi
+
+    log_info "写入文件: $dest"
+    if [[ "$dry_run" == "false" ]]; then
+      mkdir -p "$(dirname "$dest")"
+      cp "$src" "$dest"
+    fi
+  }
+
+  sync_tree() {
+    local src_dir="$1"
+    local dest_dir="$2"
+    local dry_run="$3"
+    local force="$4"
+    local backup="$5"
+    local backup_root="$6"
+
+    if [[ ! -d "$src_dir" ]]; then
+      die "源目录不存在: $src_dir"
+    fi
+
+    while IFS= read -r src_file; do
+      local rel="${src_file#$src_dir/}"
+      local dest_file="$dest_dir/$rel"
+      sync_file "$src_file" "$dest_file" "$dry_run" "$force" "$backup" "$backup_root/$rel"
+    done < <(find "$src_dir" -type f)
+  }
+fi
+
+show_help() {
+  cat <<'EOF'
+用法:
+  install/cursor [options]
+
+选项:
+  --target <path>   目标项目路径（默认当前目录）
+  --only <scope>    仅同步指定范围（commands,rules,skills）
+  --dry-run         仅输出操作，不写入文件
+  --force           冲突时直接覆盖
+  --backup          冲突时备份原文件再写入
+  --help            显示帮助信息
+
+示例:
+  install/cursor
+  install/cursor --target /path/to/project
+  install/cursor --target /path/to/project --only rules
+  install/cursor --target /path/to/project --dry-run
+EOF
+}
+
+TARGET=""
+ONLY=""
+DRY_RUN="false"
+FORCE="false"
+BACKUP="false"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --target)
+      TARGET="${2:-}"
+      shift 2
+      ;;
+    --only)
+      ONLY="${2:-}"
+      shift 2
+      ;;
+    --dry-run)
+      DRY_RUN="true"
+      shift
+      ;;
+    --force)
+      FORCE="true"
+      shift
+      ;;
+    --backup)
+      BACKUP="true"
+      shift
+      ;;
+    --help|-h)
+      show_help
+      exit 0
+      ;;
+    *)
+      die "未知参数: $1"
+      ;;
+  esac
+done
+
+if [[ -z "$TARGET" ]]; then
+  TARGET="."
+  log_info "未指定 --target，默认使用当前目录"
+fi
+
+require_cmd cmp
+require_cmd find
+require_cmd cp
+require_cmd mkdir
+
+ensure_writable_dir "$TARGET"
+TARGET="$(abs_path "$TARGET")"
+
+SCOPES=("commands" "rules" "skills")
+if [[ -n "$ONLY" ]]; then
+  ONLY="${ONLY// /}"
+  IFS=',' read -r -a SCOPES <<< "$ONLY"
+  for scope in "${SCOPES[@]}"; do
+    case "$scope" in
+      commands|rules|skills) ;;
+      *)
+        die "无效的 --only 范围: $scope（可选 commands,rules,skills）"
+        ;;
+    esac
+  done
+fi
+
+if [[ "$DRY_RUN" == "true" ]]; then
+  log_info "dry-run 模式：不会写入任何文件"
+fi
+
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DIR"' EXIT
+
+REPO_URL="https://gitlab.yc345.tv/backend/cursorkit.git"
+fetch_source_repo "$REPO_URL" "$TMP_DIR/repo"
+
+BACKUP_ROOT=""
+if [[ "$BACKUP" == "true" ]]; then
+  BACKUP_ROOT="$TARGET/.cursor-backup-$(now_timestamp)"
+  log_info "备份目录: $BACKUP_ROOT"
+fi
+
+TARGET_CURSOR_DIR="$TARGET/.cursor"
+if [[ ! -d "$TARGET_CURSOR_DIR" ]]; then
+  log_info "创建目录: $TARGET_CURSOR_DIR"
+  [[ "$DRY_RUN" == "true" ]] || mkdir -p "$TARGET_CURSOR_DIR"
+fi
+
+for scope in "${SCOPES[@]}"; do
+  SRC_DIR="$TMP_DIR/repo/.cursor/$scope"
+  DEST_DIR="$TARGET_CURSOR_DIR/$scope"
+  if [[ ! -d "$DEST_DIR" ]]; then
+    log_info "创建目录: $DEST_DIR"
+    [[ "$DRY_RUN" == "true" ]] || mkdir -p "$DEST_DIR"
+  fi
+  sync_tree "$SRC_DIR" "$DEST_DIR" "$DRY_RUN" "$FORCE" "$BACKUP" "$BACKUP_ROOT/$scope"
+done
+
+log_info "同步完成"
