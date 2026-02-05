@@ -1,0 +1,388 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Source common utilities
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+
+# Constants
+ANTHROPIC_REPO="https://github.com/anthropics/skills"
+CUSTOM_SKILLS_PATTERN="^(openspec-.*)$"
+# EXCLUDED_SKILLS=("docx" "pdf" "pptx" "xlsx")
+EXCLUDED_SKILLS=("")
+
+# Global variables
+DRY_RUN=false
+FORCE=false
+BACKUP=false
+TEMP_DIR=""
+COMMIT_HASH=""
+
+# Usage information
+show_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [OPTIONS]
+
+从 Anthropic 官方仓库同步 agent skills 到 CursorKit 项目。
+
+Options:
+  --dry-run    预览同步操作，不实际修改文件
+  --force      强制覆盖已存在的文件
+  --backup     同步前备份现有文件
+  --help       显示此帮助信息
+
+Examples:
+  # 预览同步操作
+  $(basename "$0") --dry-run
+
+  # 执行同步
+  $(basename "$0")
+
+  # 同步并备份现有文件
+  $(basename "$0") --backup
+
+Note:
+  此脚本仅负责将 Anthropic 官方技能同步到 CursorKit 本地仓库。
+  自定义技能 (openspec-* 和 create-feature-branch) 将被保护不会被覆盖。
+EOF
+}
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --dry-run)
+      DRY_RUN=true
+      shift
+      ;;
+    --force)
+      FORCE=true
+      shift
+      ;;
+    --backup)
+      BACKUP=true
+      shift
+      ;;
+    --help)
+      show_usage
+      exit 0
+      ;;
+    *)
+      die "未知参数: $1（使用 --help 查看帮助）"
+      ;;
+  esac
+done
+
+# Clone Anthropic skills repository
+# Sets global variables: TEMP_DIR, COMMIT_HASH
+clone_anthropic_repo() {
+  require_cmd git
+  
+  TEMP_DIR=$(mktemp -d -t anthropic-skills-XXXXXX)
+  log_info "创建临时目录: $TEMP_DIR"
+  
+  log_info "克隆 Anthropic skills 仓库..."
+  if ! git clone --depth 1 "$ANTHROPIC_REPO" "$TEMP_DIR" >/dev/null 2>&1; then
+    die "克隆失败，请检查网络连接和仓库访问权限"
+  fi
+  
+  # Record commit hash for traceability
+  COMMIT_HASH=$(cd "$TEMP_DIR" && git rev-parse HEAD)
+  log_info "克隆完成，commit: ${COMMIT_HASH:0:7}"
+}
+
+# Cleanup temporary directory on exit
+cleanup() {
+  if [[ -n "$TEMP_DIR" && -d "$TEMP_DIR" ]]; then
+    log_info "清理临时目录: $TEMP_DIR"
+    rm -rf "$TEMP_DIR"
+  fi
+}
+
+trap cleanup EXIT
+
+# List all valid skills in the repository
+list_valid_skills() {
+  local repo_dir="$1"
+  
+  if [[ ! -d "$repo_dir/skills" ]]; then
+    return
+  fi
+  
+  find "$repo_dir/skills" -mindepth 1 -maxdepth 2 -type f -name "SKILL.md" 2>/dev/null | while read -r skill_file; do
+    local skill_dir
+    skill_dir=$(dirname "$skill_file")
+    local skill_name
+    skill_name=$(basename "$skill_dir")
+    echo "$skill_name"
+  done
+}
+
+# Check if a skill is a custom skill
+is_custom_skill() {
+  local skill_name="$1"
+  [[ "$skill_name" =~ $CUSTOM_SKILLS_PATTERN ]]
+}
+
+# Check if a skill is in the excluded list
+is_excluded_skill() {
+  local skill_name="$1"
+  for excluded in "${EXCLUDED_SKILLS[@]}"; do
+    if [[ "$skill_name" == "$excluded" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+# Filter skills to sync
+filter_skills() {
+  local repo_dir="$1"
+  local -a skills_to_sync=()
+  local -a skills_skipped=()
+  
+  while IFS= read -r skill_name; do
+    [[ -z "$skill_name" ]] && continue
+    if is_custom_skill "$skill_name"; then
+      skills_skipped+=("$skill_name (自定义技能)")
+      log_warn "跳过自定义技能: $skill_name" >&2
+    elif is_excluded_skill "$skill_name"; then
+      skills_skipped+=("$skill_name (source-available)")
+      log_warn "跳过 source-available 技能: $skill_name" >&2
+    else
+      skills_to_sync+=("$skill_name")
+    fi
+  done < <(list_valid_skills "$repo_dir")
+  
+  if [[ ${#skills_to_sync[@]} -gt 0 ]]; then
+    printf '%s\n' "${skills_to_sync[@]}"
+  fi
+}
+
+# Sync a single skill
+sync_skill() {
+  local src_dir="$1"
+  local dest_dir="$2"
+  local skill_name="$3"
+  local dry_run="$4"
+  local force="$5"
+  local backup="$6"
+  local backup_root="$7"
+  
+  local src_skill_dir="$src_dir/skills/$skill_name"
+  local dest_skill_dir="$dest_dir/$skill_name"
+  
+  if [[ ! -d "$src_skill_dir" ]]; then
+    log_error "源技能目录不存在: $src_skill_dir"
+    return 1
+  fi
+  
+  if [[ ! -f "$src_skill_dir/SKILL.md" ]]; then
+    log_error "技能缺少 SKILL.md: $skill_name"
+    return 1
+  fi
+  
+  local status="新增"
+  if [[ -d "$dest_skill_dir" ]]; then
+    status="更新"
+  fi
+  
+  log_info "$status 技能: $skill_name"
+  
+  if [[ "$dry_run" == "false" ]]; then
+    # Create destination directory if it doesn't exist
+    mkdir -p "$dest_skill_dir"
+    
+    # Sync all files in the skill directory
+    while IFS= read -r src_file; do
+      local rel="${src_file#$src_skill_dir/}"
+      local dest_file="$dest_skill_dir/$rel"
+      local backup_path="$backup_root/$skill_name/$rel"
+      
+      # Handle file conflicts
+      if [[ -f "$dest_file" ]]; then
+        if cmp -s "$src_file" "$dest_file"; then
+          continue
+        fi
+        if [[ "$force" == "true" ]]; then
+          cp "$src_file" "$dest_file"
+        elif [[ "$backup" == "true" ]]; then
+          mkdir -p "$(dirname "$backup_path")"
+          cp "$dest_file" "$backup_path"
+          cp "$src_file" "$dest_file"
+        else
+          cp "$src_file" "$dest_file"
+        fi
+      else
+        mkdir -p "$(dirname "$dest_file")"
+        cp "$src_file" "$dest_file"
+      fi
+    done < <(find "$src_skill_dir" -type f)
+    
+    # Verify SKILL.md exists after sync
+    if [[ ! -f "$dest_skill_dir/SKILL.md" ]]; then
+      log_error "同步后验证失败: $skill_name"
+      return 1
+    fi
+  fi
+  
+  echo "$status"
+}
+
+# Update .cursor/skills/README.md
+update_readme() {
+  local skills_dir="$1"
+  local commit_hash="$2"
+  local sync_time="$3"
+  local -a synced_skills=("${@:4}")
+  
+  local readme_path="$skills_dir/README.md"
+  
+  # Collect custom skills
+  local -a custom_skills=()
+  for skill_dir in "$skills_dir"/*; do
+    if [[ -d "$skill_dir" ]]; then
+      local skill_name
+      skill_name=$(basename "$skill_dir")
+      if is_custom_skill "$skill_name"; then
+        custom_skills+=("$skill_name")
+      fi
+    fi
+  done
+  
+  # Generate README content
+  cat > "$readme_path" <<EOF
+# CursorKit Skills
+
+本目录包含 CursorKit 项目使用的 Cursor agent skills。
+
+## 技能分类
+
+### 自定义技能
+
+以下技能是为 CursorKit 项目特别开发的：
+
+EOF
+  
+  for skill in "${custom_skills[@]}"; do
+    echo "- \`$skill\`" >> "$readme_path"
+  done
+  
+  cat >> "$readme_path" <<EOF
+
+### Anthropic 官方技能
+
+以下技能同步自 Anthropic 官方仓库：
+
+EOF
+  
+  for skill in "${synced_skills[@]}"; do
+    echo "- \`$skill\`" >> "$readme_path"
+  done
+  
+  cat >> "$readme_path" <<EOF
+
+## 同步信息
+
+- **同步时间**: $sync_time
+- **源仓库**: $ANTHROPIC_REPO
+- **Commit**: $commit_hash
+
+如需更新官方技能，请运行：
+
+\`\`\`bash
+install/sync-skills
+\`\`\`
+EOF
+  
+  log_info "已更新 README: $readme_path"
+}
+
+# Main function
+main() {
+  local workspace_root
+  workspace_root="$(cd "$SCRIPT_DIR/.." && pwd)"
+  local skills_dir="$workspace_root/.cursor/skills"
+  
+  log_info "=== Anthropic Skills 同步工具 ==="
+  log_info "目标目录: $skills_dir"
+  
+  if [[ "$DRY_RUN" == "true" ]]; then
+    log_info "模式: 预览（dry-run）"
+  fi
+  
+  # Ensure skills directory exists
+  if [[ ! -d "$skills_dir" ]]; then
+    log_info "创建技能目录: $skills_dir"
+    mkdir -p "$skills_dir"
+  fi
+  
+  # Clone repository
+  log_info ""
+  log_info "第 1 步：克隆 Anthropic 仓库"
+  clone_anthropic_repo
+  
+  # List and filter skills
+  log_info ""
+  log_info "第 2 步：识别和过滤技能"
+  
+  local -a skills_array=()
+  while IFS= read -r skill_name; do
+    [[ -z "$skill_name" ]] && continue
+    skills_array+=("$skill_name")
+  done < <(filter_skills "$TEMP_DIR")
+  
+  log_info "找到 ${#skills_array[@]} 个可同步的技能"
+  
+  # Sync skills
+  log_info ""
+  log_info "第 3 步：同步技能"
+  
+  local backup_root=""
+  if [[ "$BACKUP" == "true" ]]; then
+    backup_root="$skills_dir/.backup-$(now_timestamp)"
+    log_info "备份目录: $backup_root"
+  fi
+  
+  local -a stats_new=()
+  local -a stats_updated=()
+  local -a synced_skill_names=()
+  
+  if [[ ${#skills_array[@]} -gt 0 ]]; then
+    for skill_name in "${skills_array[@]}"; do
+      local status
+      if status=$(sync_skill "$TEMP_DIR" "$skills_dir" "$skill_name" "$DRY_RUN" "$FORCE" "$BACKUP" "$backup_root"); then
+        synced_skill_names+=("$skill_name")
+        if [[ "$status" == "新增" ]]; then
+          stats_new+=("$skill_name")
+        else
+          stats_updated+=("$skill_name")
+        fi
+      fi
+    done
+  fi
+  
+  # Update README
+  if [[ "$DRY_RUN" == "false" && ${#synced_skill_names[@]} -gt 0 ]]; then
+    log_info ""
+    log_info "第 4 步：更新 README"
+    local sync_time
+    sync_time=$(date "+%Y-%m-%d %H:%M:%S")
+    update_readme "$skills_dir" "$COMMIT_HASH" "$sync_time" "${synced_skill_names[@]}"
+  fi
+  
+  # Print summary
+  log_info ""
+  log_info "=== 同步完成 ==="
+  log_info "新增技能: ${#stats_new[@]}"
+  log_info "更新技能: ${#stats_updated[@]}"
+  log_info "跳过技能: $(( $(list_valid_skills "$TEMP_DIR" | wc -l) - ${#synced_skill_names[@]} ))"
+  
+  if [[ "$DRY_RUN" == "true" ]]; then
+    log_info ""
+    log_info "预览完成，未实际修改文件。"
+    log_info "执行同步请运行: install/sync-skills"
+  fi
+}
+
+# Run main
+main
