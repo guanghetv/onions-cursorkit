@@ -33,6 +33,10 @@ wget -qO- https://gitlab.yc345.tv/backend/cursorkit/-/raw/master/install/cursor 
 # 通过 wget 下载并执行（指定目标目录）
 wget -qO- https://gitlab.yc345.tv/backend/cursorkit/-/raw/master/install/cursor | bash -s -- --target /path/to/project
 
+# 若仓库需要登录鉴权，需传入 Token（否则会返回 HTML 导致 `<!DOCTYPE html>` 报错）
+PRIVATE_TOKEN=xxx wget -qO- --header "PRIVATE-TOKEN: $PRIVATE_TOKEN" \
+  https://gitlab.yc345.tv/backend/cursorkit/-/raw/master/install/cursor | bash
+
 # 同步全部 Cursor 配置（默认当前目录）
 install/cursor
 
