@@ -118,32 +118,64 @@ else
   }
 fi
 
+# ---------------------------------------------------------------------------
+# Help
+# ---------------------------------------------------------------------------
 show_help() {
   cat <<'EOF'
 用法:
   install/cursor [options]
+  install/cursor --only <scope> --name <name> [options]
+  install/cursor --only <scope> --list [options]
 
 选项:
-  --target <path>   目标项目路径（默认当前目录）
+  --target <path>   目标项目路径（全量同步默认当前目录；单项同步默认 ~/.cursor）
   --only <scope>    仅同步指定范围（commands,rules,skills）
-  --repo <url>      安装源仓库地址（仅支持 SSH）
+  --name <name>     同步指定范围内的单个条目（需配合 --only 使用单一范围）
+  --list            列出指定范围内的可用条目（需配合 --only 使用单一范围）
+  --repo <url>      安装源仓库地址（仅支持 SSH；不指定则使用本地 cursorkit）
   --dry-run         仅输出操作，不写入文件
   --force           冲突时直接覆盖
   --backup          冲突时备份原文件再写入
   --help            显示帮助信息
 
 示例:
+  # 全量同步到当前目录
   install/cursor
-  install/cursor --repo git@gitlab.yc345.tv:backend/cursorkit.git
-  install/cursor --repo ssh://git@gitlab.yc345.tv/backend/cursorkit.git
+
+  # 全量同步到指定项目
   install/cursor --target /path/to/project
+
+  # 仅同步 rules 到指定项目
   install/cursor --target /path/to/project --only rules
-  install/cursor --target /path/to/project --dry-run
+
+  # 列出所有可用 skills
+  install/cursor --only skills --list
+
+  # 同步单个 skill 到用户 ~/.cursor（全局生效）
+  install/cursor --only skills --name frontend-design
+
+  # 同步单个 command 到指定项目
+  install/cursor --only commands --name cr --target /path/to/project
+
+  # 同步单个 rule 到用户 ~/.cursor
+  install/cursor --only rules --name doc-writing-zh
+
+  # 从远程仓库同步（仅支持 SSH）
+  install/cursor --repo git@gitlab.yc345.tv:backend/cursorkit.git
+
+  # 预览操作
+  install/cursor --only skills --name frontend-design --dry-run
 EOF
 }
 
+# ---------------------------------------------------------------------------
+# Argument parsing
+# ---------------------------------------------------------------------------
 TARGET=""
 ONLY=""
+NAME=""
+LIST_MODE="false"
 REPO_URL=""
 DRY_RUN="false"
 FORCE="false"
@@ -158,6 +190,14 @@ while [[ $# -gt 0 ]]; do
     --only)
       ONLY="${2:-}"
       shift 2
+      ;;
+    --name)
+      NAME="${2:-}"
+      shift 2
+      ;;
+    --list)
+      LIST_MODE="true"
+      shift
       ;;
     --repo)
       REPO_URL="${2:-}"
@@ -185,19 +225,14 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "$TARGET" ]]; then
-  TARGET="."
-  log_info "未指定 --target，默认使用当前目录"
-fi
-
 require_cmd cmp
 require_cmd find
 require_cmd cp
 require_cmd mkdir
 
-ensure_writable_dir "$TARGET"
-TARGET="$(abs_path "$TARGET")"
-
+# ---------------------------------------------------------------------------
+# Validate scopes
+# ---------------------------------------------------------------------------
 SCOPES=("commands" "rules" "skills")
 if [[ -n "$ONLY" ]]; then
   ONLY="${ONLY// /}"
@@ -205,27 +240,201 @@ if [[ -n "$ONLY" ]]; then
   for scope in "${SCOPES[@]}"; do
     case "$scope" in
       commands|rules|skills) ;;
-      *)
-        die "无效的 --only 范围: $scope（可选 commands,rules,skills）"
-        ;;
+      *) die "无效的 --only 范围: $scope（可选 commands,rules,skills）" ;;
     esac
   done
 fi
 
-if [[ "$DRY_RUN" == "true" ]]; then
-  log_info "dry-run 模式：不会写入任何文件"
+# --name and --list require exactly one scope
+if [[ -n "$NAME" || "$LIST_MODE" == "true" ]]; then
+  [[ ${#SCOPES[@]} -eq 1 ]] || die "--name / --list 需配合单一 --only 范围使用（commands / rules / skills）"
 fi
 
-TMP_DIR="$(mktemp -d)"
-trap 'rm -rf "$TMP_DIR"' EXIT
+# ---------------------------------------------------------------------------
+# Resolve source root (local or remote)
+# ---------------------------------------------------------------------------
+TMP_DIR=""
 
-if [[ -z "$REPO_URL" ]]; then
-  REPO_URL="${CURSORKIT_REPO_URL:-git@gitlab.yc345.tv:backend/cursorkit.git}"
+resolve_source_root() {
+  if [[ -n "$REPO_URL" ]]; then
+    if ! is_ssh_repo "$REPO_URL"; then
+      die "仅支持 SSH 仓库地址（例如 git@host:org/repo.git 或 ssh://git@host/org/repo.git），HTTPS 等方式不受支持。"
+    fi
+    TMP_DIR="$(mktemp -d)"
+    trap 'rm -rf "$TMP_DIR"' EXIT
+    fetch_source_repo "$REPO_URL" "$TMP_DIR"
+    echo "$TMP_DIR"
+  else
+    # Use local cursorkit repo (parent of install/)
+    echo "$(cd "$SCRIPT_DIR/.." && pwd)"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# List items in a scope
+# ---------------------------------------------------------------------------
+list_items() {
+  local src_root="$1"
+  local scope="$2"
+  local src_dir="$src_root/.cursor/$scope"
+
+  [[ -d "$src_dir" ]] || die "源目录不存在: $src_dir"
+
+  log_info "可用 $scope："
+  case "$scope" in
+    skills)
+      find "$src_dir" -mindepth 1 -maxdepth 1 -type d | sort | while read -r d; do
+        local name
+        name="$(basename "$d")"
+        [[ -f "$d/SKILL.md" ]] && echo "  $name"
+      done
+      ;;
+    commands)
+      find "$src_dir" -maxdepth 1 -name "*.md" | sort | while read -r f; do
+        echo "  $(basename "$f" .md)"
+      done
+      ;;
+    rules)
+      find "$src_dir" -maxdepth 1 -name "*.mdc" | sort | while read -r f; do
+        echo "  $(basename "$f" .mdc)  (文件)"
+      done
+      find "$src_dir" -mindepth 1 -maxdepth 1 -type d | sort | while read -r d; do
+        echo "  $(basename "$d")  (目录)"
+      done
+      ;;
+  esac
+}
+
+# ---------------------------------------------------------------------------
+# Single-item sync helpers
+# ---------------------------------------------------------------------------
+
+# Resolve source path for a named item within a scope
+resolve_item_src() {
+  local src_root="$1"
+  local scope="$2"
+  local name="$3"
+
+  case "$scope" in
+    skills)
+      local p="$src_root/.cursor/skills/$name"
+      [[ -d "$p" ]] || die "找不到 skill: $name（在 $src_root/.cursor/skills/）"
+      [[ -f "$p/SKILL.md" ]] || die "skill 缺少 SKILL.md: $name"
+      echo "$p"
+      ;;
+    commands)
+      local p="$src_root/.cursor/commands/${name}.md"
+      [[ -f "$p" ]] || die "找不到 command: ${name}.md（在 $src_root/.cursor/commands/）"
+      echo "$p"
+      ;;
+    rules)
+      local pf="$src_root/.cursor/rules/${name}.mdc"
+      local pd="$src_root/.cursor/rules/$name"
+      if [[ -f "$pf" ]]; then
+        echo "$pf"
+      elif [[ -d "$pd" ]]; then
+        echo "$pd"
+      else
+        die "找不到 rule: $name（尝试了 ${name}.mdc 和目录 $name）"
+      fi
+      ;;
+  esac
+}
+
+# Resolve destination path for a named item within target cursor dir
+resolve_item_dest() {
+  local target_cursor="$1"
+  local scope="$2"
+  local name="$3"
+  local src_path="$4"
+
+  case "$scope" in
+    skills)   echo "$target_cursor/skills/$name" ;;
+    commands) echo "$target_cursor/commands/${name}.md" ;;
+    rules)
+      if [[ -f "$src_path" ]]; then
+        echo "$target_cursor/rules/${name}.mdc"
+      else
+        echo "$target_cursor/rules/$name"
+      fi
+      ;;
+  esac
+}
+
+# Sync a single item (file or directory)
+sync_item() {
+  local src_path="$1"
+  local dest_path="$2"
+  local backup_root="$3"
+
+  if [[ -f "$src_path" ]]; then
+    sync_file "$src_path" "$dest_path" "$DRY_RUN" "$FORCE" "$BACKUP" "$backup_root/$(basename "$dest_path")"
+  else
+    sync_tree "$src_path" "$dest_path" "$DRY_RUN" "$FORCE" "$BACKUP" "$backup_root"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+SRC_ROOT="$(resolve_source_root)"
+
+# ── List mode ───────────────────────────────────────────────────────────────
+if [[ "$LIST_MODE" == "true" ]]; then
+  list_items "$SRC_ROOT" "${SCOPES[0]}"
+  exit 0
 fi
-if ! is_ssh_repo "$REPO_URL"; then
-  die "仅支持 SSH 仓库地址（例如 git@host:org/repo.git 或 ssh://git@host/org/repo.git），HTTPS 等方式不受支持。可改用 git remote 备选流程。"
+
+# ── Single-item sync ─────────────────────────────────────────────────────────
+if [[ -n "$NAME" ]]; then
+  SCOPE="${SCOPES[0]}"
+
+  # Default target: user-level ~/.cursor
+  local_target_cursor=""
+  if [[ -z "$TARGET" ]]; then
+    local_target_cursor="$HOME/.cursor"
+    log_info "未指定 --target，默认同步至用户目录: $local_target_cursor"
+  else
+    ensure_writable_dir "$TARGET"
+    TARGET="$(abs_path "$TARGET")"
+    local_target_cursor="$TARGET/.cursor"
+  fi
+
+  [[ -d "$local_target_cursor" ]] || { log_info "创建目录: $local_target_cursor"; [[ "$DRY_RUN" == "true" ]] || mkdir -p "$local_target_cursor"; }
+
+  [[ "$DRY_RUN" == "true" ]] && log_info "dry-run 模式：不会写入任何文件"
+
+  ITEM_SRC="$(resolve_item_src "$SRC_ROOT" "$SCOPE" "$NAME")"
+  ITEM_DEST="$(resolve_item_dest "$local_target_cursor" "$SCOPE" "$NAME" "$ITEM_SRC")"
+
+  BACKUP_ROOT=""
+  if [[ "$BACKUP" == "true" ]]; then
+    BACKUP_ROOT="${TARGET:-$HOME}/.cursor-backup-$(now_timestamp)"
+    log_info "备份目录: $BACKUP_ROOT"
+  fi
+
+  log_info "同步 $SCOPE: $NAME"
+  log_info "  来源: $ITEM_SRC"
+  log_info "  目标: $ITEM_DEST"
+
+  sync_item "$ITEM_SRC" "$ITEM_DEST" "$BACKUP_ROOT"
+  log_info "同步完成"
+  exit 0
 fi
-fetch_source_repo "$REPO_URL" "$TMP_DIR/repo"
+
+# ── Full sync ────────────────────────────────────────────────────────────────
+# SRC_ROOT is already resolved by resolve_source_root() above.
+
+if [[ -z "$TARGET" ]]; then
+  TARGET="."
+  log_info "未指定 --target，默认使用当前目录"
+fi
+
+ensure_writable_dir "$TARGET"
+TARGET="$(abs_path "$TARGET")"
+
+[[ "$DRY_RUN" == "true" ]] && log_info "dry-run 模式：不会写入任何文件"
 
 BACKUP_ROOT=""
 if [[ "$BACKUP" == "true" ]]; then
@@ -240,7 +449,7 @@ if [[ ! -d "$TARGET_CURSOR_DIR" ]]; then
 fi
 
 for scope in "${SCOPES[@]}"; do
-  SRC_DIR="$TMP_DIR/repo/.cursor/$scope"
+  SRC_DIR="$SRC_ROOT/.cursor/$scope"
   DEST_DIR="$TARGET_CURSOR_DIR/$scope"
   if [[ ! -d "$DEST_DIR" ]]; then
     log_info "创建目录: $DEST_DIR"
