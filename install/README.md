@@ -8,8 +8,11 @@
 
 ### 通用参数
 
-- `--target <path>`：目标项目路径（默认当前目录）
+- `--target <path>`：目标项目路径（全量同步默认当前目录；单项同步默认 `~/.cursor`）
 - `--only <scope>`：仅同步指定范围（`commands`、`rules`、`skills`，可用逗号分隔）
+- `--name <name>`：同步指定范围内的单个条目（需配合 `--only` 使用单一范围）
+- `--list`：列出指定范围内的可用条目（需配合 `--only` 使用单一范围）
+- `--repo <url>`：安装源仓库地址（仅支持 SSH；不指定则使用本地 cursorkit）
 - `--dry-run`：仅输出操作，不写入文件
 - `--force`：冲突时直接覆盖
 - `--backup`：冲突时备份原文件再写入
@@ -25,6 +28,8 @@
 备份目录位于目标路径下，命名为 `.cursor-backup-<timestamp>`，并保留原始目录结构。
 
 ### 示例
+
+#### 全量同步
 
 ```bash
 # 通过 wget 下载并执行（默认当前目录）
@@ -48,4 +53,23 @@ install/cursor --target /path/to/project --only rules
 
 # 预览将要执行的操作
 install/cursor --target /path/to/project --dry-run
+```
+
+#### 单项同步
+
+```bash
+# 列出所有可用 skills
+install/cursor --only skills --list
+
+# 同步单个 skill 到用户 ~/.cursor（全局生效）
+install/cursor --only skills --name frontend-design
+
+# 同步单个 command 到用户 ~/.cursor
+install/cursor --only commands --name cr
+
+# 同步单个 rule 到指定项目
+install/cursor --only rules --name doc-writing-zh --target /path/to/project
+
+# 预览操作
+install/cursor --only skills --name frontend-design --dry-run
 ```
