@@ -1,0 +1,59 @@
+---
+description: 安全合规规范（设备脱敏、敏感信息加密、视频加密、接口签名）
+globs: "**/*.go"
+alwaysApply: true
+---
+
+# 安全合规规范
+
+必读：《个人敏感信息安全合规》
+
+## 合规要求
+
+### 设备参数脱敏
+
+- 【强制】用户设备相关参数不得使用可读字段表示，必须使用无语义化、脱敏字段
+- 示例：`deviceid` 必须用 `omvd` 表示
+- 参考：《洋葱的产品如何获取、上报、使用设备 id》
+
+```go
+// ✅ Good
+type DeviceInfo struct {
+    Omvd string `json:"omvd"`  // 脱敏的设备标识
+}
+
+// ❌ Bad
+type DeviceInfo struct {
+    DeviceID string `json:"device_id"`  // 可读的设备标识，禁止使用
+}
+```
+
+### 个人敏感信息加密存储
+
+- 【强制】个人敏感信息（手机号、身份证等）必须加密存储，禁止数据库明文保存
+- 加密方案：`gitlab.yc345.tv/backend/utils/-/tree/feature/crypt/crypt`
+- 【强制】已注销用户的信息不得在业务库中明文保存，必须脱敏（编码或加密）
+
+```go
+// ✅ Good — 手机号加密存储
+encryptedPhone, err := crypt.Encrypt(phone)
+if err != nil { return err }
+user.Phone = encryptedPhone  // 存储加密后的值
+```
+
+## 安全规范
+
+### 视频加密
+
+- 【强制】视频播放业务必须符合视频加密规范：《洋葱视频加密规范》
+- 禁止返回未加密的视频直链
+
+### 接口安全
+
+- 【强制】推荐在网关开启接口加密（签名验证），防止未授权调用
+- 参考：《各端签名逻辑整理》
+
+```go
+// 新增对外接口时，评估是否需要开启网关签名验证
+// 高敏感接口必须开启，普通接口推荐开启
+```

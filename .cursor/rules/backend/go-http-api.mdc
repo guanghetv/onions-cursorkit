@@ -1,0 +1,30 @@
+---
+description: Go HTTP 接口返回值规范（状态码）
+globs: **/*.go
+alwaysApply: false
+---
+
+# HTTP 接口返回值规范
+
+- 【强制】返回的 HTTP 状态码必须符合 HTTP 语义规范，不得将所有响应统一返回 200
+
+## 常用状态码参考
+
+| 场景 | 状态码 |
+|------|--------|
+| 成功 | `200 OK` / `201 Created` / `204 No Content` |
+| 参数错误 | `400 Bad Request` |
+| 未认证 | `401 Unauthorized` |
+| 无权限 | `403 Forbidden` |
+| 资源不存在 | `404 Not Found` |
+| 冲突 | `409 Conflict` |
+| 服务内部错误 | `500 Internal Server Error` |
+| 下游服务异常 | `502 Bad Gateway` / `503 Service Unavailable` |
+
+```go
+// ✅ Good — 参数校验失败返回 400
+c.JSON(http.StatusBadRequest, gin.H{"message": "invalid param"})
+
+// ❌ Bad — 一律返回 200，业务错误放在 body 中
+c.JSON(http.StatusOK, gin.H{"code": 40001, "message": "invalid param"})
+```

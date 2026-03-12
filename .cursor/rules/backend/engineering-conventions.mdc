@@ -1,0 +1,95 @@
+---
+description: 工程规范（分层、日志、链路追踪、CI/CD、版本锁定）
+globs: "**/*.go, **/Makefile, **/.gitlab-ci.yaml, go.mod"
+alwaysApply: false
+---
+
+# 工程规范
+
+## 项目分层规范
+
+- 【推荐】新 Go 服务使用 `kratoscli` 生成项目骨架（cli 地址：`gitlab.yc345.tv/backend/yc_kratos_gen_layout`）
+
+标准目录结构：
+
+```
+/api          proto 声明的对外 API，每个模块一个文件
+/cmd          服务启动入口
+/configs      项目配置（多环境公用配置放 default.yaml）
+/thirdparty   第三方 protobuf lib
+/internal
+  /biz        核心业务逻辑层（主要逻辑在此实现）
+  /service    api ↔ biz 的数据转换、格式/参数校验
+  /server     各种 server（gRPC server、HTTP server、MQ server 等）
+  /data       数据库、Redis、外部数据获取的封装
+  /gorm       gormgen 生成的 CRUD
+README.md
+Dockerfile
+.gitlab-ci.yaml
+sonar-project.properties
+Makefile
+```
+
+- `biz` 层只包含业务逻辑，通过 `data` 层 interface 访问数据
+- `data` 层只负责数据访问，不包含业务规则
+- `service` 层只做参数校验和格式转换，不含业务逻辑
+
+## 日志规范
+
+- 【推荐】按照洋葱日志规范创建日志字段索引，参考：日志索引字段解析与统计模版
+- 【强制】新 Go 服务必须使用洋葱统一日志中间件（`go-logger`）或 apisix 日志插件；`kratoscli` 生成项目已默认集成
+
+## 链路追踪规范
+
+- 【强制】使用 OpenTelemetry 作为链路追踪协议，禁止引入其他链路追踪框架
+- 【强制】新服务必须接入 opentelemetry 链路；老服务陆续迁移
+- 【强制】`go-logger` 日志库必须升级到最新版本（打通链路日志）
+- 【强制】`tracing` 包必须升级到最新版本
+- 【推荐】参考《OpenTelemetry 接入指南（研发篇）》
+
+## 新技术引入
+
+- 【推荐】引入新库前先查阅统一工具库、kratos、巡检等项目是否已有解决方案
+- 【强制】无现有方案时，必须通过飞书审批流「技术 → 新技术/方向立项申请」，审批通过后方可引入
+
+## CI/CD 规范
+
+- 【强制】必须使用 gitlab-ci（除非技术栈另有约定）
+- 【推荐】`kratoscli` 生成项目已集成 gitlab-ci，YAPI token 需单独申请替换 `.gitlab-ci.yaml` 中的默认值
+- 【推荐】项目中配置 Sonar 检测代码质量（`sonar-project.properties`）
+
+## 版本锁定规范
+
+以下版本为【强制】约定，升级须通过架构团队确认：
+
+| 技术栈 | 版本 |
+|--------|------|
+| Go | `1.19` |
+| gRPC | `v1.63.2` |
+| Nacos | `v1.1.4` |
+| PostgreSQL | `12` |
+| Redis | `5.0` |
+| Kratos | `v2.7.3` |
+| RocketMQ | `4.x` |
+| Kafka | `2.2.2` |
+| protoc-gen-go | `v1.28.1` |
+| protoc-gen-go-grpc | `v1.2.0` |
+| protoc-gen-grpc-gateway | `v2.13.0` |
+| protoc-gen-openapiv2 | `v2.13.0` |
+| protoc-gen-validate | `v0.9.0` |
+
+```bash
+# protoc 安装命令参考
+go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28.1
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2.0
+go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.13.0
+go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.13.0
+go install github.com/go-kratos/kratos/cmd/protoc-gen-go-http/v2@a7bae93
+go install github.com/go-kratos/kratos/cmd/protoc-gen-go-errors/v2@a7bae93
+go install github.com/envoyproxy/protoc-gen-validate@v0.9.0
+```
+
+## 模块版本命名
+
+- 【强制】技术栈项目采用语义版本控制（Semantic Versioning）：`vMAJOR.MINOR.PATCH`
+- 参考：《Go 模块的语义版本控制规则》
