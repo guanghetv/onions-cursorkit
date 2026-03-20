@@ -66,6 +66,9 @@ bash install/cursor --only rules --name doc-writing-zh
 # 同步到指定项目的 .cursor/（而非用户目录）
 bash install/cursor --only skills --name frontend-design --target /path/to/project
 
+# 强制覆盖已有文件（跳过冲突检测，直接更新）
+bash install/cursor --only skills --name frontend-design --force
+
 # 预览操作（不写入文件）
 bash install/cursor --only skills --name frontend-design --dry-run
 ```

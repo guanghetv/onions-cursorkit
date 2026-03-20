@@ -82,7 +82,7 @@ sync_file() {
       fi
       return 0
     fi
-    die "文件冲突: $dest（使用 --force 或 --backup）"
+    die "文件冲突: ${dest}（使用 --force 或 --backup）"
   fi
 
   log_info "写入文件: $dest"

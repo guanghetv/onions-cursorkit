@@ -28,7 +28,7 @@ code_review_prompt:
     - 只在发现问题时才输出
     - 严重问题使用 "🔴" 标记
     - 改进建议使用 "🟠" 标记
-    - 每条：极简一句话 + 文件位置（`相对路径:行号`）
+    - 每条：极简一句话 + Markdown 链接文件位置（`[相对路径:行号](相对路径#L行号)`）
     - 无问题时输出："✅ 无明显问题"，然后立即停止
     
     **禁止输出（重要）：**
@@ -41,8 +41,8 @@ code_review_prompt:
     
     **示例：**
     ```
-    🔴 使用innerHTML存在XSS风险 — src/components/UserProfile.tsx:42
-    🟠 建议使用const替代let — src/utils/helper.ts:15
+    🔴 使用innerHTML存在XSS风险 — [src/components/UserProfile.tsx:42](src/components/UserProfile.tsx#L42)
+    🟠 建议使用const替代let — [src/utils/helper.ts:15](src/utils/helper.ts#L15)
     ```
     
     ### 审查风格：
