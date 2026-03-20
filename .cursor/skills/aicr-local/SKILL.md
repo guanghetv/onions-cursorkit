@@ -5,7 +5,7 @@ license: MIT
 compatibility: 需要Git环境和暂存区有内容
 metadata:
   author: AI-CodeReview
-  version: "1.0.0"
+  version: "1.0.1"
   source: 基于conf/prompt_templates.yml和团队规范文档
 ---
 
@@ -236,16 +236,18 @@ git add <files>
 
 使用 Cursor 可识别的格式，点击即可跳转到对应行：
 
-**推荐格式**：
-```
-相对路径:行号
-例：src/utils/helper.ts:42
-```
-
-**或 Markdown 链接**：
+**推荐格式（Markdown 链接）**：
 ```
 [相对路径:行号](相对路径#L行号)
 例：[src/utils/helper.ts:42](src/utils/helper.ts#L42)
+```
+
+> Markdown 链接在所有项目结构中均可靠跳转，包括 monorepo（如 `apps/web/src/...`、`packages/shared/src/...`）。纯文本格式在 monorepo 中可能因路径解析问题导致无法点击。
+
+**简写备选（纯文本）**：
+```
+相对路径:行号
+例：src/utils/helper.ts:42
 ```
 
 **可选列号**：
@@ -258,15 +260,15 @@ git add <files>
 
 **有问题时（只输出问题和建议）**：
 ```markdown
-🔴 使用innerHTML存在XSS风险 — src/components/UserProfile.tsx:42
-🟠 建议使用const替代let — src/utils/helper.ts:15
-🟠 函数命名应使用camelCase — src/services/api.go:88
-```
-
-或使用可点击链接：
-```markdown
 🔴 使用innerHTML存在XSS风险 — [src/components/UserProfile.tsx:42](src/components/UserProfile.tsx#L42)
 🟠 建议使用const替代let — [src/utils/helper.ts:15](src/utils/helper.ts#L15)
+🟠 函数命名应使用camelCase — [src/services/api.go:88](src/services/api.go#L88)
+```
+
+或使用纯文本简写：
+```markdown
+🔴 使用innerHTML存在XSS风险 — src/components/UserProfile.tsx:42
+🟠 建议使用const替代let — src/utils/helper.ts:15
 ```
 
 **无问题时**：
@@ -321,4 +323,5 @@ git add <files>
 
 ### 版本历史
 
+- v1.0.1 (2026-03-20): Markdown 链接升级为首选文件位置格式，提升 monorepo 兼容性
 - v1.0.0 (2026-02-10): 初始版本，支持三维度审查、极简输出、可点击链接
