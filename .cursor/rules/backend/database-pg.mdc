@@ -11,6 +11,8 @@ alwaysApply: false
 - 配置 `MaxIdleConns`、`MaxOpenConns`、`ConnMaxLifeTime`，禁止无限制开放连接
 - `MaxIdleConns`utils库默认值为5，结合实际业务规模（pod数量）和压测做调整，不要超过`MaxOpenConns`，不要低于2
 - `MaxOpenConns`utils库默认值为15，结合实际业务规模（pod数量）和压测做调整，MaxOpenConns × pod数 < 集群max_connections
+- `ConnMaxLifeTime`utils库默认值为1小时
+- `ConnMaxIdleTime`utils库默认值为10分钟，不建议小于10分钟
 - 慢查询和长事务是连接池耗尽的主要原因，需及时处理
 - 因数据库连接池受业务特性影响较大，建议做压测
 
