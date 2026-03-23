@@ -1,35 +1,34 @@
 ---
 name: fe-security
 description: >-
-  前端安全规范：代码安全、数据安全、依赖安全、域名安全。用于安全审查、实现自检、PR
-  检查。在用户提及前端安全、域名规范、存储桶、k8s 命名空间、XSS、CSRF、Cookie、CORS、npm 审计等时启用。
+  团队前端安全与供应链对照技能：从 references 拉取细则，输出 MUST/MUST NOT/SHOULD 与可执行检查项。
+  覆盖代码安全（XSS、v-html 消毒、DOM sink、开放重定向、postMessage origin、CSRF 配合、CSP 兼容、密钥不进 client bundle）、
+  数据安全（localStorage/sessionStorage/IndexedDB、HttpOnly Cookie、环境变量公开性、日志/埋点/上报脱敏、URL 与剪贴板、上传前端职责、Web Crypto 边界）、
+  依赖安全（lockfile、pnpm/npm audit、飞书《现有技术选型》白名单与禁止包表、内部 @guanghe-pub 包优先）、
+  域名安全（场景主域名、Path 优于子域、k8s 命名空间 7to12/teacherschool/wuhan、对象存储桶按类型、Cookie Domain/CORS/第三方脚本域）。
+  在用户做前端安全审查、安全向 Code Review/PR、实现前自检，或提到 XSS、注入、敏感信息泄露、token 存哪、Pinia/Vuex 持久化敏感数据、
+  Sentry/监控字段、npm audit、供应链、postMessage、重定向参数、域名/存储桶/Ingress/命名空间 时启用。
 ---
 
 # 前端安全规范（fe-security）
 
-团队前端侧安全要求的入口技能。细则在 `references/` 下分文件维护，按需 Read 对应文档。
+团队前端侧安全要求的入口。**细则只在 `references/`**；按需 Read，禁止臆造团队域名/桶名/选型结论。
 
-## 资源路径（技能目录）
+## 按议题选文件
 
-| 文档 | 内容 |
-|------|------|
-| `references/code-security.md` | 代码安全规范（XSS、重定向、`postMessage`、CSP 等） |
-| `references/data-security.md` | 数据安全规范（存储、日志、埋点、脱敏等） |
-| `references/dependency-security.md` | 依赖安全规范（lockfile、审计、供应链等） |
-| `references/domain-security.md` | 域名安全（场景选域、Path 规范、k8s 命名空间、对象存储桶、Cookie/CORS 要点） |
+| 文档 | 何时 Read |
+|------|-----------|
+| `references/code-security.md` | XSS、`v-html`/innerHTML、开放重定向、`postMessage`、CSRF 前端配合、CSP、源码/构建物密钥 |
+| `references/data-security.md` | Storage/Cookie、环境变量、日志与埋点、URL/剪贴板、上传前端校验、前端加密边界 |
+| `references/dependency-security.md` | 新增依赖、lockfile、audit、选型表、禁止包与组件库场景 |
+| `references/domain-security.md` | 页面/活动域名、Path、命名空间、OSS 桶类型、Cookie/CORS/第三方脚本（与网关文档冲突时以后者为准） |
 
-## 何时使用
+## 执行步骤
 
-- 前端安全审查、安全相关 CR、实现前的安全自检
-- 用户明确提到：XSS、注入、开放重定向、敏感信息泄露、token 存哪、CORS、Cookie、`npm audit`、依赖升级、第三方脚本域名等
+1. 根据用户议题或改动面，Read 上表中**必要**的 reference（可多篇，不要全文堆砌到回复里）。
+2. 对照文中 **MUST / MUST NOT / SHOULD** 与文末检查清单，输出：**结论**（通过/风险/需确认）+ **条目化依据** + **建议改法**；缺团队明文规定的写「待团队补充」，不编造。
+3. 与后端/网关/运维重叠处：reference 内已用「见基础设施文档」收口的，不重复展开。
 
-## 使用方式
+## 维护
 
-1. 按议题打开上表对应 `references/*.md`（不要臆造团队细则；缺项标注「待团队补充」）。
-2. 输出对照 **MUST / MUST NOT / SHOULD** 与可执行的检查项。
-3. 与后端/网关/运维重叠的条目在 reference 内用「见基础设施文档」一句话收口，避免重复堆砌。
-
-## 维护说明
-
-- 新增规范：写入对应 reference 文件，保持 MUST 可判定。
-- 版本迭代：在 reference 文末可追加变更记录（可选）。
+新增或变更规范：写入对应 `references/*.md`，保持 MUST 可判定；与飞书选型表/域名规范冲突时**以飞书最新版为准**，并同步更新本 skill 引用段落。
