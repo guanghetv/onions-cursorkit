@@ -36,8 +36,7 @@ Makefile
 
 ## 日志规范
 
-- 【推荐】按照洋葱日志规范创建日志字段索引，参考：日志索引字段解析与统计模版
-- 【强制】新 Go 服务必须使用洋葱统一日志中间件（`go-logger`）或 apisix 日志插件；`kratoscli` 生成项目已默认集成
+- 【强制】新 Go 服务必须使用洋葱统一日志中间件（`go-logger`）
 
 ## 链路追踪规范
 
@@ -45,16 +44,10 @@ Makefile
 - 【强制】新服务必须接入 opentelemetry 链路；老服务陆续迁移
 - 【强制】`go-logger` 日志库必须升级到最新版本（打通链路日志）
 - 【强制】`tracing` 包必须升级到最新版本
-- 【推荐】参考《OpenTelemetry 接入指南（研发篇）》
-
-## 新技术引入
-
-- 【推荐】引入新库前先查阅统一工具库、kratos、巡检等项目是否已有解决方案
-- 【强制】无现有方案时，必须通过飞书审批流「技术 → 新技术/方向立项申请」，审批通过后方可引入
 
 ## CI/CD 规范
 
-- 【强制】必须使用 gitlab-ci（除非技术栈另有约定）
+- 【强制】必须使用 gitlab-ci
 - 【推荐】`kratoscli` 生成项目已集成 gitlab-ci，YAPI token 需单独申请替换 `.gitlab-ci.yaml` 中的默认值
 - 【推荐】项目中配置 Sonar 检测代码质量（`sonar-project.properties`）
 
@@ -64,7 +57,7 @@ Makefile
 
 | 技术栈 | 版本 |
 |--------|------|
-| Go | `1.19` |
+| Go | `1.19或1.23` |
 | gRPC | `v1.63.2` |
 | Nacos | `v1.1.4` |
 | PostgreSQL | `12` |
@@ -88,8 +81,3 @@ go install github.com/go-kratos/kratos/cmd/protoc-gen-go-http/v2@a7bae93
 go install github.com/go-kratos/kratos/cmd/protoc-gen-go-errors/v2@a7bae93
 go install github.com/envoyproxy/protoc-gen-validate@v0.9.0
 ```
-
-## 模块版本命名
-
-- 【强制】技术栈项目采用语义版本控制（Semantic Versioning）：`vMAJOR.MINOR.PATCH`
-- 参考：《Go 模块的语义版本控制规则》

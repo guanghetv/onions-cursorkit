@@ -7,7 +7,6 @@ alwaysApply: false
 # Go 代码风格规范
 
 ## 格式化
-
 - 【强制】代码保存时必须使用 `gofmt` 和 `goimports` 进行格式化
 - 【强制】导入分为两组：标准库 / 其他包，由 `goimports` 自动维护，中间保留空行
 
