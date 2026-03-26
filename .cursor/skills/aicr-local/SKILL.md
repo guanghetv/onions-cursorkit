@@ -1,11 +1,11 @@
 ---
 name: aicr-local
-description: AI代码审查技能（本地版）。从Git暂存区获取变更，基于团队规范、业务spec和工作区上下文进行审查，输出极简的问题与建议。使用/cr命令触发。
+description: AI代码审查技能（本地版）。从Git暂存区或GitLab MR链接获取变更，基于团队规范、业务spec和工作区上下文进行审查，输出极简的问题与建议。使用/cr命令触发。
 license: MIT
-compatibility: 需要Git环境和暂存区有内容
+compatibility: 需要Git环境；暂存区模式需暂存区有内容，MR模式需本地有对应项目
 metadata:
   author: AI-CodeReview
-  version: "1.0.1"
+  version: "1.1.0"
   source: 基于conf/prompt_templates.yml和团队规范文档
 ---
 
@@ -33,10 +33,13 @@ AI驱动的代码审查工具，集成团队规范、业务需求和上下文分
 
 ## 何时使用此技能
 
-**手动触发**：通过 `/cr` 命令调用。
+**手动触发**：通过 `/cr` 命令调用，支持两种输入形式：
+- `/cr` — 从 Git 暂存区获取变更（开发自审）
+- `/cr <GitLab MR 链接>` — 从 MR 获取变更（MR Review）
 
 适用场景：
-- 提交代码前进行快速审查
+- 提交代码前进行快速审查（暂存区模式）
+- 对 GitLab MR 进行代码审查（MR 模式）
 - 验证代码是否符合团队规范
 - 检查实现是否符合业务需求（spec）
 - 发现潜在的安全风险和性能问题
@@ -44,27 +47,97 @@ AI驱动的代码审查工具，集成团队规范、业务需求和上下文分
 
 ## 前置条件
 
-**必须**：Git暂存区有内容（已执行 `git add`）
+**暂存区模式**（`/cr`）：Git 暂存区有内容（已执行 `git add`）。
 
 ```bash
-# 1. 添加需要审查的文件到暂存区
 git add <files>
-
-# 2. 触发审查
 /cr
 ```
 
-如果暂存区为空，系统会提示："暂存区为空，请先使用 git add 添加需要审查的文件"。
+**MR 模式**（`/cr <MR链接>`）：本地已 clone 该 MR 所在仓库并用 Cursor 打开（无需在 MR 的任何分支上，也无需 `git add`）。
+
+```bash
+/cr https://gitlab.yc345.tv/backend/foo/-/merge_requests/123
+```
 
 ## 审查流程
 
-### 步骤 1: 获取暂存区变更
+### 步骤 1: 获取变更
+
+根据触发方式获取变更，统一产出 **diffs_text**（diff 文本）、**file_paths**（变更文件列表）、**input_mode**（`staged` | `mr`）。
+
+#### 无 MR 链接时（暂存区模式，input_mode=staged）
 
 使用 Shell 工具执行 `git diff --cached` 获取暂存区的所有变更内容。
 
+如果暂存区为空，提示："暂存区为空，请先使用 git add 添加需要审查的文件"。
+
+#### 有 GitLab MR 链接时（MR 模式，input_mode=mr）
+
+**1) 解析链接**：从 MR 链接中提取 `host`、`project_path`、`merge_request_iid`。
+
+支持格式：`https://<host>/<group>/<repo>/-/merge_requests/<iid>`（含多级 group，如 `org/sub-group/repo`）。
+
+若链接格式无法识别，提示："无法识别的 MR 链接格式，请提供 GitLab MR 链接（如 `https://gitlab.example.com/group/repo/-/merge_requests/123`）"。
+
+**2) 仓库匹配检查**：执行 `git remote get-url origin`，比对其中的 project_path 与 MR 链接的 project_path。若不一致，输出：
+
+```
+⚠️ 当前工作区（<当前 project_path>）与 MR 所属仓库（<MR project_path>）不一致，影响范围分析可能不准确。若后续 fetch 失败，请在 MR 所在仓库目录中重新执行
+```
+
+**不阻断**，继续执行。
+
+**3) 获取 source_branch 和 target_branch**：
+
+先检查环境变量 `GITLAB_TOKEN`（或 `GITLAB_PRIVATE_TOKEN`）是否存在：
+
+```bash
+test -n "${GITLAB_TOKEN:-$GITLAB_PRIVATE_TOKEN}"
+```
+
+- **有 Token** → 调用 GitLab API：
+  ```bash
+  curl -s --header "PRIVATE-TOKEN: ${GITLAB_TOKEN:-$GITLAB_PRIVATE_TOKEN}" \
+    "https://<host>/api/v4/projects/<url_encoded_project_path>/merge_requests/<iid>"
+  ```
+  从返回 JSON 中提取 `source_branch` 和 `target_branch`。
+
+- **无 Token 或 API 失败** → 提示用户提供 source_branch 和 target_branch（不要裸调 API，GitLab 私有项目未授权会 404）。用户提供后，继续执行下方第 4) 步获取 diff。
+
+**4) 获取 diff**：
+
+```bash
+git fetch origin <source_branch> <target_branch>
+git diff origin/<target_branch>...origin/<source_branch>
+```
+
+若 `git fetch` 失败（exit code ≠ 0），输出：
+
+```
+🔴 无法获取 MR 源分支 <source_branch>，请检查 git 凭证或仓库访问权限
+```
+
+**终止审查**。
+
+成功后，用 `git diff --name-only origin/<target_branch>...origin/<source_branch>` 获取 file_paths。
+
+**5) 检测当前分支状态**：
+
+```bash
+current_branch=$(git branch --show-current)
+git status --porcelain
+```
+
+若 `current_branch` == `source_branch` 且 `git status --porcelain` 输出为空（无未提交变更），设置 **`on_source_branch = true`**；否则为 `false`。
+
+此标志影响后续步骤：
+- 步骤 7：影响范围分析的可靠性
+- 步骤 10：报告中文件位置是否可直接点击跳转
+
 ### 步骤 2: 判断代码类型
 
-分析暂存区文件的扩展名，判断代码类型：
+分析变更文件（file_paths）的扩展名，判断代码类型：
 - **前端代码**：`.ts`, `.tsx`, `.js`, `.jsx`, `.vue`, `.html`, `.css`, `.scss`
 - **后端代码**：`.go`, `.py`, `.java`, `.rs`, `.rb`
 - **混合代码**：同时包含前后端文件
@@ -85,10 +158,10 @@ git add <files>
 
 ### 步骤 4: 检查是否有 Spec 文档
 
-检查三种情况：
-1. 暂存区是否包含 `openspec/specs/` 路径的文件
+检查以下情况：
+1. 变更（diffs_text / file_paths）中是否包含 `openspec/specs/` 路径的文件
 2. 用户在对话中是否使用 @ 引用了 spec 文档
-3. 使用 `git log -5 --name-only` 检查最近5次提交是否包含 `openspec/specs/` 路径（可选，用于推断相关spec）
+3. 暂存区模式下可选：使用 `git log -5 --name-only` 检查最近5次提交是否包含 `openspec/specs/` 路径
 
 ### 步骤 5: 加载 Spec 文档（如果有）
 
@@ -96,11 +169,19 @@ git add <files>
 
 **注意**：Spec 文档在工作区的 `openspec/specs/` 目录下，不在技能目录中。
 
+**当 input_mode=mr 时**：不搜工作区 `openspec/specs/`、不查 `git log`。仅以下两种来源：
+1. MR 的 diff 中包含 `openspec/specs/` 下的文件 → 使用 `git show origin/<source_branch>:<spec_path>` 获取完整 spec 内容作为 spec_content（diff 只含变更片段，不是完整文档）。
+2. 用户在对话中通过 @ 引用了 spec 文档 → 使用该文档。
+
+若两者均无，则本轮不注入 spec_content，跳过业务需求审查维度。
+
 ### 步骤 6: 加载项目规则
 
 尝试读取**工作区中的** `.cursor/rules/` 目录下的项目规则文件（如果存在）。
 
 **注意**：项目规则在工作区根目录的 `.cursor/rules/` 下，不在技能目录中。
+
+**当 input_mode=mr 时**：仍从当前工作区读取项目规则，但当前分支可能不是 MR 分支，规则可能与 MR 分支不完全一致。
 
 ### 步骤 7: 收集工作区上下文
 
@@ -116,6 +197,18 @@ git add <files>
 
 **策略**：优先收集直接相关的内容，按需加载，避免超出上下文限制。
 
+**当 input_mode=mr 时**：
+- 若 `on_source_branch = true`：工作区与 MR 源分支一致且无本地变更，影响范围分析结论可靠，无需额外注明。
+- 若 `on_source_branch = false`：工作区可能不在 MR 源分支上，影响范围分析结论仅供参考。若审查产出了影响范围结论，在报告末尾注明："以上影响范围分析基于当前工作区，当前分支可能非 MR 源分支，结论仅供参考"。
+
+#### MR 模式与暂存区模式的步骤 4–7 差异
+
+| 步骤 | 暂存区模式（staged） | MR 模式（mr） |
+|------|----------------------|---------------|
+| 4–5 Spec | 搜工作区 openspec + @ + git log | 仅 diff 内 spec 或用户 @ |
+| 6 规则 | 工作区 .cursor/rules | 同左，可能非 MR 分支 |
+| 7 影响范围 | 工作区 = 被审分支 | on_source_branch=true 时可靠；否则仅供参考 |
+
 ### 步骤 8: 加载提示词模板
 
 **从技能目录读取**（不要在工作区搜索）：
@@ -128,7 +221,7 @@ git add <files>
 
 组合以下内容：
 - system_prompt：审查目标、输出格式要求
-- user_prompt：文件列表、代码变更
+- user_prompt：file_paths、diffs_text
 - team_standards：前后端规范文档
 - spec_content：业务需求规格（如果有）
 - project_rules：项目规则（如果有）
@@ -162,9 +255,10 @@ git add <files>
 - ✅ 边界条件和错误场景处理是否正确
 
 **如何识别 spec**：
-1. 暂存区包含 `openspec/specs/` 路径（工作区中）
-2. 用户使用 @ 引用了 spec 文档（工作区中）
-3. 最近5次提交包含 `openspec/specs/` 路径（使用 `git log -5 --name-only`，在工作区中）
+1. 变更中包含 `openspec/specs/` 路径的文件
+2. 用户使用 @ 引用了 spec 文档
+3. 暂存区模式下：使用 `git log -5 --name-only` 检查最近提交（可选）
+4. MR 模式下：仅第 1、2 项，不搜工作区、不查 git log
 
 **注意**：Spec文档在工作区的 `openspec/specs/` 目录，不在技能目录中。
 
@@ -256,6 +350,14 @@ git add <files>
 例：src/utils/helper.ts:42:10
 ```
 
+**MR 模式文件位置行为**：
+- **`on_source_branch = true`**（当前在 MR 源分支且无本地变更）：报告中的文件位置使用上述可点击格式，行号与本地文件一致，点击可直接跳转到对应行。
+- **`on_source_branch = false`**（当前不在 MR 源分支或有本地变更）：报告中仍使用 `相对路径:行号` 格式，但在报告末尾追加提示：
+
+```
+💡 当前工作区非 MR 源分支，文件位置行号对应 MR 源分支，点击跳转可能不准确。可切换到源分支（git checkout <source_branch>）后重新审查以获得准确跳转。
+```
+
 ### 输出示例
 
 **有问题时（只输出问题和建议）**：
@@ -286,28 +388,23 @@ git add <files>
 - **暂存区为空**：先执行 `git add <files>`
 - **审查结果过于简短**：极简输出是设计的，只关注核心问题
 - **可以审查未暂存的文件吗**：不可以，必须先 `git add`
+- **MR 模式行号对应哪个分支**：对应 MR 源分支。若检测到当前在源分支且无本地变更（`on_source_branch = true`），文件位置可直接点击跳转；否则行号可能与当前分支不一致，报告末尾会有提示
+- **MR 模式提示权限错误**：检查 git 凭证（SSH key 或 credential）是否有该仓库的访问权限
 
 ## 使用步骤
 
-1. **添加文件到暂存区**
-   ```bash
-   git add src/components/UserProfile.tsx
-   ```
+### 暂存区模式
 
-2. **在 Cursor Agent 中输入命令**
-   ```
-   /cr
-   ```
+1. 添加文件到暂存区：`git add src/components/UserProfile.tsx`
+2. 在 Cursor Agent 中输入：`/cr`
+3. 查看审查报告，点击文件位置跳转到对应行。
+4. 修复后重新审查：`git add <fixed-files>` → `/cr`
 
-3. **查看审查报告**
-   
-   报告会显示发现的问题和建议，点击文件位置即可跳转到对应代码行。
+### MR 模式
 
-4. **修复问题后重新审查**
-   ```bash
-   git add <fixed-files>
-   /cr
-   ```
+1. 在 Cursor 中打开 MR 所在项目。
+2. 在 Cursor Agent 中输入：`/cr https://gitlab.yc345.tv/backend/foo/-/merge_requests/123`
+3. 查看审查报告。若当前在 MR 源分支且无本地变更，报告中的文件位置可直接点击跳转；否则行号对应 MR 源分支，点击可能不准确。
 
 ## 维护说明
 
@@ -323,5 +420,6 @@ git add <files>
 
 ### 版本历史
 
+- v1.1.0 (2026-03-18): 支持 `/cr <GitLab MR 链接>` MR 模式；在源分支上时报告文件位置可点击跳转
 - v1.0.1 (2026-03-20): Markdown 链接升级为首选文件位置格式，提升 monorepo 兼容性
 - v1.0.0 (2026-02-10): 初始版本，支持三维度审查、极简输出、可点击链接
