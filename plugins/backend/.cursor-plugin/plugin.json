@@ -7,7 +7,5 @@
     "name": "洋葱学园",
     "email": "lihui@guanghe.tv"
   },
-  "logo": "assets/backend.png",
-  "rules": "rules",
-  "skills": "skills"
+  "logo": "assets/backend.png"
 }

@@ -14,6 +14,11 @@
       "name": "backend",
       "source": "backend",
       "description": "后端开发规范"
+    },
+    {
+      "name": "common",
+      "source": "common",
+      "description": "通用规则、命令与跨栈技能（文档规范、代码审查、飞书分支等）"
     }
   ]
 }

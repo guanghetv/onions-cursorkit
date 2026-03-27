@@ -1,0 +1,11 @@
+{
+  "name": "common",
+  "displayName": "通用工具与规范",
+  "version": "0.1.0",
+  "description": "文档语言规则、/cr 代码审查命令，以及本地 AI 审查与飞书分支创建等通用技能。",
+  "author": {
+    "name": "洋葱学园",
+    "email": "lihui@guanghe.tv"
+  },
+  "logo": "assets/common.png"
+}
