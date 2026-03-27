@@ -1,0 +1,86 @@
+---
+description: Go HTTP 接口返回值规范（状态码）
+globs: "**/*.go"
+alwaysApply: false
+---
+
+# HTTP 接口返回值规范
+
+依据《【规范】http状态码规范》。
+
+## 总原则
+
+- 【强制】返回的 HTTP 状态码须符合语义，**不得**将所有响应统一为 `200`，再在 body 里用业务 `code` 表示失败。
+- 【推荐】日常优先使用下文「速览」中的状态码；与 gRPC 互转时可对照 Kratos 映射表：[status.go](https://github.com/go-kratos/kratos/blob/main/transport/http/status/status.go)。
+
+## 速览（常用码）
+
+| 状态码 | 含义 | 接口侧说明 |
+|--------|------|------------|
+| `200 OK` | 成功且有响应体 | 成功处理且返回内容**不为空**（如 `GET` 返回实体） |
+| `204 No Content` | 成功但无响应体 | 规范注明**接口中不建议使用** |
+| `301 Moved Permanently` | 永久重定向 | **接口中不建议使用**（多用于站点/页面迁移） |
+| `302 Found` | 临时重定向 | **接口中不建议使用** |
+| `400 Bad Request` | 客户端请求不合法 | 参数错误、类型错误、**按 id 请求不到资源**等 |
+| `401 Unauthorized` | 未认证 | **登录凭证不存在或已失效**（如未带 token、token 无效） |
+| `403 Forbidden` | 无权限 | 已认证但**无权访问该资源** |
+| `404 Not Found` | 资源不存在 | 一般为框架/网关默认；**后端业务接口中尽量不使用** |
+| `409 Conflict` | 状态冲突 | 参数合法但与当前资源状态冲突（业务限制、重复请求等） |
+| `499`（Nginx 等） | 客户端断开 | 客户端主动关闭连接（常见于网关观测） |
+| `500 Internal Server Error` | 服务端内部错误 | 参数格式正确，但处理过程异常（空指针、未知逻辑错误等） |
+| `502 Bad Gateway` | 网关错误 | 多由 **nginx / apache** 等网关在转发层返回 |
+| `503 Service Unavailable` | 服务不可用 | 网关发现上游无法正常响应时常见 |
+| `504 Gateway Timeout` | 网关超时 | 下游过慢等；gRPC 常对应 `DeadlineExceeded` |
+
+## 分档说明（摘要）
+
+- **2xx**：`200` 表示成功且 body 非空；`204` 表示成功且 body 为空（如部分 `PUT` 无正文场景），但规范对 API 不推荐依赖 `204`。
+- **4xx**：客户端侧问题。`400` 对应 gRPC `InvalidArgument`；`401` 对应 `Unauthenticated`；`403` 对应 `PermissionDenied`；`404` 对应 `NotFound` 但业务接口宜避免；`409` 表示**请求与资源当前状态冲突**。
+- **5xx**：服务端或网关问题。`500` 对应 `Internal`；`502` 多为网关层错误；`503` 对应 `Unavailable`；`504` 为网关/下游超时，对应 `DeadlineExceeded`。
+
+## 业务错误与客户端约定
+
+- 业务上需单独交互的错误（如「资源已被占用」）优先使用 **`409`**，表示与当前服务端资源状态冲突。
+- **用户名或密码错误**：规范 QA 结论为使用 **`409`**（而非 `401` / `400`）。`401` 用于**凭证缺失或失效**，与「凭错误账号密码登录」区分。
+- 客户端兼容：对 **`401`、`403`** 有单独处理；**其他 4xx** 可统一弹窗，文案取返回体中的 **`msg`**。需分支逻辑时可用 **`reason`**（如 `"DESKTOP_HAS_CONFLICK"`）。
+- 统一错误结构宜与团队 protobuf / 生成代码一致；错误定义可参考 [protoc-gen-go-errors](https://gitlab.yc345.tv/backend/protoc-gen-go-errors)。
+
+示例（字段名以项目约定为准）：
+
+```json
+{
+  "code": 409,
+  "message": "书桌已经被抢占",
+  "reason": "DESKTOP_HAS_CONFLICK",
+  "metadata": {},
+  "msg": "书桌已经被抢占"
+}
+```
+
+说明：`msg` 与 `message` 保持一致，用于兼容历史版本客户端。
+
+## Go 示例
+
+```go
+// ✅ Good — 参数/非法请求返回 400
+c.JSON(http.StatusBadRequest, errBody)
+
+// ✅ Good — 未带 token 或 token 失效返回 401
+c.JSON(http.StatusUnauthorized, errBody)
+
+// ✅ Good — 无资源访问权限返回 403
+c.JSON(http.StatusForbidden, errBody)
+
+// ✅ Good — 业务状态冲突（含规范 QA：账号密码错误）返回 409
+c.JSON(http.StatusConflict, errBody)
+
+// ✅ Good — 服务端未捕获异常、内部故障返回 500
+c.JSON(http.StatusInternalServerError, errBody)
+
+// ❌ Bad — 一律 200，仅靠 body 里的业务 code 表示失败
+c.JSON(http.StatusOK, gin.H{"code": 40001, "message": "invalid param"})
+```
+
+## 参考链接
+
+- IANA HTTP 状态码注册表：https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml

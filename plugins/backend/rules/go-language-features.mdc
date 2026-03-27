@@ -1,0 +1,172 @@
+---
+description: Go 语言特性规范（嵌套、变量、切片/map/channel、并发、接口、泛型、字符串）
+globs: "**/*.go"
+alwaysApply: false
+---
+
+# Go 语言特性规范
+
+## 减少嵌套
+
+- 【强制】优先处理错误/特殊情况后早返回，避免多层嵌套
+
+```go
+// ✅ Good
+for _, v := range data {
+    if v.F1 != 1 {
+        log.Printf("Invalid v: %v", v)
+        continue
+    }
+    v = process(v)
+    if err := v.Call(); err != nil {
+        return err
+    }
+    v.Send()
+}
+
+// ❌ Bad
+for _, v := range data {
+    if v.F1 == 1 {
+        v = process(v)
+        if err := v.Call(); err == nil {
+            v.Send()
+        } else {
+            return err
+        }
+    }
+}
+```
+
+## 缩小变量作用域
+
+- 【强制】变量尽量在最小作用域声明，除非与减少嵌套冲突
+
+```go
+// ✅ Good
+if err := os.WriteFile(name, data, 0644); err != nil {
+    return err
+}
+
+// ❌ Bad
+err := os.WriteFile(name, data, 0644)
+if err != nil {
+    return err
+}
+```
+
+## 缩进规范
+
+- 【强制】`if` 条件不换行；提取为命名变量后合并为单行
+- 【强制】`switch` 和 `case` 必须在同一行
+- 【强制】闭合 `}` 与开头 `{` 保持相同缩进层级
+
+```go
+// ✅ Good
+inTransaction := db.CurrentStatusIs(db.InTransaction)
+keysMatch := db.ValuesEqual(db.TransactionKey(), row.Key())
+if inTransaction && keysMatch { ... }
+
+// ❌ Bad
+if db.CurrentStatusIs(db.InTransaction) &&
+    db.ValuesEqual(db.TransactionKey(), row.Key()) { ... }
+```
+
+## 变量初始化
+
+- 【强制】零值变量使用 `var` 声明，不用 `:=`
+
+```go
+// ✅ Good: var s string / var i int / var b bool
+// ❌ Bad:  s := "" / i := 0 / b := false
+```
+
+- 【强制】结构体初始化使用字段名，禁止按位置初始化
+
+```go
+// ✅ Good: Point{X: 1, Y: 2}
+// ❌ Bad:  Point{1, 2}
+```
+
+## 切片
+
+- 非空切片使用字面量或 `make` 初始化
+- `nil` 切片与空切片语义不同，需明确区分（JSON 序列化时 nil → `null`，空切片 → `[]`）
+
+```go
+// 需要 JSON 输出 [] 时：
+s := []string{}        // 或 make([]string, 0)
+// 不需要时：
+var s []string         // nil 切片，更节省内存
+```
+
+## map
+
+- 【强制】map 必须用 `make` 初始化后再写入，禁止向 nil map 赋值
+- 读取 map 时使用双值赋值检查 key 是否存在
+
+```go
+// ✅ Good
+m := make(map[string]int)
+m["key"] = 1
+
+v, ok := m["key"]
+if !ok { ... }
+
+// ❌ Bad
+var m map[string]int
+m["key"] = 1  // panic: assignment to entry in nil map
+```
+
+## channel
+
+- 明确生产者/消费者模型后再使用 channel
+- 生产者完成后必须 `close(ch)`，或通过 `context` 控制退出，防止 goroutine 泄漏
+- 有缓冲/无缓冲选择需有明确理由
+
+## 并发编程
+
+- 【强制】共享变量的并发访问必须用 `sync.Mutex` 或 channel 保护
+- 【强制】goroutine 必须能通过 `context` 或 channel 退出，禁止裸 goroutine 无法回收
+- 禁止在不同 goroutine 间通过裸变量共享状态
+
+```go
+// ✅ Good
+var mu sync.Mutex
+mu.Lock()
+sharedVar++
+mu.Unlock()
+
+// ❌ Bad
+go func() { sharedVar++ }()  // 无保护的并发写
+```
+
+## 接口设计
+
+- 接口在使用方（消费者）定义，不在实现方定义
+- 接口尽量小（单方法优先）
+- 不得为"以后可能有多个实现"而提前定义接口
+
+## 泛型
+
+- 类型参数能带来明显复用价值时才使用泛型
+- 禁止为"看起来通用"而引入泛型增加复杂度
+- 类型约束尽量精确
+
+## 字符串拼接
+
+- 【强制】频繁或循环内拼接字符串使用 `strings.Builder`，禁止在循环中使用 `+`
+
+```go
+// ✅ Good
+var b strings.Builder
+for _, s := range list {
+    b.WriteString(s)
+}
+result := b.String()
+
+// ❌ Bad
+var result string
+for _, s := range list {
+    result += s  // 每次分配新内存，O(n²)
+}
+```

@@ -1,0 +1,151 @@
+---
+description: Go 代码风格规范（格式化、命名、注释、导入）
+globs: "**/*.go"
+alwaysApply: false
+---
+
+# Go 代码风格规范
+
+## 格式化
+- 【强制】代码保存时必须使用 `gofmt` 和 `goimports` 进行格式化
+- 【强制】导入分为两组：标准库 / 其他包，由 `goimports` 自动维护，中间保留空行
+
+```go
+// ✅ Good
+import (
+    "fmt"
+    "os"
+
+    "github.com/foo/bar"
+    "myproj/internal/pkg"
+)
+
+// ❌ Bad
+import (
+    "os"
+    "github.com/foo/bar"
+    "fmt"
+)
+```
+
+## 命名
+
+### 多词命名
+- 【强制】使用 `MixedCaps` 或 `mixedCaps`，禁止下划线（蛇形命名）
+
+```go
+// ✅ Good: MixedCaps / mixedCaps
+// ❌ Bad:  MIXED_CAPS / mixed_caps
+```
+
+### 包命名
+- 【强制】包名简短、全部小写，多词不加分隔符
+- 【强制】避免与常用局部变量同名（如 `count`、`user`）
+- 【推荐】避免无意义包名（`util`、`common`、`helper`）；老服务已有的 `common` 包保持现状
+
+```go
+// ✅ Good: package tabwriter / package usercount / package stringset
+// ❌ Bad:  package tabWriter / package tab_writer / package count
+```
+
+### 接收者变量
+- 【强制】使用类型名的一到两个字母缩写，同类型所有方法保持一致
+- 【强制】类型方法全部使用指针接收者
+
+```go
+// ✅ Good
+func (t *Tray) Method() {}
+func (t *Tray) Other() {}
+
+// ❌ Bad
+func (t Tray) Method() {}   // 值接收者
+func (n *Tray) Other() {}   // 名称不一致
+```
+
+### 常量命名
+- 【强制】按角色而非值命名，使用驼峰，禁止全大写下划线
+
+```go
+// ✅ Good: const ScrumSprintCycle = 10 / const MaxPacketSize = 512
+// ❌ Bad:  const Ten = 10 / const MAX_PACKET_SIZE = 512
+```
+
+### 缩写词
+- 【推荐】导出时全大写，不导出时全小写
+
+| 原词   | 导出   | 不导出 |
+|--------|--------|--------|
+| XML API | `XMLAPI` | `xmlAPI` |
+| gRPC   | `GRPC`  | `gRPC`  |
+| ID     | `ID`    | `id`    |
+| DB     | `DB`    | `db`    |
+
+### 函数返回值命名
+- 【强制】同类型多返回值必须命名区分
+- 【强制】中等以上长度函数不得使用裸 `return`
+- 【推荐】不要为减少 `var` 声明而使用命名返回值
+
+```go
+// ✅ Good
+func (n *Node) Children() (left, right *Node, err error)
+
+// ❌ Bad
+func (n *Node) Children() (*Node, *Node, error)
+```
+
+### 避免冗余
+- 【推荐】导出方法名不含包名：`package widget` 中用 `New()` 而非 `NewWidget()`
+- 【推荐】变量名不含类型信息：`var userCount int` 而非 `var numUsersInt int`
+- 【推荐】命名不重复周围上下文（包名、方法名、类型名）
+
+## 注释
+
+- 【强制】所有导出名称必须有文档注释，注释第一个词为被注释的名称
+
+```go
+// ✅ Good
+// Request represents a request to run a command.
+type Request struct { ... }
+
+// ❌ Bad
+type Request struct { ... }  // 无注释
+```
+
+- 【推荐】每个包必须有包注释，注释紧贴 `package` 语句上方，中间无空行
+
+```go
+// ✅ Good
+// Package math provides basic constants and mathematical functions.
+package math
+```
+
+- 【推荐】注释解释"为什么"，而非"做了什么"
+
+## 导入别名
+
+- 【强制】仅在避免命名冲突时使用导入别名；别名遵循包命名规则
+- 【强制】无语义的版本包（如 `v1`）必须重命名包含路径组件
+
+```go
+// ✅ Good
+import (
+    core "github.com/kubernetes/api/core/v1"
+    meta "github.com/kubernetes/apimachinery/pkg/apis/meta/v1beta1"
+)
+
+// ❌ Bad
+import (
+    k8sapi  "github.com/kubernetes/api/core/v1"
+    k8sapi2 "github.com/kubernetes/apimachinery/pkg/apis/meta/v1beta1"
+)
+```
+
+- 【推荐】proto 生成文件导入时去除下划线，单文件用 `pb`，多文件加简短前缀，gRPC 文件用 `grpc` 后缀
+
+```go
+// ✅ Good
+import (
+    fspb   "path/to/foo_service_go_proto"
+    fsgrpc "path/to/foo_service_go_grpc"
+)
+```

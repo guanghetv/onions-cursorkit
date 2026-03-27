@@ -1,0 +1,13 @@
+{
+  "name": "backend",
+  "displayName": "后端开发规范",
+  "version": "0.1.0",
+  "description": "Go / 数据库与工程约定、安全合规，以及基于团队文档的本地 AI 代码审查技能。",
+  "author": {
+    "name": "洋葱学园",
+    "email": "lihui@guanghe.tv"
+  },
+  "logo": "assets/backend.png",
+  "rules": "rules",
+  "skills": "skills"
+}

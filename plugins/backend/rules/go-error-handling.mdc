@@ -1,0 +1,132 @@
+---
+description: Go 错误处理规范（panic 限制、错误返回、调用方处理）
+globs: "**/*.go"
+alwaysApply: false
+---
+
+# Go 错误处理规范
+
+## panic 使用限制
+
+- 【强制】禁止用 `panic` 做常规错误处理，应返回 `error` 让调用方决定如何处理
+- 【强制】允许 `panic` 的两种情况：
+  1. 程序启动时依赖异常（DB 连不上等）
+  2. 表示"不可能出现"的条件错误（应在代码评审/测试期间发现）
+
+```go
+// ✅ Good
+func run(args []string) error {
+    if len(args) == 0 {
+        return errors.New("an argument is required")
+    }
+    return nil
+}
+
+// ❌ Bad
+func run(args []string) {
+    if len(args) == 0 {
+        panic("an argument is required")
+    }
+}
+```
+
+## 返回错误规范
+
+- 【强制】`error` 必须是最后一个返回参数
+
+```go
+// ✅ Good: func Foo() (int, error)
+// ❌ Bad:  func Foo() (error, int)
+```
+
+- 【强制】返回错误必须使用 `error` 接口类型，不得返回具体结构体指针
+
+```go
+// ✅ Good
+func ReturnErr() error { return &MyError{} }  // MyError 实现了 error 接口
+
+// ❌ Bad
+func ReturnErr() *MyError { return &MyError{} }
+```
+
+- 【强制】导出函数必须通过 `err != nil` 判断错误，不得通过返回值是否为 nil 判断
+
+```go
+// ✅ Good
+func Lookup() (*Result, error) {}
+r, err := Lookup()
+if err != nil { /* handle */ }
+
+// ❌ Bad
+func Lookup() *Result {}
+r := Lookup()
+if r != nil { /* 某些场景下会误判 */ }
+```
+
+- 【推荐】全局错误变量使用 `Err`（导出）或 `err`（不导出）前缀；自定义错误类型使用 `Error` 后缀
+
+```go
+// ✅ Good
+var ErrBrokenLink = errors.New("link is broken")
+type NotFoundError struct { File string }
+
+// ❌ Bad
+var BrokenLink = errors.New("link is broken")
+type NotFound struct { File string }
+```
+
+## 调用方处理规范
+
+- 【强制】判断特定错误类型必须使用 `errors.Is`；转换错误类型必须使用 `errors.As`
+
+```go
+// ✅ Good
+if errors.Is(err, os.ErrNotExist) { ... }
+var pathErr *os.PathError
+if errors.As(err, &pathErr) { ... }
+
+// ❌ Bad
+if err.Error() == "file does not exist" { ... }  // 字符串比较
+if pathErr, ok := err.(*os.PathError); ok { ... } // 直接断言，无法处理嵌套包装
+```
+
+- 【推荐】错误处理后正常代码跟在 `if` 块之后（早返回），不放入 `else`
+
+```go
+// ✅ Good
+if err != nil {
+    return err
+}
+// 正常逻辑继续
+
+// ❌ Bad
+if err != nil {
+    return err
+} else {
+    // 正常逻辑（不必要的缩进）
+}
+```
+
+- 【推荐】错误只处理一次：要么向上透传，要么记录日志降级处理，不得同时做两件事（否则产生重复日志）
+
+```go
+// ✅ Good — 方式一：透传
+u, err := getUser(id)
+if err != nil {
+    return err
+}
+
+// ✅ Good — 方式二：记录并降级
+u, err := getUser(id)
+if err != nil {
+    log.Printf("Could not get user %q: %v", id, err)
+    // 降级处理，不再 return err
+}
+
+// ❌ Bad — 重复处理
+u, err := getUser(id)
+if err != nil {
+    log.Printf("Could not get user %q: %v", id, err) // 既打印
+    return err                                          // 又返回
+}
+```
