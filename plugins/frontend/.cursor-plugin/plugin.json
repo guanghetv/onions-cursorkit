@@ -1,0 +1,11 @@
+{
+  "name": "frontend",
+  "displayName": "前端安全与规范",
+  "version": "0.1.0",
+  "description": "团队前端安全与供应链对照技能（fe-security）：代码/数据/依赖/域名安全细则与可执行检查项。",
+  "author": {
+    "name": "洋葱学园",
+    "email": "lihui@guanghe.tv"
+  },
+  "logo": "assets/frontend.png"
+}

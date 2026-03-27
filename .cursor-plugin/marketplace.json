@@ -19,6 +19,11 @@
       "name": "common",
       "source": "common",
       "description": "通用规则、命令与跨栈技能（文档规范、代码审查、飞书分支等）"
+    },
+    {
+      "name": "frontend",
+      "source": "frontend",
+      "description": "前端安全与供应链技能（fe-security）及 references 细则"
     }
   ]
 }
