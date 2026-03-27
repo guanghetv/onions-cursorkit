@@ -1,6 +1,6 @@
 ---
 description: MongoDB 使用规范（待团队补充）
-globs: **/*.go
+globs: "**/*.go"
 alwaysApply: false
 ---
 

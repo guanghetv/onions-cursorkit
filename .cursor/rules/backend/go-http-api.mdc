@@ -1,6 +1,6 @@
 ---
 description: Go HTTP 接口返回值规范（状态码）
-globs: **/*.go
+globs: "**/*.go"
 alwaysApply: false
 ---
 

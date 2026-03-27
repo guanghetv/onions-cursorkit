@@ -1,6 +1,6 @@
 ---
 description: Redis 使用规范（key 设计、bigkey、过期、命令、缓存一致性）
-globs: **/*.go
+globs: "**/*.go"
 alwaysApply: false
 ---
 

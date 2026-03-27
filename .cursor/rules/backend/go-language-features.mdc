@@ -1,6 +1,6 @@
 ---
 description: Go 语言特性规范（嵌套、变量、切片/map/channel、并发、接口、泛型、字符串）
-globs: **/*.go
+globs: "**/*.go"
 alwaysApply: false
 ---
 

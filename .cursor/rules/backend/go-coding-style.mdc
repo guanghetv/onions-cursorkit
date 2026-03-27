@@ -1,6 +1,6 @@
 ---
 description: Go 代码风格规范（格式化、命名、注释、导入）
-globs: **/*.go
+globs: "**/*.go"
 alwaysApply: false
 ---
 
