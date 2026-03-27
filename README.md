@@ -33,3 +33,5 @@
 | **common** | 通用：`rules`（如文档语言规范）、`commands`（如 `/cr`）、`skills`（本地 AI 代码审查、飞书需求分支等） |
 | **backend** | 后端：`rules`（Go、HTTP、数据库、工程约定、安全合规等） |
 | **frontend** | 前端：`skills`（`fe-security` 团队前端安全与供应链对照，含 `references/` 细则） |
+
+## Reviewer
