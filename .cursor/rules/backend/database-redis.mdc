@@ -1,0 +1,75 @@
+---
+description: Redis 使用规范（key 设计、bigkey、过期、命令、缓存一致性）
+globs: **/*.go
+alwaysApply: false
+---
+
+# Redis 使用规范
+
+Redis 主要用于缓存热点数据，加快读取效率。
+
+## key 命名规范
+
+- 【推荐】以业务名/数据库名为前缀，用冒号分隔：`teacher:room:id`
+- 【推荐】保证语义的前提下尽量简短：`u:{uid}:fr:m:{mid}`
+- 【强制】key 不能包含特殊字符（空格、换行、单双引号、转义字符）
+
+## value 设计
+
+- 【强制】禁止 bigkey：string 类型 ≤ 10KB；hash/list/set/zset 元素数 ≤ 5000
+- 【强制】删除大 key 使用渐进式删除（`HSCAN`/`SSCAN`/`ZSCAN`），禁止直接 `DEL`
+- 【推荐】选择合适数据结构；复杂对象使用 JSON 序列化的 string
+- 【推荐】超过 500 字节的大文本必须压缩后再存入
+
+## 过期时间
+
+- 【强制】所有 key 必须设置过期时间（`EXPIRE`），Redis 不是垃圾桶
+- 条件允许时打散过期时间，防止集中过期导致缓存雪崩
+
+## 命令使用规范
+
+- 【强制】生产环境禁止使用 `KEYS`、`FLUSHALL`、`FLUSHDB`；遍历使用 `SCAN`/`HSCAN`/`SSCAN`/`ZSCAN`
+- 【推荐】O(N) 命令（`HGETALL`、`LRANGE`、`SMEMBERS` 等）使用前明确 N 的量级，超量改用渐进式命令
+- 【推荐】批量操作使用 `MGET`/`MSET` 或 pipeline，单次批量 ≤ 500 个元素
+- 【推荐】不建议使用 Redis 事务（不支持回滚）；集群模式下一次事务的所有 key 必须在同一 slot
+
+```go
+// ✅ Good — 使用 pipeline 批量写入
+pipe := rdb.Pipeline()
+for _, item := range items {
+    pipe.Set(ctx, item.Key, item.Val, item.TTL)
+}
+pipe.Exec(ctx)
+
+// ❌ Bad — 循环逐条写入
+for _, item := range items {
+    rdb.Set(ctx, item.Key, item.Val, item.TTL)
+}
+```
+
+## 客户端规范
+
+- 【推荐】使用带连接池的客户端；不同应用避免共用同一 Redis 实例
+- 【强制】设置合理的密码认证，必要时使用 SSL
+
+## 缓存与数据库操作顺序
+
+- 【推荐】更新数据：**先操作数据库，再删除缓存**
+
+```
+// ✅ 推荐方案（非高并发场景）
+1. UPDATE db
+2. DEL cache
+
+// 高并发强一致场景 — 延迟双删
+1. DEL cache
+2. UPDATE db
+3. 间隔一段时间后再次 DEL cache
+
+// 缓存删除失败 — 重试机制
+写入 MQ 异步重试删除缓存
+```
+
+## 冷热数据分离
+
+- 【推荐】仅缓存高频热数据（QPS > 5000），低频冷数据使用 MySQL/ES/MongoDB 等磁盘存储
