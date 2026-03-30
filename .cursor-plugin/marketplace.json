@@ -24,6 +24,11 @@
       "name": "frontend",
       "source": "frontend",
       "description": "前端安全与供应链技能（fe-security）及 references 细则"
+    },
+    {
+      "name": "fe-specflow",
+      "source": "fe-specflow",
+      "description": "前端 Spec-Driven 研发工作流：飞书文档/截图/文字等需求自动接入，Brainstorming → OpenSpec → TDD → 联调 → E2E 验证，全生命周期编排"
     }
   ]
 }

@@ -1,0 +1,20 @@
+{
+  "name": "fe-specflow",
+  "displayName": "前端 Specflow 研发工作流",
+  "version": "0.0.1",
+  "description": "前端 Spec-Driven 研发工作流：飞书文档/截图/文字等需求自动接入，Brainstorming → OpenSpec → TDD → 联调 → E2E 验证，全生命周期编排",
+  "author": {
+    "name": "wenli"
+  },
+  "keywords": [
+    "frontend",
+    "workflow",
+    "tdd",
+    "openspec",
+    "superpowers",
+    "e2e",
+    "spec-driven"
+  ],
+  "license": "MIT",
+  "commands": "./commands/"
+}
