@@ -1,0 +1,57 @@
+---
+description: 本项目使用 Superpowers + OpenSpec 融合的后端研发工作流。当涉及后端需求开发、API 实现、联调、提测时自动应用。完整纪律嵌入 skills/dev-workflow/SKILL.md「OpenSpec + Superpowers 强制纪律」。
+globs:
+  - "**/*.go"
+  - "**/*.proto"
+  - "openspec/**"
+---
+
+# 后端研发工作流（全局意识）
+
+## 编号说明
+
+- **纪律阶段 1～6**：见 **`skills/dev-workflow/SKILL.md`** 内**「OpenSpec + Superpowers 强制纪律」**（含验证、Code Review、归档）。
+- **编排步骤**（设计探索、交叉验证、归档等**分支名**）与纪律阶段**不是**同一套数字；合并前须满足 **纪律 4 + 5**，再 **`openspec archive`（纪律 6）**。详情见同文件**「编号约定：纪律阶段 vs 编排步骤」**。
+
+## 流程阶段
+
+本项目研发流程面向**后端**，分为**线性阶段**和**事件驱动阶段**（阶段划分、OpenSpec 分工与验证门禁以 **`skills/dev-workflow/SKILL.md`** 内**「OpenSpec + Superpowers 强制纪律」**为准）：
+
+1. **设计探索**：扫描仓库 → 采集需求（飞书用 **feishu-mcp**；GitLab 仅需求且无变更目录时**只读**拉取，见 skill；失败须**明确提示**）→ 可选 **OpenAPI/proto** 等契约输入 → **`superpowers:brainstorming`** → **步骤 1e 后端灰区** → **`design-to-opsx`**（含 **`design.md` / `plan.md`** + `proposal` + `specs`）
+2. **任务规划**：创建 `tasks.md`，声明 TDD 与测试分层（L1 单元 → L2 集成 → …）
+3. **T1 后端开发**：按 task 执行 TDD；完成后**仅在用户明确同意后再提交** Git：先 **`git add .`** → **提交前审查（必须）**：**aicr-local** → **`/cr`**（或该技能流程）；否则 Agent **自审暂存区**。与 **Superpowers 合并前 Code Review（纪律阶段 5）** 职责不同、**均须**落实（见 `dev-workflow`「两类审查」）
+4. **事件驱动**（T1 后，可选）：
+   - **前端契约 / 前端 spec 到达** → `pull-spec` → 写入 `frontend-*.md` → 对齐 API 与 DTO → **全量重跑**相关测试
+   - **测试 spec 到达** → `pull-spec` → `qa-*.md`；可**询问**是否马上做交叉验证，**须用户确认**后再进入 `e2e-verify`
+5. **交叉验证**（`e2e-verify`，编排步骤）：**先**跑测试与静态对照 → **spec 优先级**：测试 spec 最高；冲突在报告中**显著提示**；若需浏览器，**仅 Cursor 内置** `browser_*`，不用 `chrome-devtools-mcp`；之后落实 **纪律阶段 5（Code Review）**
+6. **归档**：确认 **Code Review** 与验证门禁后，用户终端 **`openspec archive`**（纪律阶段 6）
+
+## 状态推断
+
+通过变更目录产物推断阶段（无独立状态文件）：
+
+- 无变更目录 → 设计探索
+- 有 `proposal.md` 无 `tasks.md` → 任务规划
+- `tasks.md` 有未勾选项 → T1 后端开发
+- `tasks.md` 全部勾选 → 等待事件驱动、交叉验证；若用户仍说「继续开发」→ **先澄清**是扩 scope（增补 tasks）还是进入验证/CR
+- 有 `verify-report.md` / `e2e-report.md` 且通过 → **且** Code Review（纪律 5）已满足 → 可归档
+
+## 关键约束
+
+- **服务端视角**：`proposal.md` 中 **API 契约（服务端对外）** 为联调与前端对齐依据；**design.md / plan.md、验证、Code Review** 等门禁以 **`dev-workflow`** 内嵌**强制纪律**为准
+- **单一真相源**：设计产出物只进 `openspec/changes/*/`，**不**写 `docs/superpowers/specs/`
+- **TDD 纪律**：红绿循环；**不得**先实现再补测试
+- **飞书需求**：失败时明确提示，勿静默跳过
+- **commit**：须用户确认；确认后顺序为 `git add .` → **必须**提交前审查（**aicr-local `/cr` 或自审**）→ commit；**不**免除合并前的 **Superpowers `requesting-code-review`**
+- **openspec CLI**：由用户在终端执行，Agent 负责文件内容
+- **审查分层**：**aicr-local `/cr`**（每次 commit 前）与 **Superpowers `requesting-code-review`**（合并前）互补；收到 MR 评论时可配合 **`receiving-code-review`** 再改代码
+
+## 变更定位
+
+操作前先定位目标变更：仅 1 个变更目录时自动选定；多个时列出；用户提到 change-id 时直接使用。
+
+## 事件触发
+
+- "前端spec到了 / 前端来了 `<链接>`" → pull-spec → `frontend-*.md` → 对齐 → 重跑测试
+- "测试spec到了 `<链接>`" → pull-spec → `qa-*.md`；可提示是否验证，**确认后**才 `e2e-verify`
+- "跑自动化验证 / 跑集成测试 / 契约测试" → `e2e-verify`

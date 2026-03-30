@@ -1,0 +1,20 @@
+{
+  "name": "be-specflow",
+  "displayName": "后端 Specflow 研发工作流",
+  "version": "0.0.1",
+  "description": "后端 Spec-Driven 研发工作流：Brainstorming → design/plan → OpenSpec → TDD → 联调 → 验证 → 归档（纪律嵌入 skills/dev-workflow/SKILL.md）",
+  "author": {
+    "name": "wenli"
+  },
+  "keywords": [
+    "backend",
+    "workflow",
+    "tdd",
+    "openspec",
+    "superpowers",
+    "go",
+    "spec-driven"
+  ],
+  "license": "MIT",
+  "commands": "./commands/"
+}
