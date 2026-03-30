@@ -29,6 +29,11 @@
       "name": "fe-specflow",
       "source": "fe-specflow",
       "description": "前端 Spec-Driven 研发工作流：飞书文档/截图/文字等需求自动接入，Brainstorming → OpenSpec → TDD → 联调 → E2E 验证，全生命周期编排"
+    },
+    {
+      "name": "be-specflow",
+      "source": "be-specflow",
+      "description": "后端 Spec-Driven 研发工作流：飞书文档/截图/文字等需求自动接入，Brainstorming → design/plan → OpenSpec → TDD → 联调 → 验证 → 归档（纪律嵌入 dev-workflow skill）"
     }
   ]
 }

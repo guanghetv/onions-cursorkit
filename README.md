@@ -25,6 +25,7 @@
 - **后端 / 全栈（含 Go 与团队后端规范）**：建议安装 **Common** + **Backend**
 - **仅需文档规范、代码审查、飞书分支等通用能力**：可只安装 **Common**
 - **前端安全审查 / 供应链自检**：建议安装 **Common** + **Frontend**
+- **前端/后端 Spec-Driven（OpenSpec 变更目录）**：按需安装 **fe-specflow** / **be-specflow**（可与 Common 同装）
 
 ## 当前插件
 
@@ -33,5 +34,7 @@
 | **common** | 通用：`rules`（如文档语言规范）、`commands`（如 `/cr`）、`skills`（本地 AI 代码审查、飞书需求分支等） |
 | **backend** | 后端：`rules`（Go、HTTP、数据库、工程约定、安全合规等） |
 | **frontend** | 前端：`skills`（`fe-security` 团队前端安全与供应链对照，含 `references/` 细则） |
+| **fe-specflow** | 前端 Specflow：OpenSpec + Superpowers 编排，`/fe-sdd`、pull-spec、e2e-verify 等 |
+| **be-specflow** | 后端 Specflow：同上后端视角，`/be-sdd`、前端契约/QA spec 拉取、交叉验证与归档 |
 
 ## Reviewer
