@@ -47,7 +47,7 @@ git pull origin master
 
 ### 4. 查询飞书任务信息
 
-使用 `feishu-project-mcp` 的 `get_workitem_brief` 工具查询**第一个任务**：
+通过**飞书项目 MCP** 调用 `get_workitem_brief` 查询**第一个任务**（Cursor 中 MCP server 标识当前多为 **`FeishuProjectMcp`**；旧文档或配置中的 **`feishu-project-mcp`** 仍指同一能力，以本机 MCP 列表中的实际名称为准）：
 
 ```json
 {
@@ -116,7 +116,7 @@ git branch --set-upstream-to=origin/<分支名> <分支名>
 1. ✅ 提取所有工作项ID（正则：`/detail/(\d+)`）
 2. ✅ 检查工作区状态（`git status --porcelain`）
 3. ✅ 切换到master并拉取最新代码（权限：`["network", "git_write"]`）
-4. ✅ 查询第一个任务的详情（feishu-project-mcp）
+4. ✅ 查询第一个任务的详情（`FeishuProjectMcp` / `feishu-project-mcp`，见步骤 4）
 5. ✅ 查询迭代名称（如失败使用 `unknown`）
 6. ✅ 格式化分支名（`feat/<迭代>-<名称>-m-<ID1>-m-<ID2>...`）
 7. ✅ 检查远程分支是否存在（权限：`["network"]`）

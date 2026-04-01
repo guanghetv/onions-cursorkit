@@ -108,7 +108,7 @@ all_ids = work_item_ids
 
 ## 步骤4：查询飞书任务详情
 
-使用 feishu-project-mcp 的 `get_workitem_brief` 工具查询**第一个**任务的信息（作为主任务）。
+调用飞书项目 MCP 的 `get_workitem_brief` 查询**第一个**任务的信息（作为主任务）。Cursor 里 MCP server 名称通常为 **`FeishuProjectMcp`**；若文档仍写 **`feishu-project-mcp`**，视为同一 MCP，以 Cursor「MCP 已连接服务」中的实际标识为准。
 
 **调用参数：**
 ```json

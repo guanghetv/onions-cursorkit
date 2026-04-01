@@ -194,6 +194,7 @@ ping project.feishu.cn
 2. 检查并更新飞书API认证配置
 3. 验证工作项ID和访问权限
 4. 检查网络连接
+5. 在 Cursor MCP 设置中确认飞书项目服务已启用；server 名称可能为 **`FeishuProjectMcp`**（与旧称 `feishu-project-mcp` 兼容，以列表为准）
 
 ---
 
@@ -331,7 +332,7 @@ git ls-remote --heads origin
 
 在Cursor中测试MCP工具：
 ```
-使用 feishu-project-mcp 的 get_workitem_brief 工具
+使用飞书项目 MCP（FeishuProjectMcp，或配置中的 feishu-project-mcp）的 get_workitem_brief 工具
 测试工作项ID：6717631602
 ```
 
