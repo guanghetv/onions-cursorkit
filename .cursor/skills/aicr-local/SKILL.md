@@ -80,15 +80,24 @@ git add <files>
 
 若链接格式无法识别，提示："无法识别的 MR 链接格式，请提供 GitLab MR 链接（如 `https://gitlab.example.com/group/repo/-/merge_requests/123`）"。
 
-**2) 仓库匹配检查**：执行 `git remote get-url origin`，比对其中的 project_path 与 MR 链接的 project_path。若不一致，输出：
+**2) 仓库匹配检查**：执行 `git remote get-url origin`，提取其中的 project_path 并与 MR 链接的 project_path 比对。需要处理两种 remote URL 格式：
+
+- **HTTPS**：`https://gitlab.yc345.tv/group/repo.git` → project_path = `group/repo`
+- **SSH**：`git@gitlab.yc345.tv:group/repo.git` → project_path = `group/repo`（注意 SSH 用 `:` 分隔，且去掉 `.git` 后缀）
+
+若不一致，输出以下信息并**终止审查**：
 
 ```
-⚠️ 当前工作区（<当前 project_path>）与 MR 所属仓库（<MR project_path>）不一致，影响范围分析可能不准确。若后续 fetch 失败，请在 MR 所在仓库目录中重新执行
+🔴 当前工作区（<当前 project_path>）与 MR 所属仓库（<MR project_path>）不一致，请在 MR 所在仓库目录中打开 Cursor 后重新执行。
 ```
-
-**不阻断**，继续执行。
 
 **3) 获取 source_branch 和 target_branch**：
+
+**优先级**（多数人未配置 GitLab MCP，因此以本地 Token 为主）：
+
+1. **优先**：环境变量 `GITLAB_TOKEN`（或 `GITLAB_PRIVATE_TOKEN`）+ 下文 `curl` 调用 GitLab REST API。
+2. **备选**：无 Token 或 `curl` 失败时，若当前环境已启用 **GitLab MCP**，可尝试通过 MCP 获取同一套 MR 元数据（`source_branch`、`target_branch`、`title`、`description`、`state` 等）；逻辑与有 Token 时一致（含非 `opened` 状态需用户确认）。
+3. **再退**：无 Token、MCP 不可用或仍失败 → 提示用户手动提供 `source_branch` 与 `target_branch`。
 
 先检查环境变量 `GITLAB_TOKEN`（或 `GITLAB_PRIVATE_TOKEN`）是否存在：
 
@@ -101,9 +110,17 @@ test -n "${GITLAB_TOKEN:-$GITLAB_PRIVATE_TOKEN}"
   curl -s --header "PRIVATE-TOKEN: ${GITLAB_TOKEN:-$GITLAB_PRIVATE_TOKEN}" \
     "https://<host>/api/v4/projects/<url_encoded_project_path>/merge_requests/<iid>"
   ```
-  从返回 JSON 中提取 `source_branch` 和 `target_branch`。
+  **URL 编码注意**：project_path 中的 `/` 必须编码为 `%2F`，如 `org/sub-group/repo` → `org%2Fsub-group%2Frepo`。
 
-- **无 Token 或 API 失败** → 提示用户提供 source_branch 和 target_branch（不要裸调 API，GitLab 私有项目未授权会 404）。用户提供后，继续执行下方第 4) 步获取 diff。
+  从返回 JSON 中提取 `source_branch`、`target_branch`、`title`、`description`。
+
+  同时检查 MR 的 `state` 字段：若非 `opened`（如 `merged` 或 `closed`），输出提示并**等待用户确认**：
+  ```
+  ⚠️ 该 MR 状态为 <state>（非 opened），审查结果可能不准确。是否继续？
+  ```
+  用户明确要求继续后，才执行后续步骤；否则**终止审查**。
+
+- **无 Token 或 API 失败** → 先尝试 **GitLab MCP**（若已配置）获取上述字段；仍不可得则提示用户手动提供 `source_branch` 与 `target_branch`（不要裸调未授权 API，GitLab 私有项目会 404）。手动分支时无 MR title/description，跳过 MR 上下文注入。用户提供分支后，继续执行下方第 4) 步获取 diff。
 
 **4) 获取 diff**：
 
@@ -129,11 +146,39 @@ current_branch=$(git branch --show-current)
 git status --porcelain
 ```
 
-若 `current_branch` == `source_branch` 且 `git status --porcelain` 输出为空（无未提交变更），设置 **`on_source_branch = true`**；否则为 `false`。
+根据 `current_branch` 和工作区状态，确定 **`branch_state`**（三态）：
+
+| 条件 | branch_state | 含义 |
+|------|-------------|------|
+| `current_branch` == `source_branch` 且 `git status --porcelain` 为空 | `source` | 工作区就是 MR 源分支代码，Cursor Agent 能力全开 |
+| `current_branch` == `target_branch` 且 `git status --porcelain` 为空 | `target` | 工作区是合入目标，适合做影响分析 |
+| 其他情况 | `other` | 工作区与 MR 无直接关联，仅 diff 可靠 |
 
 此标志影响后续步骤：
-- 步骤 7：影响范围分析的可靠性
+- 变更量检查策略
+- 步骤 7：上下文收集深度和 Cursor Agent 能力使用范围
 - 步骤 10：报告中文件位置是否可直接点击跳转
+
+**6) 变更量检查**：若 file_paths 超过 20 个文件或 diff 超过 2000 行，根据 `branch_state` 采取不同策略：
+
+- **`source`**（当前在源分支）：这通常是开发者审查自己的功能分支，执行**全量审查**，不截断不降级。输出提示：
+  ```
+  ℹ️ MR 变更量较大（<N> 个文件 / <M> 行），当前在源分支上，将进行全量审查。
+  ```
+
+- **`target` 或 `other`**（当前不在源分支）：输出提示并采用**优先审查策略**：
+  ```
+  ⚠️ MR 变更量较大（<N> 个文件 / <M> 行），当前非源分支，将优先审查核心业务文件。如需全量审查，建议切换到源分支（git checkout <source_branch>）后重新执行。
+  ```
+  优先保留业务逻辑文件（`.go`, `.ts`, `.vue` 等），降低优先级：测试文件、自动生成文件、配置文件、lock 文件等。
+
+**7) 获取提交历史**：
+
+```bash
+git log --oneline origin/<target_branch>..origin/<source_branch>
+```
+
+将结果作为 `commits_text`，用于后续步骤 9 构建审查提示词，帮助理解变更的演进过程。
 
 ### 步骤 2: 判断代码类型
 
@@ -185,21 +230,54 @@ git status --porcelain
 
 ### 步骤 7: 收集工作区上下文
 
-**在工作区中搜索**（不在技能目录中）：
+**在工作区中搜索**（不在技能目录中）。
 
-**精准搜索**（使用 Grep 工具）：
-- 搜索被修改的函数名、类名的所有引用位置
-- 限制搜索范围，避免上下文过载
+暂存区模式下，工作区即被审代码，直接使用 Grep / SemanticSearch / Read / ReadLints。
 
-**语义搜索**（使用 SemanticSearch）：
-- 查找与变更相关的代码文件
-- 重点关注可能受影响的模块
+MR 模式下，根据 `branch_state` 分三层策略，逐层递减 Cursor Agent 能力的使用范围：
 
-**策略**：优先收集直接相关的内容，按需加载，避免超出上下文限制。
+#### branch_state = `source`（在源分支上）—— 深度审查
 
-**当 input_mode=mr 时**：
-- 若 `on_source_branch = true`：工作区与 MR 源分支一致且无本地变更，影响范围分析结论可靠，无需额外注明。
-- 若 `on_source_branch = false`：工作区可能不在 MR 源分支上，影响范围分析结论仅供参考。若审查产出了影响范围结论，在报告末尾注明："以上影响范围分析基于当前工作区，当前分支可能非 MR 源分支，结论仅供参考"。
+工作区就是 MR 源分支代码，Cursor Agent 的所有能力都直接作用于"变更后的代码"，审查质量最高。
+
+| 能力 | 操作 |
+|------|------|
+| **Read 完整文件** | 对 diff 中的每个变更文件，Read 完整内容以理解 diff 片段的上下文（上下游逻辑、同文件其他函数）。diff 只有变更片段，Read 能发现"相邻的边界判断也需同步修改"。 |
+| **Grep 精准搜索** | 搜索被修改函数名、类名、接口名的所有调用方，结果与 MR 源分支一致。 |
+| **SemanticSearch** | 查找与变更相关的架构模式、关联模块、潜在影响。 |
+| **ReadLints** | 对变更文件执行静态分析，检测 linter 错误（纯 diff 分析无法做到）。 |
+| **跨文件追踪** | 修改了 interface/type → 追踪所有 implement 的类；修改了 API → 追踪完整调用链。 |
+
+影响范围分析结论可靠，无需额外注明。
+
+#### branch_state = `target`（在目标分支上）—— 影响分析
+
+工作区是"变更前"的状态（如 `main` / `develop`），适合回答"MR 合入后会影响什么"。
+
+| 能力 | 操作 |
+|------|------|
+| **Grep 精准搜索** | 搜索被修改函数的所有现有调用方——这些是目标分支当前的真实状态，影响分析最准确（"这个函数在 main 上有 15 个调用方，MR 改了它的签名"）。 |
+| **SemanticSearch** | 在目标分支上搜索关联模块，评估影响面。 |
+| **Read 工作区文件** | 读到的是旧版本，用于了解变更前的逻辑，与 diff 对照。 |
+| **`git show` 读新代码** | 使用 `git show origin/<source_branch>:<file_path>` 读取变更后的完整文件，弥补工作区是旧版本的不足。 |
+| **ReadLints** | 不适用——工作区不是变更后的代码，lint 结果无意义。 |
+
+影响范围分析结论可靠（目标分支视角）。在报告中如引用了新代码的完整上下文，注明来源："`git show origin/<source_branch>:<path>`"。
+
+#### branch_state = `other`（既非源分支也非目标分支）—— 仅 diff 审查
+
+工作区与 MR 无直接关联，Cursor Agent 的搜索结果不可靠。
+
+| 能力 | 操作 |
+|------|------|
+| **diff 文本分析** | 审查 diff 本身的规范性、安全性、逻辑正确性。 |
+| **Grep / SemanticSearch** | **不使用**——结果来自无关分支，会产生误导。 |
+| **Read / ReadLints** | **不使用**——文件内容与 MR 不一致。 |
+
+在报告末尾注明：
+```
+💡 当前工作区非 MR 的源分支或目标分支，本次审查仅基于 diff 文本。如需深度审查（影响范围分析、完整上下文、lint 检测），建议切换到源分支（git checkout <source_branch>）后重新执行。
+```
 
 #### MR 模式与暂存区模式的步骤 4–7 差异
 
@@ -207,7 +285,7 @@ git status --porcelain
 |------|----------------------|---------------|
 | 4–5 Spec | 搜工作区 openspec + @ + git log | 仅 diff 内 spec 或用户 @ |
 | 6 规则 | 工作区 .cursor/rules | 同左，可能非 MR 分支 |
-| 7 影响范围 | 工作区 = 被审分支 | on_source_branch=true 时可靠；否则仅供参考 |
+| 7 上下文 | 工作区 = 被审分支，全量使用 Agent 能力 | `source` 全量 / `target` 影响分析 / `other` 仅 diff |
 
 ### 步骤 8: 加载提示词模板
 
@@ -226,12 +304,14 @@ git status --porcelain
 - spec_content：业务需求规格（如果有）
 - project_rules：项目规则（如果有）
 - context：工作区相关代码（精简后）
+- mr_title / mr_description（MR 模式专属，如果有）：对应模板中的 `{{ mr_title }}`、`{{ mr_description }}`
+- commits_text（MR 模式专属，如果有）：提交历史，对应模板中的 `{{ commits_text }}`
 
 ### 步骤 10: 执行审查并输出报告
 
 基于构建的提示词进行审查，输出极简报告。
 
-## 三维度审查逻辑
+## 四维度审查逻辑
 
 ### 1. 基础规范审查
 
@@ -277,6 +357,7 @@ git status --porcelain
 - 使用 Grep 精确搜索函数名、类名
 - 使用 SemanticSearch 查找相关模块
 - 限制范围，优先关注高频调用和关键路径
+- MR 模式下受 `branch_state` 限制，详见步骤 7（`other` 状态不使用 Grep / SemanticSearch）
 
 ### 4. 安全风险检测
 
@@ -351,8 +432,8 @@ git status --porcelain
 ```
 
 **MR 模式文件位置行为**：
-- **`on_source_branch = true`**（当前在 MR 源分支且无本地变更）：报告中的文件位置使用上述可点击格式，行号与本地文件一致，点击可直接跳转到对应行。
-- **`on_source_branch = false`**（当前不在 MR 源分支或有本地变更）：报告中仍使用 `相对路径:行号` 格式，但在报告末尾追加提示：
+- **`branch_state = source`**（当前在 MR 源分支且无本地变更）：报告中的文件位置使用上述可点击格式，行号与本地文件一致，点击可直接跳转到对应行。
+- **`branch_state = target` 或 `other`**（当前不在 MR 源分支）：报告中仍使用 `相对路径:行号` 格式，但在报告末尾追加提示：
 
 ```
 💡 当前工作区非 MR 源分支，文件位置行号对应 MR 源分支，点击跳转可能不准确。可切换到源分支（git checkout <source_branch>）后重新审查以获得准确跳转。
@@ -388,7 +469,8 @@ git status --porcelain
 - **暂存区为空**：先执行 `git add <files>`
 - **审查结果过于简短**：极简输出是设计的，只关注核心问题
 - **可以审查未暂存的文件吗**：不可以，必须先 `git add`
-- **MR 模式行号对应哪个分支**：对应 MR 源分支。若检测到当前在源分支且无本地变更（`on_source_branch = true`），文件位置可直接点击跳转；否则行号可能与当前分支不一致，报告末尾会有提示
+- **MR 模式行号对应哪个分支**：对应 MR 源分支。若当前在源分支且无本地变更（`branch_state = source`），文件位置可直接点击跳转；否则行号可能与当前分支不一致，报告末尾会有提示
+- **MR 模式如何获取分支名与 MR 描述**：优先配置本地 `GITLAB_TOKEN`（或 `GITLAB_PRIVATE_TOKEN`）；无 Token 时可尝试 **GitLab MCP**（备选）；均不可用时按提示手动输入分支名（多数人未配置 MCP，以 Token 为主）
 - **MR 模式提示权限错误**：检查 git 凭证（SSH key 或 credential）是否有该仓库的访问权限
 
 ## 使用步骤
@@ -420,6 +502,6 @@ git status --porcelain
 
 ### 版本历史
 
-- v1.1.0 (2026-03-18): 支持 `/cr <GitLab MR 链接>` MR 模式；在源分支上时报告文件位置可点击跳转
-- v1.0.1 (2026-03-20): Markdown 链接升级为首选文件位置格式，提升 monorepo 兼容性
+- v1.1.0 (2026-04-01): 支持 `/cr <GitLab MR 链接>` MR 模式；在源分支上时报告文件位置可点击跳转
+- v1.0.1 (2026-02-20): Markdown 链接升级为首选文件位置格式，提升 monorepo 兼容性
 - v1.0.0 (2026-02-10): 初始版本，支持三维度审查、极简输出、可点击链接

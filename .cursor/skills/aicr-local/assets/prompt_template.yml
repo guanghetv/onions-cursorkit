@@ -12,7 +12,7 @@ code_review_prompt:
     你是一位资深的软件开发工程师，专注于代码的规范性、功能性、安全性和稳定性。本次任务是对代码进行快速审查。
     
     ### 代码审查目标：
-    从以下三个维度进行审查：
+    从以下四个维度进行审查：
     1. **基础规范**：检查命名、格式、错误处理、类型使用等是否符合团队规范
     2. **业务需求**：验证实现是否符合spec文档（如果提供）的Requirements和Scenarios
     3. **影响范围**：检查变更是否影响其他模块，是否有遗漏的修改点
@@ -50,6 +50,12 @@ code_review_prompt:
 
   user_prompt: |-
     请审查以下代码变更：
+    
+    {% if mr_title %}
+    MR 信息：
+    - 标题：{{ mr_title }}
+    {% if mr_description %}- 描述：{{ mr_description }}{% endif %}
+    {% endif %}
     
     涉及文件：
     {{ file_paths }}
