@@ -50,10 +50,71 @@ git add .
 **可能原因**：
 - Cursor版本过旧，不支持文件链接格式
 - 文件路径不正确（使用相对路径）
+- MR 模式下当前不在源分支，行号与本地文件不一致
 
 **解决方案**：
 - 更新到最新版本的Cursor
 - 手动复制路径和行号打开文件
+- MR 模式下切换到源分支：`git checkout <source_branch>`
+
+## MR 模式问题
+
+### Q: 提示"无法识别的 MR 链接格式"？
+
+**原因**：MR 链接格式不符合 GitLab 标准。
+
+**支持格式**：`https://<host>/<group>/<repo>/-/merge_requests/<iid>`（含多级 group）。
+
+**常见错误**：
+- 缺少 `/-/` 分隔符
+- 使用了 GitHub PR 链接格式
+- URL 被截断
+
+### Q: 提示"无法获取 MR 源分支"（git fetch 失败）？
+
+**排查步骤**：
+1. 检查 git 凭证：`git remote get-url origin`，确认有该仓库的读权限
+2. 检查分支名是否正确：分支可能已被删除
+3. 检查网络连接：确认可以访问 GitLab 服务器
+4. 仓库不匹配：当前工作区可能不是 MR 所在仓库，在正确的仓库目录中重新执行
+
+### Q: 提示"该 MR 状态为 merged/closed"？
+
+**说明**：MR 已合并或已关闭，审查结果可能不准确（diff 可能与预期不同）。
+
+**建议**：
+- 对于已合并的 MR，可直接在目标分支上查看最终代码
+- 对于已关闭的 MR，确认是否还需要审查
+
+### Q: MR 模式没有 Token，提示手动输入分支名？
+
+**原因**：未配置 `GITLAB_TOKEN` 或 `GITLAB_PRIVATE_TOKEN`，且无法通过 GitLab MCP 获取 MR 信息（多数人未配置 MCP，属常见情况）。
+
+**解决方案**（推荐顺序）：
+1. **优先**：设置环境变量：`export GITLAB_TOKEN=<your-token>`，本地 Token + `curl` 不依赖 MCP，适用面最广。
+2. **备选**：若已启用 GitLab MCP，可由 Agent 通过 MCP 拉取 MR 元数据，无需自行填分支。
+3. **再退**：按提示手动输入 `source_branch` 与 `target_branch`。
+
+### Q: MR 变更量很大，审查质量下降？
+
+**原因**：MR 包含大量文件/行数，超出建议的审查范围。
+
+**优化建议**：
+- 系统会自动提示并优先审查核心业务文件
+- 可请求分批审查："请只审查 `src/services/` 目录下的变更"
+- 从源头减少：推动团队拆分大 MR
+
+### Q: MR 模式行号与当前文件对不上？
+
+**原因**：当前不在 MR 源分支上，或本地有未提交的变更。
+
+**解决方案**：
+```bash
+git checkout <source_branch>
+git pull origin <source_branch>
+/cr <MR链接>
+```
+重新审查后，文件位置可直接点击跳转。
 
 ## 配置问题
 
@@ -187,7 +248,7 @@ git add .
 
 查看 `SKILL.md` frontmatter 中的 `metadata.version` 字段。
 
-当前版本：**v1.0.0**
+当前版本：**v1.1.0**
 
 ---
 

@@ -17,6 +17,7 @@
 | Git操作失败 | 命令返回非零退出码 | 显示Git错误信息 |
 | 网络问题 | git pull/push 超时 | 提示检查网络连接 |
 | 分支名过长 | 多任务导致分支名超长 | Git支持长分支名，但可以警告用户 |
+| 无 `master` 或 `git checkout master` 失败 | 远程仅有 `main` 等，本地无 `master` | 停止流程；见「问题11」：创建/跟踪 `master` 或**显式指定**基线（如 `main`）后再执行技能 |
 
 ---
 
@@ -194,6 +195,7 @@ ping project.feishu.cn
 2. 检查并更新飞书API认证配置
 3. 验证工作项ID和访问权限
 4. 检查网络连接
+5. 在 Cursor MCP 设置中确认飞书项目服务已启用；server 名称可能为 **`FeishuProjectMcp`**（与旧称 `feishu-project-mcp` 兼容，以列表为准）
 
 ---
 
@@ -304,6 +306,25 @@ feat/124-优化支付模块-m-6717631602-m-6717631603-m-6717631604-m-6717631605-
 
 ---
 
+### 问题11：无 master 分支或 `git checkout master` 失败
+
+**症状**：
+
+```
+error: pathspec 'master' did not match any file(s) known to git
+```
+
+或远程无 `master` 分支。
+
+**原因**：本技能**默认**从 `master` 派生 feature 分支；**不会**自动改用 `main` 或其它分支。
+
+**解决方案**（任选其一）：
+
+1. **在仓库中提供 `master`**（例如将 `main` 作为团队约定的基线分支名时，可新增 `master` 指向同一提交，或与团队统一约定后创建远程 `master`）。
+2. **显式指定基线**：在对话中说明「以 `main` 为基线（或 `develop` 等）创建分支」，再按技能「例外」路径执行：`git checkout <基线>` → `git pull origin <基线>` → 创建 feature 分支。
+
+---
+
 ## 调试技巧
 
 ### 1. 查看详细的Git输出
@@ -331,7 +352,7 @@ git ls-remote --heads origin
 
 在Cursor中测试MCP工具：
 ```
-使用 feishu-project-mcp 的 get_workitem_brief 工具
+使用飞书项目 MCP（FeishuProjectMcp，或配置中的 feishu-project-mcp）的 get_workitem_brief 工具
 测试工作项ID：6717631602
 ```
 

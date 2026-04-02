@@ -23,25 +23,23 @@ git status --porcelain
   - 或放弃变更：git reset --hard
   ```
 
-## 步骤2：确保在master分支且代码最新
+## 步骤2：确保在默认基线分支且代码最新（门禁）
 
-检查当前分支并更新到最新代码：
+**目的**：feature 分支必须从 **`master`** 的最新提交创建；**禁止**在 `develop` 等分支上直接 `git checkout -b`；**禁止**自动改用 `main`（除非用户明确指定以 `main` 为基线）。
 
 ```bash
-# 检查当前分支
-git branch --show-current
+git fetch origin
+git checkout master
+git pull origin master
 ```
 
-**处理逻辑：**
-- 如果当前不是 `master` 分支：
-  ```bash
-  git checkout master
-  ```
-  
-- 拉取最新代码：
-  ```bash
-  git pull origin master
-  ```
+**门禁（执行下方「步骤7：创建并推送分支」中的 `git checkout -b` 前必须满足；与主文档 `SKILL.md` 的步骤 8 为同一步骤，编号因文档结构不同而不一致）**：默认路径下 `git branch --show-current` 为 `master`。否则禁止执行 `git checkout -b`，回到本步。
+
+**例外**：用户明确写出以某分支为基线（如 `develop`、`main`）时，可 `git checkout` 该分支并 `git pull origin <该分支>`，并在回复中说明基线名。
+
+**MUST NOT**：在仍为 `develop`、`main`（未显式指定时）、`feat/...` 等时按默认路径创建 feature 分支。
+
+**无 master 时**：`git checkout master` 失败则停止，提示用户处理仓库默认分支或显式指定基线；不得自动 `git checkout main`。
 
 ## 步骤3：解析飞书需求链接
 
@@ -108,7 +106,7 @@ all_ids = work_item_ids
 
 ## 步骤4：查询飞书任务详情
 
-使用 feishu-project-mcp 的 `get_workitem_brief` 工具查询**第一个**任务的信息（作为主任务）。
+调用飞书项目 MCP 的 `get_workitem_brief` 查询**第一个**任务的信息（作为主任务）。Cursor 里 MCP server 名称通常为 **`FeishuProjectMcp`**；若文档仍写 **`feishu-project-mcp`**，视为同一 MCP，以 Cursor「MCP 已连接服务」中的实际标识为准。
 
 **调用参数：**
 ```json
@@ -232,6 +230,8 @@ feat/<规划迭代>-<第一个飞书卡片名称>-m-<ID1>-m-<ID2>-m-<ID3>...
 - 多个ID时，分支名可能较长，但Git支持较长的分支名
 
 ## 步骤7：创建并推送分支
+
+（与仓库根目录下技能主文档 `SKILL.md` 的「### 8. 创建并推送分支」一致；本参考文档将「解析链接—飞书—命名—查远程」拆成多步，故此处为步骤 7。）
 
 创建新分支并推送到远程，同时建立追踪关联。
 

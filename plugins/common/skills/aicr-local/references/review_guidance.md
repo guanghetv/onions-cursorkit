@@ -1,6 +1,6 @@
 # 代码审查维度说明
 
-本文档详细说明AI代码审查的三个核心维度及其审查重点。
+本文档详细说明AI代码审查的四个核心维度及其审查重点。
 
 ## 1. 基础规范审查
 
@@ -56,9 +56,15 @@
 
 ### 如何识别spec文档
 
-1. **暂存区包含spec文件**：如果`git diff --cached`显示有`openspec/specs/`路径下的修改
-2. **用户明确引用**：用户在对话中使用@引用了spec文档
-3. **根据变更推断**：根据文件路径和功能判断可能相关的spec
+**暂存区模式**：
+1. **变更包含spec文件**：如果 `git diff --cached` 显示有 `openspec/specs/` 路径下的修改
+2. **用户明确引用**：用户在对话中使用 @ 引用了 spec 文档
+3. **最近提交推断**（可选）：使用 `git log -5 --name-only` 检查最近提交是否涉及 `openspec/specs/`
+
+**MR 模式**：
+1. **MR diff 包含spec文件**：diff 中包含 `openspec/specs/` 路径的文件，使用 `git show origin/<source_branch>:<spec_path>` 获取完整内容
+2. **用户明确引用**：用户在对话中使用 @ 引用了 spec 文档
+3. **不搜工作区、不查 git log**：避免将当前分支的 spec 误认为 MR 分支的 spec
 
 当存在spec文档时，**必须**将其作为审查依据，重点检查实现是否符合spec要求。
 
@@ -99,6 +105,7 @@
 2. **语义搜索**：使用SemanticSearch查找相关功能模块
 3. **限制范围**：优先关注直接相关的文件，避免上下文过载
 4. **实用主义**：重点关注高频调用和关键路径
+5. **MR 模式注意**：受 `branch_state` 约束——`other` 状态下不使用 Grep / SemanticSearch / Read，仅审查 diff 文本（详见 `SKILL.md` 步骤 7）
 
 ## 安全风险检测
 
@@ -140,8 +147,8 @@
 
 示例（只输出问题）：
 ```
-🔴 使用innerHTML存在XSS风险 — src/components/UserProfile.tsx:42
-🟠 建议使用const替代let — src/utils/helper.ts:15
+🔴 使用innerHTML存在XSS风险 — [src/components/UserProfile.tsx:42](src/components/UserProfile.tsx#L42)
+🟠 建议使用const替代let — [src/utils/helper.ts:15](src/utils/helper.ts#L15)
 ```
 
 无问题时：
