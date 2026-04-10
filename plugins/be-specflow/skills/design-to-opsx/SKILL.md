@@ -24,7 +24,13 @@ description: >-
 
 从设计结论中提取关键词，生成 kebab-case 动词开头的 change-id。
 
-示例：`add-refund-detail-api`、`fix-order-payment-webhook`
+**如果有需求层上下文**（由 `/dev-start` 传递，对话中包含 `requirement_ref` 路径和 `requirement_repo`）：
+- 建议使用 `<requirement-id>-<repo-name>` 格式（如 `contract-subject-tree-v1-channel`）
+- 这样可以在工作区内自动发现跨仓库的对方 spec
+
+**无需求层上下文时**：保持原有方式。
+
+示例：`add-refund-detail-api`、`fix-order-payment-webhook`、`contract-subject-tree-v1-channel`
 
 ### 步骤 2：创建 OpenSpec 变更目录
 
@@ -105,7 +111,25 @@ mkdir -p openspec/changes/<change-id>/specs/<capability-name>/
 
 ### 步骤 4：写入 proposal.md
 
-从对话上下文提取设计结论，结构化写入：
+从对话上下文提取设计结论，结构化写入。
+
+**如果有需求层上下文**，在 proposal.md 顶部注入 YAML frontmatter：
+
+```markdown
+---
+requirement_ref: requirements/<requirement>
+requirement_repo: <specs-repo-name>
+modules: [MODULE-1, MODULE-3]
+---
+```
+
+- `requirement_ref`：指向 specs 仓库中的需求路径（两层连接点，决策 D3）
+- `requirement_repo`：specs 仓库的逻辑名称（人类可读标识；specs 仓库自身不在注册表 JSON 的条目列表中，实际定位通过扫描 **`workspace-repos.json`（仓库根或 `scripts/`）** 与 `requirements/`，与 **`pull-spec`** / `references/workspace-native.md` 一致）
+- `modules`：本次变更覆盖的 MODULE 列表（用于 `pull-spec` 的 MODULE 切片）
+
+**无需求层上下文时**：不注入 frontmatter，保持原有格式。
+
+proposal.md 正文结构：
 
 ```markdown
 # <change-id>
@@ -188,11 +212,30 @@ mkdir -p openspec/changes/<change-id>/specs/<capability-name>/
 
 **注意**：spec.md 必须在 `specs/<capability-name>/spec.md` 路径下，不能直接放变更目录根。
 
-### 步骤 6：可选 Spec Review
+### 步骤 6：回写 specs 仓库的 metadata.yaml（有需求层上下文时）
+
+如果 proposal.md 中有 `requirement_ref` 和 `requirement_repo`：
+
+1. 定位 specs 仓库：在多根工作区中查找 specs 根（含 `requirements/`），且可解析 **`workspace-repos.json`（仓库根或 `scripts/workspace-repos.json`）**（specs 仓库自身不在注册表 JSON 的条目列表中，它是包含该 JSON 的仓库；与 `references/workspace-native.md`「前置检查」一致）
+2. 定位 `requirements/<requirement>/metadata.yaml`
+3. 在 `changes` 字段中追加本次创建的 change 信息：
+   ```yaml
+   changes:
+     - repo: <当前仓库逻辑名>
+       change_id: <change-id>
+       created_at: <YYYY-MM-DD>
+   ```
+4. 写入前确认 `metadata.yaml` 存在且 `prd.status` 为 `confirmed`
+
+**无需求层上下文时**：跳过此步骤。
+
+⚠️ 这是**唯一允许开发角色修改 `requirements/` 的场景**（决策 D33）。
+
+### 步骤 7：可选 Spec Review
 
 若 Superpowers 的 spec-document-reviewer 可用，派发 subagent 审阅 `design.md`、`plan.md`、`proposal.md`、`spec.md`。
 
-### 步骤 7：用户确认
+### 步骤 8：用户确认
 
 向用户展示已创建的文件清单和核心内容，等待确认后返回 `dev-workflow` 进入阶段 2（任务规划）。
 
