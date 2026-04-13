@@ -182,6 +182,14 @@ find openspec/changes -maxdepth 2 -name proposal.md 2>/dev/null
 | 多个变更目录 | 列出所有 change-id，请用户选择 |
 | 用户在触发语中指定了 change-id | 直接使用指定的变更 |
 
+### 步骤 1.5：跨会话恢复需求层上下文
+
+若当前对话中**无 `/dev-start` 传递的上下文**（新会话、恢复中断等），但已有变更目录，则从 `proposal.md` frontmatter 重建：
+
+1. 读取 `proposal.md` 顶部 YAML frontmatter 中的 `requirement_ref`、`requirement_repo`、`modules`
+2. 有 `requirement_ref` → 定位 specs 仓库（扫描可解析 **`workspace-repos.json`** 的 workspace root：**仓库根**或 **`scripts/workspace-repos.json`**，与 **`pull-spec`** / `references/workspace-native.md` 一致）→ 按需读取 `prd.md` 或 `test-spec.md`
+3. 无 frontmatter → 视为独立变更（无需求层上下文），走原有流程
+
 ### 步骤 2：根据产物 + 意图推断阶段
 
 | 变更目录产物 | 用户意图（触发语示例） | 执行动作 |
@@ -216,9 +224,22 @@ find openspec/changes -maxdepth 2 -name proposal.md 2>/dev/null
 
 ### 步骤 1b：采集与结构化产品需求
 
-目标：得到**完整、可评审**的需求表述，再进入 brainstorming。**输入形式多样**，需统一抽取为「需求事实 + 范围边界」。
+目标：得到**完整、可评审**的需求表述，再进入 brainstorming。
 
-#### 飞书文档链接
+#### 需求层上下文检测（workspace-aware）
+
+**优先检查**对话上下文中是否包含由 `/dev-start` 传递的需求层信息：
+
+| 检测项 | 含义 |
+|--------|------|
+| `prd.md` 全文 | 产品 spec 已由 `/dev-start` 读取并传递 |
+| 匹配的 MODULE 列表 | 本次变更范围已由开发确认 |
+| `requirement_ref` 路径 | specs 仓库中的需求定位 |
+
+- **有需求层上下文** → 直接使用产品 spec 的对应 MODULE 内容作为需求输入，**跳过来源询问**，进入 brainstorming
+- **无需求层上下文** → 走下方原有多源采集流程（兼容）
+
+#### 飞书文档链接（无需求层上下文时）
 
 若用户提供了**飞书文档链接**：
 
@@ -231,7 +252,7 @@ find openspec/changes -maxdepth 2 -name proposal.md 2>/dev/null
 若用户给出 **GitLab 文件或仓库内文档 URL** 作为需求来源，且当前**还没有** `openspec/changes/<change-id>/`：
 
 1. **不得**调用 **`pull-spec` 写入**变更目录（`pull-spec` 要求目标目录已存在且含 `proposal.md`）。
-2. 使用 **`GITLAB_TOKEN`** 经 GitLab API / Raw 拉取正文，或由用户**粘贴**全文到对话；将内容并入「需求事实 + 范围边界」。
+2. 使用 **`GITLAB_TOKEN`**（或 **`GITLAB_PRIVATE_TOKEN`**，与 **`pull-spec`** / **aicr-local** 一致）经 GitLab API / Raw 拉取正文，或由用户**粘贴**全文到对话；将内容并入「需求事实 + 范围边界」。
 3. 用户 **`/be-sdd` 放行**并由用户在终端执行 `openspec new change`（或降级 `mkdir`）**之后**，再按 **`design-to-opsx`** 落盘；此前采集的 GitLab 正文仅存在于对话上下文。
 
 已有变更目录后，若需把外部契约**落盘**到 `frontend-*.md` / `qa-*.md`，使用 **`pull-spec`**。
@@ -395,8 +416,14 @@ T1 完成（tasks.md 全部 `[x]`）后，根据用户触发语执行对应链�
 - "前端契约到了 `<GitLab链接>`"
 - "前端 OpenAPI 来了 `<链接>`"
 - "对齐前端接口 `<链接>`"
+- "前端 spec 到了"（无链接，workspace-native 自动发现）
 
 **REQUIRED SUB-SKILL:** Use `pull-spec`
+
+`pull-spec` 现已支持 **workspace-aware 三级读取**：
+- 无链接时自动从工作区内对方仓库发现分支并读取（`git show`，不 checkout）
+- 有链接时走 GitLab API
+- 均不可用时请用户粘贴
 
 1. 定位当前变更目录 → 拉取前端契约或共享 OpenAPI，写入 `openspec/changes/<change-id>/frontend-*.md`（或团队约定文件名，与 `proposal.md` 同级）
 2. 对比 **服务端已实现 API** 与前端契约差异
@@ -409,10 +436,13 @@ T1 完成（tasks.md 全部 `[x]`）后，根据用户触发语执行对应链�
 - "测试spec到了 `<GitLab链接>`"
 - "测试用例来了 `<链接>`"
 - "QA文档到了 `<链接>`"
+- "测试 spec 到了"（无链接，workspace-native 自动从 specs 仓库读取）
 
 **REQUIRED SUB-SKILL:** Use `pull-spec`
 
-1. 定位当前变更目录 → 拉取测试 spec 写入 `openspec/changes/<change-id>/qa-*.md`
+`pull-spec` 现已支持 **workspace-aware 三级读取**，测试 spec 可从 specs 仓库自动读取。
+
+1. 定位当前变更目录 → 拉取测试 spec 写入 `openspec/changes/<change-id>/qa-*.md`（如有 MODULE 切片则自动过滤）
 2. 对比 `specs/*/spec.md` 与已有测试，标记增量/盲区（为 **e2e-verify** 与补充测试提供依据）
 3. **可选衔接**：解析 `qa-*.md` 后，可询问用户是否**立即进入**编排「交叉验证（`e2e-verify`）」；**仅当用户明确同意**后再进入（不得自动跑全量集成测试）
 

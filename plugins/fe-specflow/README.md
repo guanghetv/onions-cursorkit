@@ -31,7 +31,7 @@ Superpowers + OpenSpec 融合的**前端** Spec-Driven 研发工作流编排。�
 | 验证 Skill | `skills/e2e-verify/SKILL.md` | 清单化验证 → 内置浏览器自动化；报告模板与归档条件 |
 | Slash Command | `commands/fe-sdd.md` | **`/fe-sdd`**：本对话内强制「先 brainstorming 再落盘」，禁止抢跑写 `openspec/**` 或业务代码 |
 
-业务仓库若另有 **`docs/spec.md`**（OpenSpec + Superpowers 纪律），以该文档与**本插件 skills** 中更严者为准。
+业务仓库内若**可选**存在 **`docs/spec.md`**（OpenSpec + Superpowers 纪律），以该文件与**本插件 skills** 中更严者为准。
 
 ## OpenSpec 与 CLI 分工（必读）
 
@@ -39,7 +39,7 @@ Superpowers + OpenSpec 融合的**前端** Spec-Driven 研发工作流编排。�
 
 - **`openspec new change`、`openspec instructions`、`openspec validate`、`openspec archive` 等 CLI**：由**用户在终端**执行；Agent 在非交互 Shell 中直接调 `openspec` 可能静默失败，**不要代替用户跑**。
 - **变更目录下的 Markdown 内容**：由 **Agent 按 skills 模板编写**，保证路径与标题符合 `openspec validate` 预期。
-- Agent 可用 `which openspec` 判断是否安装；未安装时按 `dev-workflow` / 项目 `docs/spec.md` 中的**降级模式**手工等价步骤。
+- Agent 可用 `which openspec` 判断是否安装；未安装时按 `dev-workflow` 与**业务仓库内** `docs/spec.md`（若有）中的**降级模式**手工等价步骤。
 
 ## 命令与常见触发语
 
@@ -98,8 +98,8 @@ Superpowers + OpenSpec 融合的**前端** Spec-Driven 研发工作流编排。�
 
 | 依赖 | 用途 | 安装检查 |
 |------|------|---------|
-| [Superpowers](https://cursor.directory/superpowers) | brainstorming / TDD / verification 纪律 | Cursor 插件已安装 |
-| [OpenSpec CLI](https://openspec.pro) | 变更生命周期（new / continue / validate / archive） | `which openspec` |
+| Superpowers | brainstorming / TDD / verification 纪律 | Cursor 插件目录安装 |
+| OpenSpec CLI | 变更生命周期（new / continue / validate / archive） | `which openspec` |
 | **Cursor 内置浏览器**（`cursor-ide-browser` / `browser_*`，通常不在 `mcp.json`） | E2E 交叉验证（`e2e-verify`） | 勿用 `mcp.json` 中的 chrome-devtools-mcp 跑本流程自动化 |
 | `GITLAB_TOKEN` 环境变量 | `pull-spec`：阶段 1 读取 GitLab 上的需求 Spec；T1 后拉取后端/测试 spec | `echo ${GITLAB_TOKEN:+ok}` |
 | feishu-mcp（或工作区等价的 `user-feishu-mcp`） | 读取飞书产品需求文档；未启用或 token 失效时须提示用户处理 | Cursor MCP 已启用 |
@@ -144,18 +144,11 @@ Superpowers + OpenSpec 融合的**前端** Spec-Driven 研发工作流编排。�
 
 ## 安装
 
-在 Cursor **Settings → Plugins → Team Marketplaces** 中配置本组织维护的插件市场仓库（**onions-plugins** / cursorkit），在列表中启用 **fe-specflow** 并安装；安装后按提示重载窗口。
+在 Cursor **Settings → Plugins → Team Marketplaces** 中配置**本组织**维护的插件市场 Git 仓库，在列表中启用 **fe-specflow** 并安装；安装后按提示重载窗口。
 
 ## Cursor Marketplace 发布与更新
 
-1. **首次上架**：在 [cursor.com/marketplace/publish](https://cursor.com/marketplace/publish) 提交你的 **公开** Git 仓库地址；清单需符合 [Plugins 参考文档](https://cursor.com/docs/reference/plugins.md)。团队/私有分发可用 **Team Marketplaces**（见上）。
-
-2. **后续更新**：
-   - 在 `.cursor-plugin/plugin.json` 里**提高 `version`**（语义化版本，例如 `0.0.1` → `0.0.2`）。
-   - 将变更 **push 到 GitHub 上 Cursor 已关联的默认分支**（与提审时一致）。
-   - 根据 [Marketplace 安全说明](https://cursor.com/help/security-and-privacy/marketplace-security.md)，**公开 Marketplace 上的每次更新会经 Cursor 审核后再对用户可见**；具体提交流程以提审时或后台说明为准（若后台提供「请求更新」或重新关联仓库，按指引操作）。
-
-3. **建议**：发版前在 Cursor 中通过团队市场安装本插件并走一遍关键技能验证；README 与 `version` 同步更新，便于审核与用户感知变更。
+公开发布、插件清单与提审流程以 **Cursor 官方 Marketplace 说明**为准；团队/私有分发使用 **Settings → Plugins → Team Marketplaces**（与上文「安装」一致）。发版前建议本地安装验证后再提高 `.cursor-plugin/plugin.json` 的 **`version`** 并推送，README 与版本号同步更新。
 
 ## 与社区工具的关系
 

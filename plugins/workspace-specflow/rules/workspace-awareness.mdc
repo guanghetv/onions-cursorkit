@@ -1,0 +1,78 @@
+---
+description: 当前工作区是一个 specs 仓库（含 requirements/ 和 workspace-repos.json），启用 workspace-specflow 多角色协作工作流。
+globs:
+  - "requirements/**"
+  - "**/workspace-repos.json"
+---
+
+# Workspace Specflow 多角色协作工作流（全局意识）
+
+## 识别
+
+当前项目含有 `requirements/` 目录和 `workspace-repos.json`，是一个 **specs 仓库**（需求层）。
+
+## 双层架构
+
+- **需求层**（当前 specs 仓库）：需求管理、prd.md（产品 PRD + 结构化增强）、测试 spec、进度追踪。依赖 Superpowers。
+- **执行层**（多根工作区中的代码仓库）：技术设计、TDD 开发、验证、归档。依赖 Superpowers + OpenSpec。由 fe-specflow / be-specflow 管理。
+
+两层通过 `requirement_ref` 连接，specs 仓库是唯一真相源。
+
+## 可用技能
+
+| 命令 | 角色 | 用途 |
+|------|------|------|
+| `/req-new` | 任何人 | 初始化需求目录（贴飞书链接即可） |
+| `/pm-spec` | 产品 | 在 prd.md 上结构化增强（含 brainstorming + MODULE 拆分） |
+| `/qa-spec` | 测试 | prd.md → 测试 spec + 可选 XMind 导出（禁止读取开发产出） |
+| `/qa-sync-xmind` | 测试 | test-spec.md ↔ XMind（飞书自由模式）；Export **必须**先满足 SKILL 内「生成 JSON 前 MUST」，细则见 `references/xmind-mapping.md`（同技能目录） |
+| `/dev-start` | 开发 | 读取需求层 → 确定目标仓库和 MODULE → 无缝启动 dev-workflow |
+| `/req-status` | 任何人 | 查看全部活跃需求的 PRD / 测试 spec / 各仓库 change 进度 |
+
+> spec 同步（测试 spec、对方 API 契约）由执行层的 `pull-spec`（workspace-aware 增强版）统一处理，不在 specs 仓库中操作。
+
+## 前置：确保 specs 仓库最新
+
+specs 仓库是多角色共享的，产品、测试、开发的产出都提交到同一个仓库。**在读取 `requirements/` 内容前**，Agent 应提示用户确认 specs 仓库已拉取最新代码：
+
+> 📌 读取需求数据前，请确认 specs 仓库已是最新：`git pull`（在 specs 仓库目录中执行）
+
+适用于 `/dev-start`、`/qa-spec`、`/req-status` 等所有需要扫描 `requirements/` 的操作。若 Agent 检测到 specs 仓库有未拉取的远程更新（`git status` 显示 behind），**必须先提示用户 pull**，再继续操作。
+
+## 关键约束
+
+- 需求层文件只在 `requirements/` 下操作，不直接修改代码仓库
+- `/dev-start` 只准备上下文，不写入任何文件，由 dev-workflow 内部的 design-to-opsx 创建 change
+- 信息隔离：测试 spec（`/qa-spec`）禁止读取 `openspec/changes/` 下的开发产出
+- prd.md 只描述需求本质，不涉及技术实现细节
+- 仓库路径通过 `workspace-repos.json` 的逻辑名称解析，不使用硬编码路径
+- **开发禁止修改 requirements/ 下的文件**，唯一例外：design-to-opsx 回写 metadata.yaml 的 changes 字段
+- **`/qa-sync-xmind` Export（生成 XMind）**：在调用 MCP `create_xmind` **之前**，须完整遵守 workspace-specflow 技能 `qa-sync-xmind` 中 **「生成 JSON 前 MUST」** 每一条（含 `structureClass`、`【模块短名】` 合并、四级链式嵌套与 labels、分号/换行聚合等）。**细则与 JSON 示例**以插件内 `skills/qa-sync-xmind/references/xmind-mapping.md` 为准。若上下文未加载该 SKILL，应先读取或请用户 `@` 该文件后再导出。
+- **XMind 文件位置**：`.xmind` **不**作为需求目录内的持久产物提交；生成与编辑仅在 `mcp-xmind` 所配置的 MCP 工作目录中进行（与 `qa-sync-xmind` SKILL 一致）。
+
+## 流程阶段
+
+1. **需求发起**：`/req-new` → 创建需求目录 + metadata.yaml + prd.md 空模板
+2. **产品撰写**：产品在 prd.md 撰写需求（或通过飞书同步技能生成）
+3. **产品 spec 增强**：`/pm-spec` → prd.md 结构化增强 + brainstorming + MODULE 拆分
+4. **测试 spec**：`/qa-spec` → 基于 prd.md 生成测试用例（与开发并行）
+5. **开发启动**：`/dev-start` → 定位需求 + 扫描服务 + 匹配 MODULE → 启动 dev-workflow
+6. **开发执行**：dev-workflow（fe/be-specflow 接管）→ brainstorming → design-to-opsx → tasks → TDD
+7. **异步同步**：T1 后按需触发，执行层 `pull-spec` 自动从工作区读取（workspace-native）或从 GitLab 拉取
+8. **进度追踪**：`/req-status`（贯穿全程）
+
+## 需求定位
+
+操作前先定位目标需求：
+- 扫描 `requirements/` 下所有需求目录的 `metadata.yaml`（`_archive/` 与 `requirements/` 同级，不在扫描范围内）
+- 根据状态过滤（如 `/pm-spec` 只列 prd.status = pending 的需求）
+- 仅一个匹配时自动选定，多个时列出让用户选择
+- 用户直接指定路径时跳过扫描
+
+## 权限模型
+
+| 角色 | requirements/<req>/ 读 | requirements/<req>/ 写 | 代码仓库 |
+|------|----------------------|----------------------|---------|
+| 产品 | prd.md, metadata.yaml | prd.md, prototypes/, metadata.yaml | 只读（扫描用） |
+| 测试 | prd.md | test/test-spec.md, metadata.yaml（XMind 经 MCP 工作目录，不写入仓库内 `.xmind`） | 只读（扫描用） |
+| 开发 | prd.md, test/test-spec.md | metadata.yaml (仅 changes 字段) | 读写 |

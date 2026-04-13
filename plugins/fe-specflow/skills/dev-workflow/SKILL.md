@@ -50,6 +50,14 @@ find openspec/changes -maxdepth 2 -name proposal.md 2>/dev/null
 
 示例：用户说「跑一下 add-refund-detail 的 e2e」→ 直接定位到 `openspec/changes/add-refund-detail/`。
 
+### 步骤 1.5：跨会话恢复需求层上下文
+
+若当前对话中**无 `/dev-start` 传递的上下文**（新会话、恢复中断等），但已有变更目录，则从 `proposal.md` frontmatter 重建：
+
+1. 读取 `proposal.md` 顶部 YAML frontmatter 中的 `requirement_ref`、`requirement_repo`、`modules`
+2. 有 `requirement_ref` → 定位 specs 仓库（扫描可解析 **`workspace-repos.json`** 的 workspace root：**仓库根**或 **`scripts/workspace-repos.json`**，与 **`pull-spec`** / `references/workspace-native.md` 一致）→ 按需读取 `prd.md` 或 `test-spec.md`
+3. 无 frontmatter → 视为独立变更（无需求层上下文），走原有流程
+
 ### 步骤 2：根据产物 + 意图推断阶段
 
 | 变更目录产物 | 用户意图（触发语示例） | 执行动作 |
@@ -81,14 +89,29 @@ find openspec/changes -maxdepth 2 -name proposal.md 2>/dev/null
 
 ### 步骤 1b：采集与结构化产品需求（多源、可组合）
 
-目标：得到**完整、可评审**的需求表述，再进入 brainstorming。需求来源可以是**单一渠道**，也可以是**多个组合**（如「飞书链接 + Spec 文档 + 截图补充」），Agent 须按来源逐一采集，最终**合并整理**为统一的「需求事实 + 范围边界」，不得遗漏用户给出的范围限定。
+目标：得到**完整、可评审**的需求表述，再进入 brainstorming。
 
-#### 来源一览
+#### 需求层上下文检测（workspace-aware）
+
+**优先检查**对话上下文中是否包含由 `/dev-start` 传递的需求层信息：
+
+| 检测项 | 含义 |
+|--------|------|
+| `prd.md` 全文 | 产品 spec 已由 `/dev-start` 读取并传递 |
+| 匹配的 MODULE 列表 | 本次变更范围已由开发确认 |
+| `requirement_ref` 路径 | specs 仓库中的需求定位 |
+
+- **有需求层上下文** → 直接使用产品 spec 的对应 MODULE 内容作为需求输入，**跳过来源询问**，进入 brainstorming
+- **无需求层上下文** → 走下方原有多源采集流程（兼容）
+
+#### 来源一览（无需求层上下文时）
+
+需求来源可以是**单一渠道**，也可以是**多个组合**（如「飞书链接 + Spec 文档 + 截图补充」），Agent 须按来源逐一采集，最终**合并整理**为统一的「需求事实 + 范围边界」，不得遗漏用户给出的范围限定。
 
 | 来源 | 获取方式 | 典型场景 |
 |------|----------|----------|
 | **飞书文档** | **feishu-mcp**（或等价 MCP）自动拉取 | 产品 PRD / 需求文档在飞书 |
-| **Spec 文档（GitLab）** | 复用 **pull-spec** 的 GitLab API 机制（`GITLAB_TOKEN` + API）**读取内容** | 产品/业务需求以 Spec 形式存放在另一个 GitLab 仓库 |
+| **Spec 文档（GitLab）** | 复用 **pull-spec** 的 GitLab API 机制（`GITLAB_TOKEN` 或 `GITLAB_PRIVATE_TOKEN` + API）**读取内容** | 产品/业务需求以 Spec 形式存放在另一个 GitLab 仓库 |
 | **截图** | 直接上传 | 原型图、飞书片段截图、标注图 |
 | **纯文字** | 对话中输入 | 口头描述、聊天记录、会议纪要 |
 | **本地文件** | 文件路径 | 已导出的文档（Markdown / PDF / Word 等） |
@@ -108,9 +131,9 @@ find openspec/changes -maxdepth 2 -name proposal.md 2>/dev/null
 
 若用户提供了 **GitLab 文件 URL**（指向产品/业务 Spec，而非后端接口或测试用例）：
 
-1. 复用 **`pull-spec`** 的 GitLab API 机制（`GITLAB_TOKEN` + GitLab REST API）**读取文件内容**。
+1. 复用 **`pull-spec`** 的 GitLab API 机制（`GITLAB_TOKEN` 或 `GITLAB_PRIVATE_TOKEN` + GitLab REST API）**读取文件内容**。
 2. **与 T1 后 pull-spec 的区别**：阶段 1 此时**尚无变更目录**，拉取的内容**仅作为 brainstorming 的输入材料**，**不写入** `openspec/changes/`（变更目录在 `design-to-opsx` 时才创建）。Spec 来源 URL 将记入后续 `proposal.md` 的 `References` 中。
-3. **失败处理**：与 pull-spec 一致——`GITLAB_TOKEN` 缺失或无权限时明确提示，降级为用户粘贴内容。
+3. **失败处理**：与 pull-spec 一致——`GITLAB_TOKEN` 与 `GITLAB_PRIVATE_TOKEN` 皆未设置或无权限时明确提示，降级为用户粘贴内容。
 
 #### 截图 / 纯文字 / 本地文件
 
@@ -309,8 +332,14 @@ T1 前端开发完成（tasks.md 全部 `[x]`）后，根据用户触发语执�
 - "后端接口文档来了 `<链接>`"
 - "API文档到了 `<链接>`"
 - "后端给了spec"（后跟链接或粘贴内容）
+- "后端 spec 到了"（无链接，workspace-native 自动发现）
 
 **REQUIRED SUB-SKILL:** Use `pull-spec`
+
+`pull-spec` 现已支持 **workspace-aware 三级读取**：
+- 无链接时自动从工作区内对方仓库发现分支并读取（`git show`，不 checkout）
+- 有链接时走 GitLab API
+- 均不可用时请用户粘贴
 
 1. 定位当前变更目录 → 拉取后端 spec 写入 `openspec/changes/<change-id>/backend-*.md`
 2. 对比前端 API 契约与后端 spec 差异
@@ -326,10 +355,13 @@ T1 前端开发完成（tasks.md 全部 `[x]`）后，根据用户触发语执�
 - "测试用例来了 `<链接>`"
 - "QA文档到了 `<链接>`"
 - "测试给了spec"（后跟链接或粘贴内容）
+- "测试 spec 到了"（无链接，workspace-native 自动从 specs 仓库读取）
 
 **REQUIRED SUB-SKILL:** Use `pull-spec`
 
-1. 定位当前变更目录 → 拉取测试 spec 写入 `openspec/changes/<change-id>/qa-*.md`
+`pull-spec` 现已支持 **workspace-aware 三级读取**，测试 spec 可从 specs 仓库自动读取。
+
+1. 定位当前变更目录 → 拉取测试 spec 写入 `openspec/changes/<change-id>/qa-*.md`（如有 MODULE 切片则自动过滤）
 2. 对比前端已有 Scenario，标记增量/盲区（为 **e2e-verify** 与 T1 补充测试提供依据）
 3. **可选衔接**：解析 `qa-*.md` 后，可向用户**提示**是否**立即进入**阶段 4 的 Browser 交叉验证（`e2e-verify`）；**仅当用户明确同意**后再进入该流程（与「用户主动说跑 e2e」等价，不得自动开浏览器）
 
