@@ -8,8 +8,7 @@
 
 - **单一真相源**：`requirements/<requirement-id>/` 下的 `prd.md` 与 `test/test-spec.md` 是产品与测试产出的权威版本；飞书文档可作为展示层，但以 specs 仓库为准。
 - **角色分工清晰**：每人通过对应命令完成本角色步骤，减少在聊天里重复解释流程。
-- **与代码仓库解耦**：需求讨论与文档在 specs 仓库完成；创建 OpenSpec change、写代码、拉取对方契约等在各自代码仓库由执行层插件处理。
-- **多根工作区友好**：开发在 Cursor 中同时打开 specs 与前后端仓库时，`pull-spec`（workspace-aware）可从本地仓库读取 spec，无需反复切换分支或手工拷贝。
+- **需求与代码分层、多根友好**：需求与讨论在 specs 仓库；OpenSpec change、编码与契约拉取在各自业务仓由 **fe-specflow / be-specflow** 处理。多根工作区下 **`pull-spec`（workspace-aware）** 可从本地仓读 spec，无需反复切分支或手搓同步文件。
 
 ---
 
@@ -21,8 +20,6 @@
 | **执行层** | 各业务代码仓库 | **fe-specflow** / **be-specflow** | 技术设计、OpenSpec change、TDD、联调、验证、归档；依赖 Superpowers + OpenSpec |
 
 两层通过 **`requirement_ref`**（通常写在执行层 `proposal.md` 中，并回连到需求目录）对齐；**prd.md** 是产品侧需求的锚点，**MODULE** ID 在产品 spec、测试 spec、change 之间保持一致。
-
-> 测试 spec、前后端 API 契约等到齐后的 **同步**，由执行层的 **`pull-spec`（workspace-aware）** 完成，不在本插件里手搓文件。
 
 ---
 
@@ -48,7 +45,7 @@
 
 ### 测试（QA）
 
-**你在流程中的位置**：在产品 PRD 已确认（`prd.status = confirmed`）后，基于 **仅** `prd.md`（及原型等）编写 `test/test-spec.md`，可与开发并行；可选导出 XMind 导入飞书或本地编辑后再回写。
+**你在流程中的位置**：在产品 PRD 已确认（`prd.status = confirmed`）后，基于 **仅** `prd.md`（及原型等）编写 `test/test-spec.md`，可与开发并行；可选经 **`/qa-sync-xmind`** 导出 XMind（**中间产物**，走 MCP 工作目录）导入飞书或本地编辑后再 **import** 回写，**不在 specs 仓库中保留 `.xmind`**。
 
 | 能力 | 命令 | 说明 |
 |------|------|------|
@@ -60,7 +57,7 @@
 
 **典型顺序**：确认 specs 仓库已 `git pull` → `/qa-spec` → 需要时 `/qa-sync-xmind export` → 飞书导入或 XMind 编辑 → `/qa-sync-xmind import`。
 
-**权限与边界**：可写 `test/test-spec.md`、`test/test-cases.xmind`（若采用）、以及 `metadata.yaml` 中与测试相关的状态字段；对代码仓库只读扫描（识别可测行为与入口，不写代码）。
+**权限与边界**：可写 **`test/test-spec.md`**（测试 spec 唯一长期落盘处）、**`metadata.yaml`** 中与测试相关的状态字段；**`.xmind` 仅作中间产物**（由 `/qa-sync-xmind` 在 **MCP 工作目录**生成或编辑），**不纳入 Git、不保留在 specs 仓库**。对代码仓库只读扫描（识别可测行为与入口，不写代码）。
 
 **依赖提示**：brainstorming；可选 **mcp-xmind**（`@41px/mcp-xmind`）用于 XMind 双向转换。
 
@@ -77,7 +74,7 @@
 
 **典型顺序**：specs 仓库 `git pull` → `/dev-start` → 进入目标仓库上下文后的 **brainstorming → design-to-opsx**（在此创建 `openspec/changes/<change-id>/` 并回写 `metadata.yaml` 的 `changes`）→ tasks → TDD → 需要时由执行层 **`pull-spec`** 拉取测试 spec / 对方 API 契约。
 
-**多仓库**：若同一需求要改多个仓库，在 **不同会话** 中分别 `/dev-start`，每个仓库一个 change。
+**多仓库**：若同一需求要改多个仓库，推荐 **「对齐单窗 + 实现分会话（或分阶段单窗）」**（见下文同名章节）：对齐阶段可单会话通览；**实现阶段**在 **不同会话** 中分别 `/dev-start`，**每仓库一个 change、每会话尽量只盯一个仓**，避免混仓 OpenSpec 与混仓暂存区。
 
 **权限与边界**：**禁止**随意改 `requirements/` 下文件；允许由 **design-to-opsx** 回写 `metadata.yaml` 的 **`changes`** 字段。可读取 `prd.md` 与 `test/test-spec.md`（用于理解与验证）。代码仓库内按 fe-specflow / be-specflow 规范执行。
 
@@ -106,6 +103,40 @@
 | 新建需求 | `/req-new` | 通常由产品发起，也可由 TL 代建目录。 |
 
 **协作习惯**：在读取或汇总 `requirements/` 前，建议在 specs 仓库执行 **`git pull`**，避免基于过期 PRD 讨论（规则 `workspace-awareness.mdc` 中亦强调）。
+
+---
+
+## 单人多仓：对齐单窗 + 实现分会话（或分阶段单窗）
+
+适用于：**同一需求**要改 **多个代码仓库**（典型：前后端各一仓，或两个前端仓），且已在 Cursor 中打开 **多根工作区**、各仓分支已手动对齐。产品 spec（如 `prd.md`）已在 specs 仓库就绪。
+
+### 为何不全靠「一个 Agent 窗改到底」
+
+单会话同时改多仓，模型虽能**通览全局**，但容易：
+
+- 混淆不同仓库下的 **`openspec/changes/<change-id>/`**，误写路径；
+- **暂存区**混含多仓 diff，`/cr` 与 revert 变重；
+- 上下文过长后反而丢失端到端一致性。
+
+因此推荐把 **「全局对齐」** 与 **「按仓落地」** 拆开。
+
+### 推荐节奏
+
+| 阶段 | 建议的 Agent 用法 | 目标 |
+|------|-------------------|------|
+| **1. 对齐** | **单一会话**即可：读 `prd.md` / MODULE，必要时 **只读**扫前后端目录，把 **API 形状、错误码、MODULE 边界、先后依赖** 说清；产出落在 **契约真相源**（常见：后端 `proposal` API 段落、或 OpenAPI，再经执行层 **`pull-spec`** 到前端）。本阶段**尽量少改业务代码**，或只改一处「契约源」。 |
+| **2. 实现** | **分会话（推荐）**：**每个代码仓库一个会话**，在该会话内完整跑该仓的 **fe-specflow / be-specflow `dev-workflow`**（含 TDD、提交前审查、合并前 CR 等），**一次只 commit 一个仓**。 |
+| **2′. 分阶段单会话（备选）** | 若坚持用单会话：须 **显式 checkpoint**——例如「本段仅改后端仓，直至 `git commit` 完成；下一段仅改前端仓」，每段前后核对 `git status` **只出现一个仓库**的变更。 |
+
+### 与现有命令的衔接
+
+- 每仓进入实现前，可在该仓会话执行 **`/dev-start`**（或依赖 `proposal` frontmatter **步骤 1.5** 恢复需求层上下文），避免重复追问来源。
+- 跨仓契约与测试 spec 仍由各仓的 **`pull-spec`（workspace-aware）** 落盘，**同一需求**在各仓使用团队约定的 **同一 `change-id` 命名**（见执行层 **design-to-opsx**）。
+- 进度用 **`/req-status`** 与 `metadata.yaml` 的 **`changes`** 字段总览。
+
+### 未安装 workspace-specflow 时
+
+上述 **「对齐 vs 按仓实现」** 习惯仍适用；仅缺少 specs 仓命令与部分自动化衔接，执行层 **dev-workflow** 仍以**当前仓库**为界。
 
 ---
 
@@ -153,7 +184,7 @@
 | 角色 | `requirements/` 读 | `requirements/` 写 | 代码仓库 |
 |------|---------------------|---------------------|----------|
 | 产品 | prd.md、metadata.yaml 等 | prd.md、prototypes/、metadata.yaml | 只读 |
-| 测试 | prd.md 等 | test/test-spec.md、相关 xmind、metadata.yaml | 只读 |
+| 测试 | prd.md 等 | `test/test-spec.md`、`metadata.yaml`（测试相关字段）；XMind 为中间产物不入库 | 只读 |
 | 开发 | prd.md、test/test-spec.md | **仅** metadata.yaml 的 **changes**（由 design-to-opsx 回写） | 读写 |
 
 ---
@@ -164,10 +195,3 @@
 - **feishu-mcp**（读飞书文档；缺失时技能应明确提示）
 - **mcp-xmind**（`@41px/mcp-xmind`，可选，用于 `/qa-sync-xmind`）
 - 多根工作区中的 **fe-specflow** / **be-specflow**（执行层与 workspace-aware **pull-spec**）
-
----
-
-## 延伸阅读
-
-- 完整阶段说明与时序图：`docs/superpowers/specs/2026-04-07-workspace-specflow-workflow.md`
-- 设计决策与背景：`docs/superpowers/specs/2026-04-07-workspace-specflow-design.md`

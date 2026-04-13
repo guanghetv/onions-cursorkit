@@ -98,8 +98,8 @@ Superpowers + OpenSpec 融合的**后端** Spec-Driven 研发工作流编排。�
 
 | 依赖 | 用途 | 安装检查 |
 |------|------|---------|
-| [Superpowers](https://cursor.directory/superpowers) | brainstorming、TDD、verification、requesting-code-review 等 | Cursor 插件已安装 |
-| [OpenSpec CLI](https://openspec.pro) | `new` / `instructions` / `validate` / `archive`（**用户终端执行**） | `which openspec` |
+| Superpowers | brainstorming、TDD、verification、requesting-code-review 等 | Cursor 插件目录安装 |
+| OpenSpec CLI | `new` / `instructions` / `validate` / `archive`（**用户终端执行**） | `which openspec` |
 | feishu-mcp（或等价 MCP） | 读取飞书需求；失败须提示，勿静默跳过 | Cursor MCP 已启用 |
 | `GITLAB_TOKEN` | **pull-spec** 从 GitLab 拉取契约与 spec | `echo ${GITLAB_TOKEN:+ok}` |
 | **aicr-local**（推荐） | **每次 commit 前**（用户同意后）：优先 **`/cr`**；否则 Agent 自审暂存区。与 Superpowers **纪律阶段 5**（合并前 `requesting-code-review`）**互补、不冲突** | 见 `dev-workflow`「两类审查」与「Git commit」 |
