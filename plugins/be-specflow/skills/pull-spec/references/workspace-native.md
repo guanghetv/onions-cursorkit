@@ -31,7 +31,7 @@ git -C <specs-repo-path> log --all --remotes --source --format=%S -1 \
 对方仓库（前端）的 API spec 在其 feature 分支的 `openspec/changes/<change-id>/proposal.md` 中：
 
 ```bash
-# 1. 从 proposal.md 的 requirement_ref 提取需求 ID（如 contract-subject-tree-v1）
+# 1. 从 proposal.md 的 requirement_ref 提取需求 ID（如 req-example-123）
 #
 # 2. 确定对方仓库（优先 metadata.yaml，降级遍历）：
 #    a) 从 specs 仓库读取 requirements/<requirement>/metadata.yaml 的 changes 字段
@@ -44,7 +44,7 @@ git -C <specs-repo-path> log --all --remotes --source --format=%S -1 \
 git -C <repo-path> fetch origin --quiet
 git -C <repo-path> log --all --remotes --source --format=%S -1 \
   -- openspec/changes/<change-id>/proposal.md
-# 输出示例：refs/remotes/origin/feat/S29-xxx-m-222
+# 输出示例：refs/remotes/origin/feat/req-example-123-feature
 
 # 5. 如无结果 → 降级到策略 2（询问 URL）或策略 3（粘贴）
 

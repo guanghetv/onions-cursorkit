@@ -16,7 +16,7 @@
 
 | 层级 | 所在位置 | 插件 | 主要职责 |
 |------|-----------|------|----------|
-| **需求层** | specs 仓库（如 `channel-specs`） | **workspace-specflow** | PRD、结构化产品 spec、测试 spec、元数据与进度；依赖 Superpowers（如 brainstorming） |
+| **需求层** | specs 仓库（如 `<your-specs-repo>`） | **workspace-specflow** | PRD、结构化产品 spec、测试 spec、元数据与进度；依赖 Superpowers（如 brainstorming） |
 | **执行层** | 各业务代码仓库 | **fe-specflow** / **be-specflow** | 技术设计、OpenSpec change、TDD、联调、验证、归档；依赖 Superpowers + OpenSpec |
 
 两层通过 **`requirement_ref`**（通常写在执行层 `proposal.md` 中，并回连到需求目录）对齐；**prd.md** 是产品侧需求的锚点，**MODULE** ID 在产品 spec、测试 spec、change 之间保持一致。

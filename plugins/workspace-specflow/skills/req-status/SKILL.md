@@ -45,14 +45,14 @@ description: >-
 ```
 需求进度总览
 
-contract-subject-alignment (合同管理-学科学段树与CVS对齐)
-  PRD:      confirmed (04-07)
+example-feature-a (示例需求 A)
+  PRD:      confirmed (MM-DD)
   测试用例:  pending
   开发:
-    branstark  tasks 3/7
-    channel    tasks 5/8
+    frontend-app  tasks 3/7
+    backend-api   tasks 5/8
 
-order-commission-split (订单佣金拆分)
+example-feature-b (示例需求 B)
   PRD:      pending
   测试用例:  pending
   开发:     未开始

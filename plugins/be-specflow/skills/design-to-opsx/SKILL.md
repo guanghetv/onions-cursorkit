@@ -25,12 +25,12 @@ description: >-
 从设计结论中提取关键词，生成 kebab-case 动词开头的 change-id。
 
 **如果有需求层上下文**（由 `/dev-start` 传递，对话中包含 `requirement_ref` 路径和 `requirement_repo`）：
-- 建议使用 `<requirement-id>-<repo-name>` 格式（如 `contract-subject-tree-v1-channel`）
+- 建议使用 `<requirement-id>-<repo-name>` 格式（如 `req-example-123-backend-api`）
 - 这样可以在工作区内自动发现跨仓库的对方 spec
 
 **无需求层上下文时**：保持原有方式。
 
-示例：`add-refund-detail-api`、`fix-order-payment-webhook`、`contract-subject-tree-v1-channel`
+示例：`add-invoice-export-api`、`fix-cart-checkout-webhook`、`req-example-123-backend-api`
 
 ### 步骤 2：创建 OpenSpec 变更目录
 

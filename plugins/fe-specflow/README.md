@@ -144,7 +144,7 @@ Superpowers + OpenSpec 融合的**前端** Spec-Driven 研发工作流编排。�
 
 ## 安装
 
-在 Cursor **Settings → Plugins → Team Marketplaces** 中配置本组织维护的插件市场仓库（**onions-plugins** / cursorkit），在列表中启用 **fe-specflow** 并安装；安装后按提示重载窗口。
+在 Cursor **Settings → Plugins → Team Marketplaces** 中配置**本组织**维护的插件市场 Git 仓库，在列表中启用 **fe-specflow** 并安装；安装后按提示重载窗口。
 
 ## Cursor Marketplace 发布与更新
 

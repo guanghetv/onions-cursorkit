@@ -44,10 +44,10 @@ change 目录由 dev-workflow 内部的 `design-to-opsx` 在 brainstorming 结�
 
 ```
 扫描结果：
-  ✓ branstark (前端)  — 运营后台合同管理页面直接相关
-  ✓ channel (后端)    — 合同服务、学科树接口
-  ? channel-core      — 可能涉及基础数据模型
-  ✗ channel-data      — 数据分析，本次不涉及
+  ✓ admin-web (前端)   — 管理端页面与交互直接相关
+  ✓ order-api (后端)   — 订单与领域接口
+  ? order-core         — 可能涉及核心领域模型
+  ✗ analytics-service — 数据分析，本次不涉及
   ...
 ```
 
@@ -56,16 +56,16 @@ change 目录由 dev-workflow 内部的 `design-to-opsx` 在 brainstorming 结�
 ### Step 3: AI 匹配 MODULE
 
 开发用自然语言描述本次迭代范围，例如：
-- "做学科树对齐的后端接口"
-- "先做合同列表页的前端改造"
+- "做订单列表筛选的后端接口"
+- "先做管理端列表页的前端改造"
 - "全部都做"
 
 AI 自动匹配 prd.md 中的 MODULE，展示匹配结果：
 
 ```
 匹配结果：
-  ✓ MODULE-1: 学科树结构对齐 — 与"学科树对齐"高度匹配
-  ? MODULE-2: CVS数据补丁   — 可能相关，请确认
+  ✓ MODULE-1: 列表筛选增强 — 与「筛选」高度匹配
+  ? MODULE-2: 导出报表     — 可能相关，请确认
 ```
 
 开发确认。
