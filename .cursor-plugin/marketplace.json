@@ -34,6 +34,11 @@
       "name": "be-specflow",
       "source": "be-specflow",
       "description": "后端 Spec-Driven 研发工作流：飞书文档/截图/文字等需求自动接入，Brainstorming → design/plan → OpenSpec → TDD → 联调 → 验证 → 归档（纪律嵌入 dev-workflow skill）"
+    },
+    {
+      "name": "workspace-specflow",
+      "source": "workspace-specflow",
+      "description": "Workspace 多角色协作工作流：specs 仓库内串联 PRD、产品 spec、测试 spec、开发桥接与进度总览；与 fe-specflow / be-specflow 通过 requirement_ref 衔接"
     }
   ]
 }
