@@ -17,5 +17,7 @@
     "superpowers"
   ],
   "license": "MIT",
+  "rules": "./rules/",
+  "skills": "./skills/",
   "commands": "./commands/"
 }
