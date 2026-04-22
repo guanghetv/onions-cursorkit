@@ -39,6 +39,11 @@
       "name": "workspace-specflow",
       "source": "workspace-specflow",
       "description": "Workspace 多角色协作工作流：specs 仓库内串联 PRD、产品 spec、测试 spec、开发桥接与进度总览；与 fe-specflow / be-specflow 通过 requirement_ref 衔接"
+    },
+    {
+      "name": "go-cutover-suite",
+      "source": "go-cutover-suite",
+      "description": "Go 路由切换工作流套件：批次调度、单路由 cutover 编排、服务端调用切换、网关追踪、前端入口定位与 APISIX 路由发现"
     }
   ]
 }

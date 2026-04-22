@@ -1,0 +1,17 @@
+{
+  "SOURCEGRAPH_URL": "https://sourcegraph.yc345.tv",
+  "SOURCEGRAPH_TOKEN": "",
+  "GITLAB_URL": "https://gitlab.yc345.tv",
+  "GITLAB_TOKEN": "",
+  "workspaceRoot": "",
+  "feishuAlertOpenId": "",
+  "oldServiceName": "",
+  "newServiceName": "",
+  "oldNamespace": "",
+  "newNamespace": "",
+  "oldServiceHint": "",
+  "newServiceHint": "",
+  "apisixAdminURL": "",
+  "apisixAdminURLs": "",
+  "apisixAdminKeyEnvVar": "APISIX_ADMIN_KEY"
+}
