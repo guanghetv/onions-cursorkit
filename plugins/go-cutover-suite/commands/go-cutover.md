@@ -1,6 +1,6 @@
 ---
 name: go-cutover
-description: 单条 Go 路由切换入口。收集 old/new route、method、branch 与服务标识后，进入 go-cutover-orchestrator 执行全链路 cutover。
+description: 单条 Go 路由切换入口。收集 old/new route、method、branch 与服务标识后，进入 go-cutover-orchestrator 执行全链路 cutover，并在提供 APISIX endpoints 时并行检查所有 APISIX 外部暴露链路。
 ---
 
 # /go-cutover
@@ -13,7 +13,8 @@ description: 单条 Go 路由切换入口。收集 old/new route、method、bran
 2. 先确认或补齐 `oldRoute`、`newRoute`、`method`、`branch`、`oldServiceName`、`newServiceName`、`oldNamespace`、`newNamespace`、`workspaceRoot`。
 3. 若 `oldServiceHint` 或 `newServiceHint` 缺失，但 service name 与 namespace 已齐全，则按 skill 约定自动推导。
 4. 若 `gatewayRepos`、`apisixAdminURL`、`apisixAdminURLs`、`apisixAdminKeyEnvVar` 未提供，按 orchestrator 里的默认策略继续。
-5. 输入足够后，直接按 `go-cutover-orchestrator` 的流程执行，不要再要求用户重新切换到 skill 名调用。
+5. 若提供了 `apisixAdminURL` 或 `apisixAdminURLs`，必须把所有已提供 APISIX endpoints 当成与代码网关平级的外部暴露链路，在前端入口定位前全部检查一遍。
+6. 输入足够后，直接按 `go-cutover-orchestrator` 的流程执行，不要再要求用户重新切换到 skill 名调用。
 
 ## 何时使用
 
@@ -25,4 +26,5 @@ description: 单条 Go 路由切换入口。收集 old/new route、method、bran
 
 - 不要把它当成批处理入口
 - 不要绕过 `go-cutover-orchestrator` 自行发明另一套流程
+- 不要因为代码网关已经找到一个 outward route，就跳过本次显式提供的 APISIX endpoints
 - 不要在普通非阻塞歧义上频繁停下来等待用户确认

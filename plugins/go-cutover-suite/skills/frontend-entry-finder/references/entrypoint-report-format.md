@@ -37,6 +37,8 @@
 - 入口类型：`page|screen|modal|list-action|submit-flow|unknown`
 - 置信度：`high|medium|low`
 - 路由证据：`<来自本地代码的匹配路由或推导符号>`
+- 路由来源类型：`code-gateway|apisix-admin-api|mixed-route-union|similar-route-fallback`
+- 路由来源标识：`<gateway repo 或 APISIX sourceName>`
 - 命中原因：<一句中文说明>
 - 建议测试路径：<一段简短中文操作流>
 ```
@@ -51,10 +53,25 @@
 - `medium`：通过间接 API 封装命中，但业务模块较明确
 - `low`：只有文本、埋点或弱线索，没有直接路由证据
 
+## 路由来源规则
+
+- `code-gateway`：入口候选主要由代码网关确认的 outward route 支撑
+- `apisix-admin-api`：入口候选主要由 APISIX 确认的 outward route 支撑
+- `mixed-route-union`：代码网关与 APISIX 都给出了可用 outward route，当前候选建立在二者并集之上
+- `similar-route-fallback`：没有 confirmed outward route，当前候选来自 fallback hypotheses
+
+如果本次分析同时存在代码网关 confirmed route 和 APISIX confirmed route：
+
+- 不要只保留其中一个来源
+- 每个候选都要写清主要依据来自哪一类来源
+- 如果同一候选同时受两类来源支持，优先标记为 `mixed-route-union`
+
 ## 结尾总结
 
 最后补一个中文总结：
 
 - 已确认入口
 - 推测入口
+- 代码网关确认入口
+- APISIX 确认入口
 - 缺失项目或访问阻塞

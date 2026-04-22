@@ -28,8 +28,8 @@ Provide these inputs up front:
 - `newServiceHint`: optional new Go service prefix, domain, host, or proto/client hint. If omitted, derive from `newServiceName + "." + newNamespace`
 - `workspaceRoot`: local workspace root, such as `~/work`
 - `gatewayRepos`: optional known gateway, proxy, or route-exposure repos. Default to `onions-school`, `channel-platform-server`, `channel`, `teacher-tenant`
-- `apisixAdminURL`: optional APISIX Admin API route-list endpoint, used for outward-route discovery when code gateways are insufficient
-- `apisixAdminURLs`: optional list of APISIX Admin API route-list endpoints when the same interface may be exposed by multiple APISIX gateways
+- `apisixAdminURL`: optional APISIX Admin API route-list endpoint, used as a parallel outward-route evidence source during gateway tracing and frontend scope analysis when provided
+- `apisixAdminURLs`: optional list of APISIX Admin API route-list endpoints when the same interface may be exposed by multiple APISIX gateways; when provided, all of them should be checked
 - `apisixAdminKeyEnvVar`: optional env var name that stores APISIX `X-API-KEY`, default `APISIX_ADMIN_KEY`
 - `SOURCEGRAPH_TOKEN` should normally come from the environment or the independent `sourcegraph-token` refresh flow rather than being pasted into the prompt
 
@@ -65,7 +65,8 @@ If `gatewayRepos` is omitted, default to `onions-school`, `channel-platform-serv
 Use `gatewayRepos` as strong priors for classifying gateway layers, but never treat them as the only allowed gateway evidence.
 If `oldServiceHint` is omitted, default to `oldServiceName.oldNamespace`.
 If `newServiceHint` is omitted, default to `newServiceName.newNamespace`.
-Use `apisixAdminURL` and `apisixAdminKeyEnvVar` when APISIX is part of the gateway chain or when code gateways cannot fully prove the outward-facing route.
+Use `apisixAdminURL` and `apisixAdminKeyEnvVar` when APISIX may be part of the outward exposure chain.
+If `apisixAdminURL` or `apisixAdminURLs` is provided, treat APISIX as a parallel gateway-evidence source during gateway tracing and frontend scope analysis rather than a dead-end-only fallback.
 If both `apisixAdminURL` and `apisixAdminURLs` are present, treat them as one deduplicated list of APISIX gateway sources and check all of them.
 
 ## Shared Scripts
@@ -78,7 +79,7 @@ Shared scripts live in `skills/go-cutover-orchestrator/scripts/` within this plu
 - `gitlab_create_mr.py`: create or detect a GitLab Merge Request targeting `dev`
 - `gitlab_push_and_create_mr.py`: push the branch and create a GitLab Merge Request targeting `dev` in the same command
 
-**REQUIRED SUB-SKILL:** Use `apisix-admin-route-finder` when APISIX may expose the route and code-gateway tracing is incomplete.
+**REQUIRED SUB-SKILL:** Use `apisix-admin-route-finder` whenever APISIX endpoints are provided, so APISIX evidence can be collected in parallel with code-gateway tracing.
 
 Read `references/report-contract.md` before writing final outputs.
 Read `references/script-env.md` before invoking the shared scripts.
@@ -122,11 +123,11 @@ For GitLab access, prefer `GITLAB_TOKEN`; otherwise fall back to SSH clone URLs.
 - Compare old/new route, method, parameters, and core logic.
 - Only continue to caller cutover when the old and new interfaces can be treated as the same route for migration purposes.
 - Use `backend-service-switch` to update all in-scope server-side repos that still depend on the old service or old route chain.
-- Use `gateway-route-tracer` to trace the outward-facing route.
-- If code gateways such as `onions-school`, `channel-platform-server`, or `teacher-tenant` still do not prove an outward-facing route and APISIX Admin API endpoints are available, use `apisix-admin-route-finder` before declaring a gateway dead end.
-- Do not stop after the first gateway or APISIX source produces one plausible outward route. Continue until every discovered gateway source has a verification outcome or is explicitly marked unavailable.
-- If `gateway-route-tracer` cannot prove an outward-facing route, require it to emit a dead-end note plus fallback route hypotheses derived from the normalized suffix, method, and route-shape similarity.
-- Use `frontend-entry-finder` to locate frontend or client entry points from local repositories.
+- Use `gateway-route-tracer` to trace the outward-facing route and aggregate route evidence from both code gateways and APISIX gateways.
+- If `apisixAdminURL` or `apisixAdminURLs` is provided, require `gateway-route-tracer` to invoke `apisix-admin-route-finder` once per APISIX endpoint and merge the results, even when code gateways already produced plausible outward routes.
+- Do not stop after the first code gateway or APISIX source produces one plausible outward route. Continue until every discovered code gateway source and every provided APISIX source has a verification outcome or is explicitly marked unavailable.
+- If `gateway-route-tracer` cannot prove an outward-facing route from either code gateways or APISIX, require it to emit a dead-end note plus fallback route hypotheses derived from the normalized suffix, method, route-shape similarity, and any route-family evidence gathered from both source types.
+- Use `frontend-entry-finder` to locate frontend or client entry points from local repositories using the merged route-evidence set.
 - When no outward-facing route is confirmed, let `frontend-entry-finder` search by fallback route hypotheses such as same suffix, same terminal action, same resource nouns, and same parameterized shape. All such candidates must be labeled speculative rather than confirmed.
 
 4. Write the report pack.
@@ -159,8 +160,9 @@ Report changed repos, traced outer routes, frontend entry candidates, remaining 
   - other backend repos that still call `oldServiceName` directly
 - In gateway or proxy repos, treat `route prefix + wildcard/catch-all + old-service proxy` as real forwarding evidence, not as a weak hint. Such repos stay in scope until the migrated route is shown to be explicitly overridden to the new service, still falling through to the old service, or blocked by ambiguous routing order.
 - Treat `gatewayRepos` as explicit user knowledge about which repos likely serve gateway or route-exposure roles. When omitted, use the default gateway repo set. In all cases, still require concrete local evidence before marking a repo in scope.
-- Treat APISIX Admin API evidence as an additional gateway-evidence source. It can confirm or strengthen outward-route tracing, but it must still be tied back to the migrated route by path, method, or route-family evidence.
+- Treat APISIX Admin API evidence as a parallel gateway-evidence source whenever `apisixAdminURL` or `apisixAdminURLs` is provided. It must still be tied back to the migrated route by path, method, or route-family evidence.
 - One migrated interface may be exposed through multiple code gateways, multiple APISIX gateways, or both. Keep all distinct outward routes and group them by gateway source instead of collapsing them into a single guessed answer.
+- If APISIX endpoints are provided for the task, do not skip them merely because a code gateway already produced one outward-facing route. The final route evidence must reflect both code-gateway and APISIX checks.
 - Treat the repo named by `oldServiceName` as reference-only unless the user explicitly asks to modify the old service itself.
 - Treat the repo named by `newServiceName` as implementation-reference only during caller discovery. Use it to confirm the new contract, not as a default caller-edit target.
 - Treat frontend and client repos as trace-only unless the user explicitly asks to edit them.
@@ -216,7 +218,7 @@ Before calling the task complete:
 11. Confirm the report includes a clear old/new interface comparison result before any caller switch.
 12. Confirm the report pack matches `references/report-contract.md`.
 13. Confirm APISIX evidence, when used, is recorded as `confirmed-by-apisix` or `speculative-by-apisix-route-family` instead of being mixed into generic notes.
-14. Confirm every discovered gateway source ended in one of these states: `confirmed-route`, `fallback-only`, `dead-end`, `blocked`, or `unavailable`.
+14. Confirm every discovered code gateway source and every provided APISIX source ended in one of these states: `confirmed-route`, `fallback-only`, `dead-end`, `blocked`, or `unavailable`.
 15. Confirm no repo was labeled `out of scope` before checking for route-family prefix coverage, wildcard/catch-all handlers, and generic old-service proxy fallbacks.
 16. Confirm `artifacts/execution.json` contains commit and push evidence for every task that produced real code changes.
 17. Confirm the report pack records a Merge Request result for every changed repo, including a direct URL when available.

@@ -1,6 +1,6 @@
 # go-cutover-suite
 
-面向 Go 接口切换场景的插件化工作流套件，包含批次调度、单路由切换编排、服务端调用方切换、网关暴露路由追踪、前端测试入口定位，以及 APISIX Admin API 辅助发现。
+面向 Go 接口切换场景的插件化工作流套件，包含批次调度、单路由切换编排、服务端调用方切换、网关暴露路由追踪、前端测试入口定位，以及 APISIX Admin API 并行路由发现。
 
 ## 包含的 Skills
 
@@ -56,6 +56,13 @@ plugins/go-cutover-suite/
 2. 插件内未来可能存在的 `skills/sourcegraph-token/scripts/get_token.py`
 3. 本机默认位置 `~/.cursor/skills/sourcegraph-token/scripts/get_token.py`
 
+## APISIX 策略
+
+- 如果本次任务显式提供了 `apisixAdminURL` 或 `apisixAdminURLs`，插件会把这些 APISIX endpoints 当成与代码网关平级的外部暴露证据源。
+- `gateway-route-tracer` 需要同时汇总代码网关证据和 APISIX 证据，而不是只在代码网关 dead-end 后才补查 APISIX。
+- `frontend-entry-finder` 需要消费“代码网关结果 + APISIX 结果”的并集来推导前端功能入口。
+- 如果本次任务没有提供任何 APISIX endpoints，则保持仅按代码网关追踪的旧行为。
+
 ## 使用说明
 
 - 对话内执行：
@@ -64,6 +71,7 @@ plugins/go-cutover-suite/
   - 也可以直接触发底层 `go-cutover-batch` 或 `go-cutover-orchestrator`
 - 脚本执行：使用各 skill 目录下的 `scripts/*`
 - 批次 JSON 模板与本地配置模板：见 `skills/go-cutover-batch/references/`
+- 当任务显式提供 APISIX endpoints 时，前端入口定位前必须先完成所有已提供 APISIX sources 的检查与合并。
 
 ## 说明
 

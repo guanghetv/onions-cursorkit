@@ -45,6 +45,8 @@ JSON 产物保持机器可读，可以继续使用英文键名。
 - Merge Request 状态与链接
 - 最终对外暴露路由
 - 所有已检查网关来源及其状态
+- 所有已检查 APISIX 来源及其状态
+- 代码网关与 APISIX 合并后的最终路由证据结论
 - 已确认的前端入口
 - 阻塞项与后续关注点
 - 异常简述
@@ -89,12 +91,21 @@ JSON 产物保持机器可读，可以继续使用英文键名。
 - 从内部调用到对外路由的链路
 - 每一步对应的仓库和文件
 - 断点、歧义点或未确认点
-- 如果存在多个网关来源，必须分别列出每个来源的结果，不得只保留第一个命中
-- 如果使用了 APISIX Admin API，要明确写出：
-  - 查询入口
-  - 网关来源标识
+- 如果存在多个代码网关来源，必须分别列出每个来源的结果，不得只保留第一个命中
+- 如果本次提供了 `apisixAdminURL` 或 `apisixAdminURLs`，必须分别列出每个 APISIX 来源的结果，不得因为代码网关已命中就省略
+- 对每个代码网关来源或 APISIX 来源，都必须写出：
+  - 来源类型：`code-gateway` 或 `apisix-admin-api`
+  - 来源标识：仓库名或 APISIX `sourceName`
+  - 来源状态：`confirmed-route`、`fallback-only`、`dead-end`、`blocked`、`unavailable`
+  - 查询或追踪入口
   - 使用的匹配线索
-  - 结果是 `confirmed-by-apisix` 还是 `speculative-by-apisix-route-family`
+  - 产出的路由、方法、置信度与证据来源
+- 如果使用了 APISIX Admin API，要明确写出结果是 `confirmed-by-apisix` 还是 `speculative-by-apisix-route-family`
+- 必须单独给出“合并后的对外暴露路由结论”一节，说明：
+  - 最终保留了哪些 confirmed outward routes
+  - 哪些来自代码网关
+  - 哪些来自 APISIX
+  - 哪些只是 fallback hypotheses，不能当作 confirmed route 使用
 
 ## `frontend-entrypoints.md`
 
@@ -103,6 +114,7 @@ JSON 产物保持机器可读，可以继续使用英文键名。
 如果项目是本次 clone 下来的，要明确写出来。
 报告必须以中文的“功能流程简述”开头。
 这段内容必须一步一步说明用户如何走到会触发接口的页面或动作。
+如果前端入口分析基于多个 confirmed outward routes，必须保留每个入口对应的外部暴露来源，不得把代码网关和 APISIX 结果压成一个模糊结论。
 
 ## JSON Artifacts
 
@@ -113,6 +125,29 @@ JSON 产物保持机器可读，可以继续使用英文键名。
 - `method`
 - `generatedAt`
 - `items`
+
+`artifacts/gateway-trace.json` 中每个 item 还应至少包含：
+
+- `sourceType`，例如 `code-gateway` 或 `apisix-admin-api`
+- `sourceName`
+- `status`
+- `route`
+- `method`
+- `confidence`
+- `evidenceSource`
+- `reason`
+
+`artifacts/frontend-entrypoints.json` 中每个 item 还应至少包含：
+
+- `project`
+- `path`
+- `entryType`
+- `confidence`
+- `routeEvidence`
+- `routeSourceType`
+- `routeSourceName`
+- `evidenceSource`
+- `testSuggestion`
 
 `artifacts/execution.json` should also include:
 
@@ -132,6 +167,8 @@ JSON 产物保持机器可读，可以继续使用英文键名。
 - `status`
 - `apisixUsed`
 - `gatewaySources`
+- `routeEvidenceSummary`
+- `apisixSourcesChecked`
 
 当 `status` 不是 `already_cut_over`、`no_code_change`、`noop` 这类“无代码改动成功态”时，还必须满足：
 
@@ -142,3 +179,13 @@ JSON 产物保持机器可读，可以继续使用英文键名。
   - `targetBranch`，默认应为 `dev`
   - `status`，例如 `created`、`exists`、`blocked`、`creation_link_only`
   - `url`，优先填写已创建 MR 的直达链接；若自动创建失败，则填写可直达的创建链接
+
+当本次输入提供了 `apisixAdminURL` 或 `apisixAdminURLs` 时，还必须满足：
+
+- `apisixUsed` 为 `true`
+- `apisixSourcesChecked` 非空，能列出所有已检查 APISIX 来源及其状态
+- `gatewaySources` 同时覆盖代码网关来源与 APISIX 来源，而不是只记录其中一类
+- `routeEvidenceSummary` 明确区分：
+  - `confirmedByCodeGateway`
+  - `confirmedByApisix`
+  - `fallbackHypotheses`

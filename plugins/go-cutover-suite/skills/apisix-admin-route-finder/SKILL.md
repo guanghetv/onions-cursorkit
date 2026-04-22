@@ -1,13 +1,13 @@
 ---
 name: apisix-admin-route-finder
-description: Use when a migrated route may be exposed through one or more APISIX gateways, when code gateways do not fully reveal the outward-facing route, or when the user provides APISIX Admin API endpoints and needs route evidence before inferring frontend test scope.
+description: Use when a migrated route may be exposed through one or more APISIX gateways, when the user provides APISIX Admin API endpoints that should be checked as part of gateway tracing, or when route evidence is needed before inferring frontend test scope.
 ---
 
 # APISIX Admin Route Finder
 
 ## Overview
 
-Use APISIX Admin API as a gateway-evidence source when code gateways such as `onions-school`, `channel-platform-server`, or `teacher-tenant` still cannot confirm the outward-facing route.
+Use APISIX Admin API as a parallel gateway-evidence source when APISIX Admin endpoints are provided for the task.
 One migrated interface may be exposed by multiple APISIX gateways at the same time. Do not stop after the first APISIX hit.
 
 This skill is for read-only route discovery. It must never save the APISIX admin key into code, scripts, reports, or docs.
@@ -15,6 +15,7 @@ This skill is for read-only route discovery. It must never save the APISIX admin
 ## When to Use
 
 - The route may be exposed through APISIX in the test cluster
+- The user provides `apisixAdminURL` or `apisixAdminURLs` and APISIX should be checked as part of normal gateway tracing
 - Code gateways dead-end before an outward-facing route is confirmed
 - The user provides `apisixAdminURL` and an admin key through an environment variable
 - You need better evidence before handing off to `frontend-entry-finder`
@@ -58,7 +59,7 @@ If there are multiple APISIX gateways, run the helper once per `apisixAdminURL` 
 3. Rank matches by exact route, prefix, suffix, and method
 4. Keep every gateway source separate and do not stop at the first hit
 5. Emit `confirmed`, `probable`, or `speculative`
-6. Hand off the result to `gateway-route-tracer` or `frontend-entry-finder`
+6. Hand off the result to `gateway-route-tracer` as part of the merged outward-route evidence set, and then to `frontend-entry-finder`
 
 ## Implementation
 
@@ -129,6 +130,7 @@ If the user provides multiple APISIX Admin API endpoints:
 4. preserve all distinct outward routes instead of collapsing them into one guess
 
 If two gateways expose different outward routes for the same migrated interface, keep both and pass both to `gateway-route-tracer` and `frontend-entry-finder`.
+If code gateways also produced outward routes for the same interface, do not treat the APISIX result as optional noise. Preserve it as a parallel exposure source.
 
 When handing off to `frontend-entry-finder`:
 
@@ -156,7 +158,7 @@ When handing off to `frontend-entry-finder`:
 
 ## Handoff Rules
 
-- `go-cutover-orchestrator`: use this skill after code-gateway tracing is incomplete and APISIX access is available
-- `gateway-route-tracer`: use this skill before declaring a dead end if APISIX may expose the route
+- `go-cutover-orchestrator`: use this skill whenever APISIX endpoints are provided for the task, so APISIX evidence can be gathered in parallel with code-gateway tracing
+- `gateway-route-tracer`: use this skill as a regular parallel check when APISIX endpoints are available, not only before declaring a dead end
 - if multiple APISIX gateways exist, invoke this skill once per gateway endpoint and aggregate all gateway-tagged results
 - `frontend-entry-finder`: consume `confirmed` as strong evidence and `probable/speculative` as fallback route hypotheses

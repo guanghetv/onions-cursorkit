@@ -7,13 +7,13 @@ description: Use when the user wants to know which page, module, or app flow sho
 
 ## Goal
 
-Map one outward-facing route to the most likely frontend or client feature entry points so the user can test the cutover efficiently.
+Map one outward-facing route or one merged outward-route evidence set to the most likely frontend or client feature entry points so the user can test the cutover efficiently.
 If no outward-facing route is confirmed, fall back to route-similarity inference and keep those results clearly marked as speculative.
 
 ## Inputs
 
 - outward-facing route and method
-- optional multiple confirmed outward routes from different gateway sources
+- optional multiple confirmed outward routes from different code gateway and APISIX sources
 - gateway trace results
 - optional fallback route hypotheses when no outward-facing route is confirmed
 - optional frontend repo hints
@@ -31,9 +31,10 @@ If the project is missing locally, run `skills/go-cutover-orchestrator/scripts/g
 Do not produce final test entry candidates until the project exists locally or clone has failed explicitly.
 
 3. Choose the analysis mode.
-Use `confirmed-route` mode when the gateway trace produced an outward-facing route.
+Use `confirmed-route` mode when the gateway trace produced one or more outward-facing routes from code gateways, APISIX gateways, or both.
 Use `similar-route-fallback` mode when the gateway trace ended without a confirmed outward route but did produce fallback route hypotheses.
-If multiple gateway sources produced multiple confirmed outward routes, analyze the union and keep the gateway source attached to each candidate path.
+If multiple code gateway or APISIX sources produced multiple confirmed outward routes, analyze the union and keep the gateway source attached to each candidate path.
+If APISIX endpoints were provided upstream, assume the gateway trace already checked all of them and consume the merged route evidence rather than only the code-gateway subset.
 
 4. Analyze the local project only.
 Search from API client layer outward in the local checkout.
@@ -66,13 +67,13 @@ For each candidate, include:
 - why it likely maps to the route
 - suggested manual test path
 - confidence such as `confirmed` or `speculative`
-- evidence source such as `exact-route`, `derived-symbol`, `similar-route`, or `confirmed-by-apisix`
+- evidence source such as `exact-route`, `derived-symbol`, `similar-route`, `confirmed-by-code-gateway`, `confirmed-by-apisix`, or `mixed-route-union`
 
 6. Rank candidates.
 Prefer direct route usage over indirect references.
 Prefer `confirmed-route` candidates over `similar-route-fallback` candidates.
 Inside fallback mode, rank same suffix plus same action tail above generic semantic matches.
-If two candidates come from different confirmed gateway routes, keep both instead of collapsing to one winner.
+If two candidates come from different confirmed code gateway or APISIX routes, keep both instead of collapsing to one winner.
 
 If Sourcegraph and local code disagree, trust the local repository state and record the mismatch in the report.
 
@@ -94,6 +95,7 @@ Before finishing:
 5. Confirm the report starts with a concise Chinese feature-flow summary that a tester can follow step by step without opening code.
 6. Confirm each flow states which user action actually triggers the interface at the last step.
 7. Confirm each speculative candidate explains which similarity rule made it relevant, such as same suffix or same action tail.
+8. Confirm APISIX-confirmed outward routes were not dropped merely because a code gateway already produced another confirmed route.
 
 ## Reference
 
