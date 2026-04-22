@@ -1,0 +1,21 @@
+{
+  "name": "go-cutover-suite",
+  "displayName": "Go Cutover Suite",
+  "version": "0.1.0",
+  "description": "Go 路由切换工作流套件：批次调度、单路由 orchestrator、服务端调用切换、网关追踪、前端入口定位与 APISIX 辅助发现。",
+  "author": {
+    "name": "yangcong"
+  },
+  "keywords": [
+    "go-cutover",
+    "route-cutover",
+    "gateway",
+    "apisix",
+    "sourcegraph",
+    "backend",
+    "migration"
+  ],
+  "license": "MIT",
+  "skills": "./skills/",
+  "commands": "./commands/"
+}
