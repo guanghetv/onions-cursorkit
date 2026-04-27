@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Telemetry Suite Local Config",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "gitlab": {
+      "type": "object",
+      "properties": {
+        "url": {"type": "string", "default": "https://gitlab.yc345.tv"},
+        "token": {"type": "string"}
+      }
+    },
+    "feishu": {
+      "type": "object",
+      "properties": {
+        "baseToken": {"type": "string"},
+        "tableId": {"type": "string"},
+        "viewId": {"type": "string"}
+      }
+    },
+    "workspace": {
+      "type": "object",
+      "properties": {
+        "root": {"type": "string"},
+        "artifactDir": {"type": "string", "default": "./telemetry-audit"}
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "properties": {
+        "auditWorkerConcurrency": {"type": "integer", "minimum": 1, "maximum": 8, "default": 3},
+        "instrumentWorkerConcurrency": {"type": "integer", "minimum": 1, "maximum": 4, "default": 1}
+      }
+    }
+  }
+}

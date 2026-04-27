@@ -1,0 +1,21 @@
+{
+  "name": "telemetry-suite",
+  "displayName": "Telemetry Suite",
+  "version": "0.1.0",
+  "description": "Telemetry 可观测性接入工作流套件：从飞书服务清单解析仓库，批量审计 Go/Node 服务，自动完成链路追踪与指标接入并创建 GitLab MR。",
+  "author": {
+    "name": "yangcong"
+  },
+  "keywords": [
+    "telemetry",
+    "opentelemetry",
+    "prometheus",
+    "feishu",
+    "gitlab",
+    "observability",
+    "backend"
+  ],
+  "license": "MIT",
+  "skills": "./skills/",
+  "commands": "./commands/"
+}

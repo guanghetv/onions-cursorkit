@@ -44,6 +44,11 @@
       "name": "go-cutover-suite",
       "source": "go-cutover-suite",
       "description": "Go 路由切换工作流套件：批次调度、单路由 cutover 编排、服务端调用切换、网关追踪、前端入口定位与 APISIX 路由发现"
+    },
+    {
+      "name": "telemetry-suite",
+      "source": "telemetry-suite",
+      "description": "Telemetry 可观测性接入工作流套件：飞书服务清单解析、GitLab 仓库匹配、批量审计、自动接入、验证、提交与 MR 跟踪"
     }
   ]
 }
