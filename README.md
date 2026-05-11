@@ -26,6 +26,7 @@
 - **仅需文档规范、代码审查、飞书分支等通用能力**：可只安装 **Common**
 - **前端安全审查 / 供应链自检**：建议安装 **Common** + **Frontend**
 - **前端/后端 Spec-Driven（OpenSpec 变更目录）**：按需安装 **fe-specflow** / **be-specflow**（可与 Common 同装）
+- **路由切换 / 流量验收**：按需安装 **go-cutover-suite** + **tls-traffic-suite**
 
 ## 当前插件
 
@@ -36,5 +37,8 @@
 | **frontend** | 前端：`skills`（`fe-security` 团队前端安全与供应链对照，含 `references/` 细则） |
 | **fe-specflow** | 前端 Specflow：OpenSpec + Superpowers 编排，`/fe-sdd`、pull-spec、e2e-verify 等 |
 | **be-specflow** | 后端 Specflow：同上后端视角，`/be-sdd`、前端契约/QA spec 拉取、交叉验证与归档 |
+| **workspace-specflow** | Workspace 多角色协作：串联 PRD、产品 spec、测试 spec、开发桥接与进度总览 |
+| **go-cutover-suite** | Go 路由切换：批次调度、单路由 cutover、网关追踪、前端入口定位与 APISIX 路由发现 |
+| **tls-traffic-suite** | 火山 TLS 路由流量对比：查询任意两个服务流量、归一化 route、辅助聚合并导出 CSV 或写入飞书 Base |
 
 ## Reviewer

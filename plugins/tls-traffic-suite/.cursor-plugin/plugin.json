@@ -1,0 +1,21 @@
+{
+  "name": "tls-traffic-suite",
+  "displayName": "TLS Traffic Suite",
+  "version": "0.1.0",
+  "description": "火山 TLS 路由流量对比工作流：按服务查询生产流量、归一化 route、辅助聚合候选、导出 CSV 或写入飞书 Base。",
+  "author": {
+    "name": "yangcong"
+  },
+  "keywords": [
+    "tls",
+    "traffic",
+    "route-compare",
+    "volcengine",
+    "feishu-base",
+    "cutover",
+    "migration"
+  ],
+  "license": "MIT",
+  "skills": "./skills/",
+  "commands": "./commands/"
+}
