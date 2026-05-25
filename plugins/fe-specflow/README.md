@@ -1,23 +1,25 @@
 # fe-specflow
 
-Superpowers + OpenSpec 融合的**前端** Spec-Driven 研发工作流编排。流水线从**需求自动提取**开始——飞书文档（feishu-mcp）、GitLab Spec 文档（pull-spec 机制）、截图、纯文字、本地文件等**多源可组合**，统一整理为需求事实后，再进入 Brainstorming → OpenSpec → TDD → 联调 → E2E 验证 → 归档。**不修改任何社区 skill 源码**，仅通过自建 Rule + Skills + Commands 编排串联。
+Superpowers + OpenSpec 融合的**前端** Spec-Driven 研发工作流编排。流水线从**需求自动提取**开始——飞书文档（feishu-mcp）、GitLab Spec 文档（pull-spec 机制）、YApi 接口契约（pull-yapi / user-yapi-common-mcp）、截图、纯文字、本地文件等**多源可组合**，统一整理为需求事实后，再进入 Brainstorming → OpenSpec → TDD → 联调 → E2E 验证 → 归档。**不修改任何社区 skill 源码**，仅通过自建 Rule + Skills + Commands 编排串联。
 
 ## 适用场景
 
 - 产品需求在**飞书**，或分散在**飞书 + GitLab Spec + 截图**，希望 Agent **先澄清再落盘**，而不是直接写页面。
 - 团队已采用 **OpenSpec** 管理变更，希望前端开发与 **`openspec/changes/<change-id>/`** 目录结构一致。
-- T1 完成后需要按**后端 spec / 测试 spec** 做联调与验收，并希望 **pull-spec** 把外部文档落到同一变更目录。
+- T1 完成后需要按**后端 spec / YApi 契约 / 测试 spec** 做联调与验收；**pull-spec** / **pull-yapi** 落盘契约，**re-check** 将 mock 与 YApi 对齐并改代码。
 - 提测前需要 **Browser 交叉验证**（Cursor 内置浏览器），并在 **`e2e-report.md`** 中留下可追溯结论再归档。
 
 ## 核心能力
 
 | 能力 | 说明 |
 |------|------|
-| 多源需求接入 | 飞书 MCP、GitLab Spec（只读）、截图、文字、本地文件可组合；失败须**明确提示**，禁止静默跳过 |
+| 多源需求接入 | 飞书 MCP、GitLab Spec（只读）、YApi MCP（用户给链接/ID 时只读）、截图、文字、本地文件可组合；失败须**明确提示**，禁止静默跳过 |
+| YApi 契约 | **pull-yapi**（文档层）：阶段 1 只读；T1 后落盘 `backend-yapi-<slug>.md`，**不改业务代码** |
+| YApi 对齐 | **re-check**（实现层）：YApi/飞书链接到达后校对 mock → 真接口；破坏性变更须确认；**无单独 Command** |
 | 设计驱动 | 可选 **Figma MCP**；有稿时视觉规格以设计稿为准，局部需求禁止擅自全页改 |
 | OpenSpec 一体 | `design-to-opsx` 将 brainstorming 结论写入 `proposal.md`、`specs/**/spec.md`、`tasks.md` 等（以技能内模板为准） |
 | 阶段推断 | 无独立状态文件，靠变更目录**文件产物** + 用户意图推断当前阶段（见下「状态推断」） |
-| 事件驱动 | T1 完成后可响应「后端 spec 到了」「测试 spec 到了」等，执行 pull-spec → 联调或差异分析 |
+| 事件驱动 | T1 后可响应「后端 spec 到了」「YApi 到了 / re-check」「测试 spec 到了」；YApi 默认 **re-check**，仅落盘用 pull-yapi |
 | E2E 与归档 | `e2e-verify` 以 **QA spec 置信度最高**；归档以 **`e2e-report.md` 中 `## 验收结论`** 为门禁 |
 
 ## 权威文档与编排入口
@@ -28,6 +30,8 @@ Superpowers + OpenSpec 融合的**前端** Spec-Driven 研发工作流编排。�
 | 主编排 Skill | `skills/dev-workflow/SKILL.md` | **全流程**：阶段 1～5、事件 A/B、触发语表、灰区讨论、Git 与审查纪律 |
 | 落盘 Skill | `skills/design-to-opsx/SKILL.md` | brainstorming 确认后 → OpenSpec 变更目录与设计文档转场 |
 | 拉取 Skill | `skills/pull-spec/SKILL.md` | GitLab 上后端/测试等 spec → 写入 `openspec/changes/<change-id>/`（`backend-*.md` / `qa-*.md` 等） |
+| YApi 拉取 | `skills/pull-yapi/SKILL.md` | 文档层：落盘 + proposal diff，**不改代码** |
+| YApi 对齐 | `skills/re-check/SKILL.md` | 实现层：mock 与 YApi 校对、改代码、重跑 TDD |
 | 验证 Skill | `skills/e2e-verify/SKILL.md` | 清单化验证 → 内置浏览器自动化；报告模板与归档条件 |
 | Slash Command | `commands/fe-sdd.md` | **`/fe-sdd`**：本对话内强制「先 brainstorming 再落盘」，禁止抢跑写 `openspec/**` 或业务代码 |
 
@@ -56,7 +60,9 @@ Superpowers + OpenSpec 融合的**前端** Spec-Driven 研发工作流编排。�
 | 新需求 / 新功能 / 开始开发 | 设计探索 |
 | 继续开发 / 接着做（已有 proposal、尚无 tasks） | 任务规划 |
 | 继续写（tasks 有未完成项） | T1 开发 |
-| 后端 spec 到了 / API 文档到了 `<链接>` | 事件：拉 spec → 联调向 |
+| 后端 spec 到了 / API 文档到了 `<链接>` | 事件：pull-spec → 联调向 |
+| YApi 接口到了 / re-check / 对齐 YApi `<链接>` | 事件：**re-check**（默认） |
+| 只拉 YApi / 只落盘契约 | 事件：**pull-yapi** only（不改代码） |
 | 测试 spec 到了 / QA 文档到了 `<链接>` | 事件：拉 qa → 可询问是否 e2e |
 | 跑 e2e / 浏览器验证 / 跑自动化验证 | `e2e-verify` |
 | 用这个 spec 跑 e2e `<链接>`（无活跃变更） | `e2e-verify` 延迟模式 |
@@ -78,6 +84,8 @@ Superpowers + OpenSpec 融合的**前端** Spec-Driven 研发工作流编排。�
 │   ├── dev-workflow/      # 主编排：阶段识别 + 事件分发 + 灰区 + commit
 │   ├── design-to-opsx/    # brainstorming → OpenSpec 落盘（proposal / specs / tasks）
 │   ├── pull-spec/         # GitLab 拉取 spec → openspec/changes/<change-id>/
+│   ├── pull-yapi/         # YApi 文档层 → backend-yapi-<slug>.md
+│   ├── re-check/          # YApi 实现层对齐 mock
 │   └── e2e-verify/        # Browser 交叉验证 + e2e-report.md
 └── README.md
 ```
@@ -89,7 +97,7 @@ Superpowers + OpenSpec 融合的**前端** Spec-Driven 研发工作流编排。�
 - `proposal.md`、`tasks.md`
 - `specs/<capability>/spec.md`
 - 设计类文档（以 `design-to-opsx` 与项目约定为准）
-- T1 后外部拉取的 **`backend-*.md`**、**`qa-*.md`** 等（与 `proposal.md` 同级）
+- T1 后外部拉取的 **`backend-*.md`**、**`backend-yapi-*.md`**、**`qa-*.md`** 等（与 `proposal.md` 同级）
 - 验证阶段输出的 **`e2e-report.md`**（验收结论决定是否可归档）
 
 精确文件清单与标题格式以 **`design-to-opsx`**、**`pull-spec`** 及业务项目中的 OpenSpec 配置为准。
@@ -104,6 +112,8 @@ Superpowers + OpenSpec 融合的**前端** Spec-Driven 研发工作流编排。�
 | `GITLAB_TOKEN` 环境变量 | `pull-spec`：阶段 1 读取 GitLab 上的需求 Spec；T1 后拉取后端/测试 spec | `echo ${GITLAB_TOKEN:+ok}` |
 | feishu-mcp（或工作区等价的 `user-feishu-mcp`） | 读取飞书产品需求文档；未启用或 token 失效时须提示用户处理 | Cursor MCP 已启用 |
 | user-Figma MCP（可选） | 读取 Figma 设计稿，按设计稿实现 UI | Cursor MCP 已启用 |
+| **user-yapi-common-mcp**（可选） | `pull-yapi`：阶段 1 只读 / T1 后落盘 YApi 接口契约 | Cursor MCP 已启用 |
+| `YAPI_BASE_URL`、`YAPI_GLOBAL_TOKEN` | YApi MCP 鉴权与服务地址 | `echo ${YAPI_BASE_URL:+ok}` / `echo ${YAPI_GLOBAL_TOKEN:+ok}` |
 | **aicr-local** 技能（可选） | 用户同意提交后：有则**必须**用 `/cr` 或该技能审查暂存区；无则由 **Agent 自审暂存区**（仍须完成审查，不可跳过） | 见 `dev-workflow` / `rules/dev-workflow.mdc` |
 
 ## 状态推断
@@ -124,7 +134,7 @@ Superpowers + OpenSpec 融合的**前端** Spec-Driven 研发工作流编排。�
 ```
 线性阶段：
   仓库扫描(技术栈/目录/现有模块)
-    → 需求提取(多源可组合: 飞书MCP / GitLab Spec文档 / 截图 / 文字 / 本地文件)
+    → 需求提取(多源可组合: 飞书MCP / GitLab Spec / YApi只读 / 截图 / 文字 / 本地文件)
     → Figma设计稿(Figma MCP, 可选)
     → Brainstorming(Superpowers, 以工程约束+需求事实+设计稿为输入)
     → 灰区讨论(空态/错误态/分页等决策)
@@ -133,6 +143,8 @@ Superpowers + OpenSpec 融合的**前端** Spec-Driven 研发工作流编排。�
 
 事件驱动（T1 后，顺序不定，均可选）：
   [后端 spec 到达] → pull-spec(GitLab API) → 切换真实API → 全量重跑前端 TDD
+  [YApi 到达 / re-check] → re-check → pull-yapi 落盘 → scope 内改代码 → TDD
+  [只拉 YApi 契约] → pull-yapi only → backend-yapi-*.md → diff（不改代码）
   [测试 spec 到达] → pull-spec(GitLab API) → 差异分析
 
 验证阶段：
@@ -159,6 +171,6 @@ Superpowers + OpenSpec 融合的**前端** Spec-Driven 研发工作流编排。�
 | 现象 | 建议 |
 |------|------|
 | Agent 执行 `openspec` 无输出且失败 | 由用户在终端执行 CLI；Agent 只写文件内容（见「OpenSpec 与 CLI 分工」）。 |
-| 飞书 / GitLab 拉取失败 | 检查 MCP 与 `GITLAB_TOKEN`；向用户说明原因并提供粘贴正文等替代路径。 |
+| 飞书 / GitLab / YApi 拉取失败 | 检查对应 MCP 与 `GITLAB_TOKEN` / `YAPI_*`；向用户说明原因并提供粘贴正文等替代路径。 |
 | E2E 无法自动登录 | 按 `e2e-verify`：用户在内置浏览器中手动登录到验收页后，再由 Agent 接管自动化。 |
 | 与后端仓库对齐 change-id | 约定同一需求共用同一 `change-id`，外部 spec 落在各自仓库的 `openspec/changes/<change-id>/`（后端插件侧自行维护其目录规范）。 |

@@ -77,11 +77,14 @@ proposal.md 正文结构：
 <!-- 从确认的方案中提取变更内容清单 -->
 
 ## API 契约（前端期望）
-<!-- 从设计阶段产出的 API 契约 -->
+<!-- 从设计阶段产出的 API 契约；涉及接口改动且已拉 YApi 时写目标态，并注明相对 YApi 现状的变更 -->
 ### <接口名>
+- YApi: <链接或 interfaceID；来自飞书时注明「飞书 §章节」>
+- 变更类型: 新增 | 修改 | 废弃 | 不变
 - 请求: <字段列表>
 - 响应: <字段列表>
 - 错误码: <错误码列表>
+<!-- 新增且 YApi 尚无条目时: yapi_status: pending-create -->
 
 ## Capabilities
 ### New Capabilities
@@ -97,6 +100,7 @@ proposal.md 正文结构：
 
 ## References
 - 需求文档: <飞书链接>
+- YApi 接口: <链接列表，每行一个；阶段 1 只读拉取过的 interfaceURL 或 interfaceID 对应页面>
 
 ## Decisions
 <!-- 记录 brainstorming 中已澄清的关键决策 -->

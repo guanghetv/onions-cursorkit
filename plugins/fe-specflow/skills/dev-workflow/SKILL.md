@@ -4,11 +4,12 @@ description: >-
   前端需求研发工作流编排。Use when developing frontend features, starting
   requirements from Feishu / GitLab Spec docs / screenshots / text, or when
   user mentions: 新需求/新功能/开始开发/继续开发/接着做/后端spec/后端接口文档/
-  API文档/测试spec/测试用例/跑自动化验证/跑e2e/浏览器验证/归档.
+  API文档/YApi接口到了/re-check/对齐YApi/测试spec/测试用例/跑自动化验证/跑e2e/浏览器验证/归档.
   Orchestrates Superpowers + OpenSpec workflow across design, planning,
   frontend development, integration, and verification phases. Supports
   multi-source requirement extraction (Feishu MCP, GitLab Spec via pull-spec,
-  screenshots, text, local files) and design drafts from Figma MCP.
+  YApi MCP via pull-yapi, re-check for mock alignment, screenshots, text, local
+  files) and design drafts from Figma MCP.
 ---
 
 # 前端需求研发工作流编排
@@ -65,7 +66,8 @@ find openspec/changes -maxdepth 2 -name proposal.md 2>/dev/null
 | 无 | 开始新需求 / 新功能 / 做个新 feature / 开始开发 | 阶段 1：设计探索 |
 | 有 `proposal.md` + `specs/` 但无 `tasks.md` | 继续这个需求 / 接着做 / 继续开发 | 阶段 2：任务规划 |
 | 有 `tasks.md` 且存在未勾选项 | 继续开发 / 接着写 / 继续这个需求 | 阶段 3：继续 T1 开发 |
-| `tasks.md` 全部勾选 | 后端 spec 到了 / 后端接口文档来了 / API 文档到了 | 事件 A：后端 Spec → 联调 |
+| `tasks.md` 全部勾选 | 后端 spec 到了 / 后端接口文档来了 / API 文档到了 | 事件 A：pull-spec → 联调 |
+| 有变更目录 + YApi/飞书链接或对齐语义 | YApi 接口到了 / re-check / 对齐 YApi / 继续对齐接口 / 贴 YApi 或飞书链 | 事件 A：**re-check**（默认）；仅落盘 → pull-yapi only |
 | `tasks.md` 全部勾选 | 测试 spec 到了 / 测试用例来了 / QA 文档到了 | 事件 B：测试 Spec 到达 |
 | `tasks.md` 全部勾选 | 跑自动化验证 / 跑 e2e / 浏览器验证一下 / 验证一下这个需求 | 阶段 4：Browser 交叉验证 |
 | 无活跃变更目录 | 用这个 spec 跑 e2e `<链接/路径>` / 按这个测试用例验证一下 | 阶段 4：Browser 交叉验证（延迟模式） |
@@ -112,6 +114,7 @@ find openspec/changes -maxdepth 2 -name proposal.md 2>/dev/null
 |------|----------|----------|
 | **飞书文档** | **feishu-mcp**（或等价 MCP）自动拉取 | 产品 PRD / 需求文档在飞书 |
 | **Spec 文档（GitLab）** | 复用 **pull-spec** 的 GitLab API 机制（`GITLAB_TOKEN` 或 `GITLAB_PRIVATE_TOKEN` + API）**读取内容** | 产品/业务需求以 Spec 形式存放在另一个 GitLab 仓库 |
+| **YApi 接口** | **pull-yapi** → **user-yapi-common-mcp** `get_interface_detail`（`interfaceURL` / `interfaceID`） | 设计期对齐字段；用户已给链接或 ID 时拉取 |
 | **截图** | 直接上传 | 原型图、飞书片段截图、标注图 |
 | **纯文字** | 对话中输入 | 口头描述、聊天记录、会议纪要 |
 | **本地文件** | 文件路径 | 已导出的文档（Markdown / PDF / Word 等） |
@@ -123,7 +126,12 @@ find openspec/changes -maxdepth 2 -name proposal.md 2>/dev/null
 若用户提供了**飞书文档链接**：
 
 1. 使用 **`feishu-mcp`**（或工作区已启用的等价飞书文档 MCP，如 `user-feishu-mcp`）拉取文档正文。
-2. **失败时须向用户给出明确提示**（不要静默跳过）：
+2. **飞书正文中的 YApi 链接（与「接口改动」联动，强制）**——拉取成功后**必须**执行：
+   - 从正文（含表格、超链接、代码块）中**提取**全部 YApi 链接及可识别的 `interfaceID`（常见域名/path 以团队 YApi 为准；无法识别时列出疑似链接请用户确认）。
+   - 判定本次需求是否**涉及接口改动**（见下方「接口改动范围」）。**若涉及**且正文存在至少一条 YApi 链接/ID → **必须**对每条链接调用 **`pull-yapi`** 阶段 1 只读（`get_interface_detail`），不得仅凭 PRD 文字推断字段。
+   - 合并笔记标注出处：`飞书 <文档标题/章节> → YApi <url/id>`；链接列表写入后续 `proposal.md` 的 `References`（`YApi 接口:` 段）。
+   - 若**涉及接口改动**但正文**无任何** YApi 链接/ID：在 brainstorming **必须**向用户说明缺口，并询问补链、interfaceID 或粘贴 YApi 导出；在 proposal 中标注 `contract_source: inferred` 直至补齐。
+3. **失败时须向用户给出明确提示**（不要静默跳过）：
    - **未安装 / 未启用** feishu-mcp：说明当前无法读取飞书文档，请用户安装并启用 MCP，或改为粘贴需求正文 / 导出为本地文件后再继续。
    - **鉴权失败、token 过期或权限不足**：说明具体现象（401/403、无权限等），请用户更新 token、重新登录飞书集成或调整文档可见范围，或改用粘贴/截图等方式提供需求。
 
@@ -134,6 +142,40 @@ find openspec/changes -maxdepth 2 -name proposal.md 2>/dev/null
 1. 复用 **`pull-spec`** 的 GitLab API 机制（`GITLAB_TOKEN` 或 `GITLAB_PRIVATE_TOKEN` + GitLab REST API）**读取文件内容**。
 2. **与 T1 后 pull-spec 的区别**：阶段 1 此时**尚无变更目录**，拉取的内容**仅作为 brainstorming 的输入材料**，**不写入** `openspec/changes/`（变更目录在 `design-to-opsx` 时才创建）。Spec 来源 URL 将记入后续 `proposal.md` 的 `References` 中。
 3. **失败处理**：与 pull-spec 一致——`GITLAB_TOKEN` 与 `GITLAB_PRIVATE_TOKEN` 皆未设置或无权限时明确提示，降级为用户粘贴内容。
+
+#### 接口改动范围（决定是否必须走 YApi MCP）
+
+在步骤 1b 合并需求时，Agent **须判断**本次是否**涉及接口改动**（满足任一即视为涉及）：
+
+- PRD/飞书/对话中明确 **新增、修改、废弃** 后端 HTTP 接口或对外 API 契约
+- 前端需对接**新接口**、**改请求/响应字段**、**改错误码**、**改 path/method**
+- 联调、mock、L1 契约测试依赖的后端接口范围有变
+
+**若不涉及**（纯 UI/文案/纯前端路由、复用既有接口且字段不变）：可从飞书提取 YApi 链接作**背景只读**（可选），**不强制**逐条 `get_interface_detail`。
+
+**若涉及**：凡已知的 YApi 链接/ID（无论来自用户直给还是**飞书正文提取**）**必须**走 `pull-yapi` 只读；brainstorming 与 proposal 的 API 契约以 MCP 详情 + 需求目标态为准。
+
+#### YApi 接口（链接或 interfaceID）
+
+触发来源（任一即可）：
+
+1. 用户**直接提供** YApi 链接或 `interfaceID`
+2. **飞书文档正文提取**的链接/ID（见上文「飞书正文中的 YApi 链接」）
+3. `proposal.md` 的 `References` 中已记录的 YApi 列表（跨会话恢复、T1 后联调）
+
+流程：
+
+1. 遵循 **`pull-yapi`** 阶段 1 只读流程：调用 **user-yapi-common-mcp** 的 `get_interface_detail`。
+2. **设计 / 更改接口（工作流含义）**：
+   - **更改既有接口**：以 MCP 返回的**现状**为基线，对照需求整理 **delta**（增删改字段、错误码、path/method 变更），写入 brainstorming 与 proposal 的 **API 契约（目标态）** 及 **Decisions**（说明相对 YApi 现状的变更）。
+   - **新增接口**：若链接指向**已有**接口则同上；若 PRD 要求**新接口**但 YApi 尚无对应条目，须在契约中写清**拟议** path/method/字段，标注 `yapi_status: pending-create`，并在 brainstorming 确认由谁在 YApi 平台创建；**不得**虚构已存在于 YApi 的 interfaceID。
+   - **MCP 能力边界**：当前 `user-yapi-common-mcp` 以 **`get_interface_detail` / `search_interface`（只读）** 为主；**不在 YApi 平台直接保存接口定义**。落库改 YApi 由研发在 YApi 上操作；Agent 产出的是**可执行的契约与变更说明**。若未来 MCP 提供写接口工具，在 `pull-yapi` 中另行约定。
+3. **与 T1 后 pull-yapi 的区别**：阶段 1 **不写入** `openspec/changes/`；整理后的契约摘要用于 brainstorming；YApi 链接记入后续 `proposal.md` 的 `References`。
+4. **`search_interface` 纪律**：**不得**因「只有功能名、无链接」就在阶段 1 默认搜索；**例外**：用户显式要求搜索，或飞书/PRD 指明接口名且**无任何** YApi 链接/ID 时，可在 brainstorming 中提议搜索并经用户确认 `interfaceID` 后再拉详情。
+5. **失败处理**（须明确提示，禁止静默跳过）：
+   - **未安装 / 未启用** user-yapi-common-mcp：说明无法读取 YApi，请启用 MCP 或粘贴导出内容。
+   - **`YAPI_BASE_URL` / `YAPI_GLOBAL_TOKEN` 未配置或鉴权失败**：说明配置或 token 问题，请更新后重试或粘贴接口字段说明。
+   - **接口不存在**：说明 ID/链接无效，请用户核对。
 
 #### 截图 / 纯文字 / 本地文件
 
@@ -156,7 +198,7 @@ find openspec/changes -maxdepth 2 -name proposal.md 2>/dev/null
 
 当用户同时提供多种来源时：
 1. 按来源逐一采集并提取需求点、业务规则、验收标准。
-2. **合并**为统一的结构化需求摘要；标注每条需求的**出处**（飞书 / Spec / 截图 / 文字）。
+2. **合并**为统一的结构化需求摘要；标注每条需求的**出处**（飞书 / Spec / YApi / 截图 / 文字）。
 3. **来源间信息冲突**时：**不自行裁决**，在 brainstorming 中**向用户列出冲突点**并请求澄清。
 
 #### 与 brainstorming 的衔接
@@ -184,7 +226,10 @@ find openspec/changes -maxdepth 2 -name proposal.md 2>/dev/null
 1. 以仓库扫描结论为**工程约束**（现有架构、技术栈、模块划分、编码风格）
 2. 以步骤 1b 得到的需求（飞书/截图/文字及其**范围边界**）为业务背景；以步骤 1c 的 Figma 规格为 UI 约束；**局部变更时**在方案中明确写出「本次改动边界」与「明确不改动的区域」，避免范围蔓延
 3. 方案聚焦**前端实现**：组件拆分、状态管理、路由、样式方案——须复用现有公共组件和工具函数
-4. 产出**前端视角的 API 契约**（请求参数、响应结构、错误码）——这是前端期望后端提供的接口，用于 mock 开发
+4. 产出**前端视角的 API 契约**（请求参数、响应结构、错误码）——用于 mock 开发：
+   - **涉及接口改动**且已从 YApi（含飞书提取链接）拉取详情 → 契约 MUST 写**目标态**，并体现相对 YApi **现状**的变更（新增/修改/废弃）
+   - **涉及接口改动**但无法拉取 YApi → 须在 brainstorming 补齐链接或降级标注 `contract_source: inferred`，不得静默当作文档已对齐 YApi
+   - **不涉及接口改动** → 可省略 YApi 拉取；契约仅在有对接需要时简述
 5. 设计确认后，**不**调用 `superpowers:writing-plans`
 6. 设计确认后，进入 **步骤 1e 前端灰区讨论**
 
@@ -295,6 +340,7 @@ Brainstorming 确认方案后、调用 `design-to-opsx` 前，识别本次变更
 逐 task 执行，遵循 TDD 纪律（写测试 → 验证失败 → 最小实现 → 验证通过）。
 
 - 基于 API 契约写 **L1 契约测试**（mock 数据，验证前端对接口的调用和数据处理）
+- 无 YApi 或 `contract_source: inferred` 时，对 mock/占位 API **SHOULD** 添加推荐标记（见 **`re-check`** 技能 §扫描）；不强制，但便于后续对齐
 - 基于 spec Scenario 写 **L2 行为测试**（组件渲染、用户交互、状态变化）
 - 如存在 Figma 设计稿，UI 实现须**参照设计稿**的布局、组件、颜色、字号、间距等视觉规格，**严格遵守**与本次 task 相关的设计规格；开发过程中可使用 `user-Figma` MCP 随时查阅设计稿细节
 - 若需求为**页面局部变更**（见步骤 1b/1c），本阶段**仅改约定范围内的代码与样式**；不在任务范围内的区域即使稿与代码不一致，也**不擅自修改**，除非用户另行确认
@@ -325,7 +371,7 @@ Brainstorming 确认方案后、调用 `design-to-opsx` 前，识别本次变更
 
 T1 前端开发完成（tasks.md 全部 `[x]`）后，根据用户触发语执行对应链路。以下事件均为**可选**——并非所有需求都有后端接口或测试 spec。
 
-### 事件 A：后端 Spec 到达 → 联调
+### 事件 A：后端 Spec / YApi 到达 → 联调
 
 **触发语示例**：
 - "后端spec到了 `<GitLab链接>`"
@@ -333,20 +379,39 @@ T1 前端开发完成（tasks.md 全部 `[x]`）后，根据用户触发语执�
 - "API文档到了 `<链接>`"
 - "后端给了spec"（后跟链接或粘贴内容）
 - "后端 spec 到了"（无链接，workspace-native 自动发现）
+- "YApi 接口到了 `<链接>`" / "re-check" / "对齐 YApi" / "继续对齐接口" / 粘贴飞书或 YApi 链接
+- "只拉 YApi" / "只落盘契约" / "从 YApi 拉 interface `<id>`"（**仅文档**，不改代码）
 
-**REQUIRED SUB-SKILL:** Use `pull-spec`
+**无感路由**（对话中含飞书/YApi 链接且能唯一定位 change-id）：
+- 默认 → **`re-check`**（若需对齐 mock/实现，或 `contract_source: inferred`）
+- 用户明确「只拉文档/只落盘/不要改代码」→ 仅 **`pull-yapi`**
 
-`pull-spec` 现已支持 **workspace-aware 三级读取**：
-- 无链接时自动从工作区内对方仓库发现分支并读取（`git show`，不 checkout）
-- 有链接时走 GitLab API
-- 均不可用时请用户粘贴
+**按输入选择技能**：
 
-1. 定位当前变更目录 → 拉取后端 spec 写入 `openspec/changes/<change-id>/backend-*.md`
-2. 对比前端 API 契约与后端 spec 差异
-3. 前端切换 mock → 真实后端 API
-4. **全量重跑前端 TDD 测试**（L1 + L2）
-5. 修复前端代码中的差异
-6. 全部通过 → 联调完成；若需将联调修复提交到 Git，**沿用阶段 3「Git commit」同一套流程**（先用户确认，再 `git add .` → 必须完成提交前审查：aicr-local 路径或 Agent 自审 → commit）
+| 用户输入 | 技能 | 产出 |
+|----------|------|------|
+| GitLab / workspace / 粘贴叙事 spec | **`pull-spec`** | `backend-*.md` 或 `qa-*.md` |
+| YApi 对齐 mock/实现（默认） | **`re-check`** | 落盘 + 改代码 + TDD（内含 pull-yapi） |
+| 仅 YApi 契约文档 | **`pull-yapi`** | `backend-yapi-<slug>.md` + diff，**不改业务代码** |
+| GitLab + YApi 对齐实现 | **pull-spec + re-check** | 分别落盘；字段以 YApi 为准（3a） |
+
+**REQUIRED SUB-SKILL:** `pull-spec` 和/或 `re-check` 或 `pull-yapi`（按上表）
+
+`pull-spec`：workspace-aware 三级读取（见 pull-spec 技能）。
+
+`re-check`（**YApi 联调默认**）：
+- REQUIRED 调用 **`pull-yapi`** 落盘与 proposal diff
+- 划定 scope（`modules` → git diff → 交集；皆空则只报告）
+- 扫描 mock、分级差异、破坏性/批量（≥3 接口或 ≥5 文件）须用户确认
+- 详见 **`re-check`** 技能
+
+`pull-yapi`（仅文档）：
+- 用户提供 YApi 链接或 `interfaceID`；**不得**修改业务代码
+- 详见 **`pull-yapi`** 技能
+
+**GitLab 后端 spec 链路**（无 YApi 时）：定位变更目录 → pull-spec 写入 → diff → mock→真实 API → 全量 TDD → Git commit（用户确认后）。
+
+**YApi 对齐链路**（re-check）：由 re-check 技能端到端执行；提交纪律同阶段 3「Git commit」。
 
 ### 事件 B：测试 Spec 到达
 
@@ -389,12 +454,12 @@ T1 前端开发完成（tasks.md 全部 `[x]`）后，根据用户触发语执�
 ### 验证顺序与 spec 置信度
 
 1. **TDD 优先**：进入本阶段前，**先**尽量跑通已有前端 TDD（L1/L2 等）；若项目**无单元测试工具**或仅有少量测试，在 `e2e-verify` 的验证清单中如实标注，再进入浏览器层验证。
-2. **多份 spec 对照**：综合阅读变更目录内的 **`qa-*.md`（测试 spec）**、`specs/*/spec.md`（前端 spec）**、`backend-*.md`（后端 spec，如有）**。**置信度优先级**：**测试 spec 最高**，其次为前端 spec 与后端 spec（二者用于交叉核对；若与测试 spec 冲突，以测试 spec 为验收口径，并在报告中**显著标明差异**）。
+2. **多份 spec 对照**：综合阅读变更目录内的 **`qa-*.md`（测试 spec）**、`specs/*/spec.md`（前端 spec）**、`backend-*.md`（GitLab 叙事后端 spec，如有）**、**`backend-yapi-*.md`（YApi 字段契约，如有）**。**置信度优先级**：**测试 spec 最高**（E2E 验收口径）；**接口字段/schema 以 `backend-yapi-*` 为准**；GitLab `backend-*` 补场景；若 YApi 与 qa 字段冲突，以 qa 为验收口径并在报告中**显著标明**与 YApi 的差异。
 3. **实现与测试 spec 不一致**：若当前前后端实现与 **qa 测试 spec** 的预期不一致，须在 **`e2e-report.md` 中用显著提示**（如醒目标题、表格或「⚠️ 与测试 spec 冲突」小节）列出，不得仅一笔带过。
 
 ### 模式说明
 
-- **常规模式**：从变更目录读取 spec；有 `qa-*.md` 以其为主，无则退化为前端 spec，并可对照 `backend-*.md`。
+- **常规模式**：从变更目录读取 spec；有 `qa-*.md` 以其为主，无则退化为前端 spec，并可对照 `backend-*.md` 与 `backend-yapi-*.md`（字段以 YApi 落盘为准）。
 - **延迟模式**：用户手动指定 spec 来源（文件路径 / GitLab 链接 / 粘贴内容）。
 
 输出报告（须含 **`## 验收结论`**，见 `e2e-verify`）→ 默认修复失败项并重跑至 **结论为通过** → 再进入归档。**宽松版**：仍存在失败时，仅当用户在对话中**明确同意带已知问题归档**且报告已记录同意与摘要时，方可进入阶段 5。
@@ -409,7 +474,7 @@ openspec archive "<change-id>" --yes
 
 若结论为不通过且用户未同意带债，**不**提示归档；应回到阶段 4 或修代码后重跑验证。
 
-归档完成后，变更目录（含 `backend-*.md`、`qa-*.md` 等外部 spec）整体归档。
+归档完成后，变更目录（含 `backend-*.md`、`backend-yapi-*.md`、`qa-*.md` 等外部 spec）整体归档。
 
 ---
 
