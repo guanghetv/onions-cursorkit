@@ -1,15 +1,10 @@
 ---
 name: dev-workflow
 description: >-
-  前端需求研发工作流编排。Use when developing frontend features, starting
-  requirements from Feishu / GitLab Spec docs / screenshots / text, or when
-  user mentions: 新需求/新功能/开始开发/继续开发/接着做/后端spec/后端接口文档/
-  API文档/YApi接口到了/re-check/对齐YApi/测试spec/测试用例/跑自动化验证/跑e2e/浏览器验证/归档.
-  Orchestrates Superpowers + OpenSpec workflow across design, planning,
-  frontend development, integration, and verification phases. Supports
-  multi-source requirement extraction (Feishu MCP, GitLab Spec via pull-spec,
-  YApi MCP via pull-yapi, re-check for mock alignment, screenshots, text, local
-  files) and design drafts from Figma MCP.
+  前端需求研发工作流编排。在开发前端功能时使用：需求可来自飞书、GitLab Spec、截图、文字或本地文件；
+  用户提到新需求/新功能/开始开发/继续开发/接着做/后端 spec/后端接口文档/API 文档/YApi 接口到了/re-check/对齐 YApi/测试 spec/测试用例/跑自动化验证/跑 e2e/浏览器验证/归档时也启用。
+  串联 Superpowers 与 OpenSpec，覆盖设计探索、任务规划、T1 前端开发、联调对齐与 E2E 验收归档。
+  支持多源需求采集（飞书 MCP、pull-spec 拉 GitLab Spec、pull-yapi 读 YApi 契约、re-check 对齐 mock、 截图/文字/本地文件）及 Figma MCP 设计稿参照。
 ---
 
 # 前端需求研发工作流编排
@@ -42,12 +37,12 @@ digraph startup {
 find openspec/changes -maxdepth 2 -name proposal.md 2>/dev/null
 ```
 
-| 场景 | 处理方式 |
-|------|---------|
-| 无变更目录 | 进入「阶段 1：设计探索」 |
-| 仅 1 个变更目录 | 自动选定该变更 |
-| 多个变更目录 | 列出所有 change-id，请用户选择 |
-| 用户在触发语中指定了 change-id | 直接使用指定的变更 |
+| 场景                           | 处理方式                       |
+| ------------------------------ | ------------------------------ |
+| 无变更目录                     | 进入「阶段 1：设计探索」       |
+| 仅 1 个变更目录                | 自动选定该变更                 |
+| 多个变更目录                   | 列出所有 change-id，请用户选择 |
+| 用户在触发语中指定了 change-id | 直接使用指定的变更             |
 
 示例：用户说「跑一下 add-refund-detail 的 e2e」→ 直接定位到 `openspec/changes/add-refund-detail/`。
 
@@ -61,18 +56,18 @@ find openspec/changes -maxdepth 2 -name proposal.md 2>/dev/null
 
 ### 步骤 2：根据产物 + 意图推断阶段
 
-| 变更目录产物 | 用户意图（触发语示例） | 执行动作 |
-|-------------|----------------------|---------|
-| 无 | 开始新需求 / 新功能 / 做个新 feature / 开始开发 | 阶段 1：设计探索 |
-| 有 `proposal.md` + `specs/` 但无 `tasks.md` | 继续这个需求 / 接着做 / 继续开发 | 阶段 2：任务规划 |
-| 有 `tasks.md` 且存在未勾选项 | 继续开发 / 接着写 / 继续这个需求 | 阶段 3：继续 T1 开发 |
-| `tasks.md` 全部勾选 | 后端 spec 到了 / 后端接口文档来了 / API 文档到了 | 事件 A：pull-spec → 联调 |
-| 有变更目录 + YApi/飞书链接或对齐语义 | YApi 接口到了 / re-check / 对齐 YApi / 继续对齐接口 / 贴 YApi 或飞书链 | 事件 A：**re-check**（默认）；仅落盘 → pull-yapi only |
-| `tasks.md` 全部勾选 | 测试 spec 到了 / 测试用例来了 / QA 文档到了 | 事件 B：测试 Spec 到达 |
-| `tasks.md` 全部勾选 | 跑自动化验证 / 跑 e2e / 浏览器验证一下 / 验证一下这个需求 | 阶段 4：Browser 交叉验证 |
-| 无活跃变更目录 | 用这个 spec 跑 e2e `<链接/路径>` / 按这个测试用例验证一下 | 阶段 4：Browser 交叉验证（延迟模式） |
-| 有 `e2e-report.md` 且 **`## 验收结论`** 允许归档（**通过**，或**不通过**但已记录用户同意带已知问题归档） | 归档 / 可以归档了 / archive | 阶段 5：归档 |
-| 有 `e2e-report.md` 但结论不通过且未同意带债 | 继续修 E2E / 重跑（仍属阶段 4 后续） | 不进入阶段 5 |
+| 变更目录产物                                                                                             | 用户意图（触发语示例）                                                 | 执行动作                                              |
+| -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------- |
+| 无                                                                                                       | 开始新需求 / 新功能 / 做个新 feature / 开始开发                        | 阶段 1：设计探索                                      |
+| 有 `proposal.md` + `specs/` 但无 `tasks.md`                                                              | 继续这个需求 / 接着做 / 继续开发                                       | 阶段 2：任务规划                                      |
+| 有 `tasks.md` 且存在未勾选项                                                                             | 继续开发 / 接着写 / 继续这个需求                                       | 阶段 3：继续 T1 开发                                  |
+| `tasks.md` 全部勾选                                                                                      | 后端 spec 到了 / 后端接口文档来了 / API 文档到了                       | 事件 A：pull-spec → 联调                              |
+| 有变更目录 + YApi/飞书链接或对齐语义                                                                     | YApi 接口到了 / re-check / 对齐 YApi / 继续对齐接口 / 贴 YApi 或飞书链 | 事件 A：**re-check**（默认）；仅落盘 → pull-yapi only |
+| `tasks.md` 全部勾选                                                                                      | 测试 spec 到了 / 测试用例来了 / QA 文档到了                            | 事件 B：测试 Spec 到达                                |
+| `tasks.md` 全部勾选                                                                                      | 跑自动化验证 / 跑 e2e / 浏览器验证一下 / 验证一下这个需求              | 阶段 4：Browser 交叉验证                              |
+| 无活跃变更目录                                                                                           | 用这个 spec 跑 e2e `<链接/路径>` / 按这个测试用例验证一下              | 阶段 4：Browser 交叉验证（延迟模式）                  |
+| 有 `e2e-report.md` 且 **`## 验收结论`** 允许归档（**通过**，或**不通过**但已记录用户同意带已知问题归档） | 归档 / 可以归档了 / archive                                            | 阶段 5：归档                                          |
+| 有 `e2e-report.md` 但结论不通过且未同意带债                                                              | 继续修 E2E / 重跑（仍属阶段 4 后续）                                   | 不进入阶段 5                                          |
 
 ---
 
@@ -97,11 +92,11 @@ find openspec/changes -maxdepth 2 -name proposal.md 2>/dev/null
 
 **优先检查**对话上下文中是否包含由 `/dev-start` 传递的需求层信息：
 
-| 检测项 | 含义 |
-|--------|------|
-| `prd.md` 全文 | 产品 spec 已由 `/dev-start` 读取并传递 |
-| 匹配的 MODULE 列表 | 本次变更范围已由开发确认 |
-| `requirement_ref` 路径 | specs 仓库中的需求定位 |
+| 检测项                 | 含义                                   |
+| ---------------------- | -------------------------------------- |
+| `prd.md` 全文          | 产品 spec 已由 `/dev-start` 读取并传递 |
+| 匹配的 MODULE 列表     | 本次变更范围已由开发确认               |
+| `requirement_ref` 路径 | specs 仓库中的需求定位                 |
 
 - **有需求层上下文** → 直接使用产品 spec 的对应 MODULE 内容作为需求输入，**跳过来源询问**，进入 brainstorming
 - **无需求层上下文** → 走下方原有多源采集流程（兼容）
@@ -110,14 +105,14 @@ find openspec/changes -maxdepth 2 -name proposal.md 2>/dev/null
 
 需求来源可以是**单一渠道**，也可以是**多个组合**（如「飞书链接 + Spec 文档 + 截图补充」），Agent 须按来源逐一采集，最终**合并整理**为统一的「需求事实 + 范围边界」，不得遗漏用户给出的范围限定。
 
-| 来源 | 获取方式 | 典型场景 |
-|------|----------|----------|
-| **飞书文档** | **feishu-mcp**（或等价 MCP）自动拉取 | 产品 PRD / 需求文档在飞书 |
+| 来源                    | 获取方式                                                                                            | 典型场景                                          |
+| ----------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| **飞书文档**            | **feishu-mcp**（或等价 MCP）自动拉取                                                                | 产品 PRD / 需求文档在飞书                         |
 | **Spec 文档（GitLab）** | 复用 **pull-spec** 的 GitLab API 机制（`GITLAB_TOKEN` 或 `GITLAB_PRIVATE_TOKEN` + API）**读取内容** | 产品/业务需求以 Spec 形式存放在另一个 GitLab 仓库 |
-| **YApi 接口** | **pull-yapi** → **user-yapi-common-mcp** `get_interface_detail`（`interfaceURL` / `interfaceID`） | 设计期对齐字段；用户已给链接或 ID 时拉取 |
-| **截图** | 直接上传 | 原型图、飞书片段截图、标注图 |
-| **纯文字** | 对话中输入 | 口头描述、聊天记录、会议纪要 |
-| **本地文件** | 文件路径 | 已导出的文档（Markdown / PDF / Word 等） |
+| **YApi 接口**           | **pull-yapi** → **user-yapi-common-mcp** `get_interface_detail`（`interfaceURL` / `interfaceID`）   | 设计期对齐字段；用户已给链接或 ID 时拉取          |
+| **截图**                | 直接上传                                                                                            | 原型图、飞书片段截图、标注图                      |
+| **纯文字**              | 对话中输入                                                                                          | 口头描述、聊天记录、会议纪要                      |
+| **本地文件**            | 文件路径                                                                                            | 已导出的文档（Markdown / PDF / Word 等）          |
 
 > **注意**：上述来源**不互斥**——用户可一次性提供多种来源。Agent 须依次处理每种来源，汇总后再进入 brainstorming。
 
@@ -191,12 +186,14 @@ find openspec/changes -maxdepth 2 -name proposal.md 2>/dev/null
 #### 范围限定（适用于所有来源）
 
 若用户在提供任何来源时**同时指定了范围**（二选一或并存）：
+
 - **自然语言范围**（如「只做订单列表页的筛选区」「第 3 节到第 5 节」）：只将**该范围**内的需求纳入本次变更的必选范围，并在笔记中写明边界；范围外内容仅作背景，不自动纳入实现范围。
 - **截图圈选/标注**：以截图所示区域或标注为准，识别对应模块/模块内控件，同样写明「本次仅覆盖截图/描述所指范围」。
 
 #### 多源合并与冲突
 
 当用户同时提供多种来源时：
+
 1. 按来源逐一采集并提取需求点、业务规则、验收标准。
 2. **合并**为统一的结构化需求摘要；标注每条需求的**出处**（飞书 / Spec / YApi / 截图 / 文字）。
 3. **来源间信息冲突**时：**不自行裁决**，在 brainstorming 中**向用户列出冲突点**并请求澄清。
@@ -242,6 +239,7 @@ Brainstorming 确认方案后、调用 `design-to-opsx` 前，识别本次变更
 仅讨论与本次变更**相关**的维度，跳过不涉及的部分。
 
 **1. UI 状态完整性**
+
 - 空状态：列表/表格无数据时展示什么？（空白占位图 + 文案引导 / 隐藏整个区域 / 其他）
 - 加载态：初始加载和操作中分别用什么形式？（骨架屏 / spinner / 渐进式占位）
 - 错误态：网络异常、业务错误、超时分别如何展示？（toast / 内联提示 / 全屏错误页）
@@ -249,6 +247,7 @@ Brainstorming 确认方案后、调用 `design-to-opsx` 前，识别本次变更
 - 禁用态：按钮/表单项禁用时的视觉反馈和交互行为？
 
 **2. 交互细节**
+
 - 表单验证时机：实时校验 / 失焦校验 / 提交时校验？
 - 防重复提交：按钮 loading + 禁用？节流？时间窗口？
 - 破坏性操作确认：哪些操作需二次确认弹窗？（删除、批量操作、不可逆变更）
@@ -256,6 +255,7 @@ Brainstorming 确认方案后、调用 `design-to-opsx` 前，识别本次变更
 - 列表增删改后：刷新整个列表 / 局部更新 / 乐观更新？
 
 **3. 数据边界与展示**
+
 - 长文本：截断 + tooltip / 换行 / 展开收起？
 - 大数据量：分页 / 无限滚动 / 虚拟列表？默认分页参数？
 - 极端值：金额/数量为 0、负数、超大数时的展示格式？
@@ -263,16 +263,19 @@ Brainstorming 确认方案后、调用 `design-to-opsx` 前，识别本次变更
 - 数值精度：小数保留几位？舍入规则？
 
 **4. 响应式与布局**
+
 - 是否需要响应式？目标断点？（仅桌面 / 桌面+平板 / 全终端）
 - 容器最小/最大宽度？
 - 内容溢出策略：横向滚动 / 列隐藏 / 自适应？
 
 **5. 权限与条件渲染**
+
 - 不同角色/权限看到的内容差异？
 - 无权限时：隐藏元素 / 显示但禁用 / 显示提示？
 - 是否需要 feature flag 控制？
 
 **6. 动效与过渡**
+
 - 列表增删是否需要动画？
 - 页面/模块切换过渡效果？
 - 操作反馈动效（成功、删除等）？
@@ -286,15 +289,16 @@ Brainstorming 确认方案后、调用 `design-to-opsx` 前，识别本次变更
 3. 用户可以逐个回答，也可以说"用项目默认"（Agent 基于步骤 1a 扫描到的现有模式推断）
 4. 所有决策收集完毕后，汇总为如下格式，暂存在对话上下文中传递给 `design-to-opsx`：
 
-| 维度 | 灰区问题 | 决策 | 依据 |
-|------|---------|------|------|
-| 空状态 | 退款列表无数据 | 空白占位图 + "暂无退款记录" | 复用现有 EmptyState 组件 |
-| 加载态 | 退款列表首次加载 | 骨架屏 | 项目已有 Skeleton 组件 |
-| 防重复 | 提交退款按钮 | loading + 禁用 3s | 涉及资金操作，严格防重 |
+| 维度   | 灰区问题         | 决策                        | 依据                     |
+| ------ | ---------------- | --------------------------- | ------------------------ |
+| 空状态 | 退款列表无数据   | 空白占位图 + "暂无退款记录" | 复用现有 EmptyState 组件 |
+| 加载态 | 退款列表首次加载 | 骨架屏                      | 项目已有 Skeleton 组件   |
+| 防重复 | 提交退款按钮     | loading + 禁用 3s           | 涉及资金操作，严格防重   |
 
 #### 跳过条件
 
 以下场景可跳过灰区讨论，直接进入 `design-to-opsx`：
+
 - 纯文案/样式微调，不涉及交互逻辑和数据展示
 - 用户明确表示"跳过灰区讨论"或"不需要讨论细节"
 
@@ -310,10 +314,12 @@ Brainstorming 确认方案后、调用 `design-to-opsx` 前，识别本次变更
 # Tasks: <change-id>
 
 > **执行约束**
+>
 > - 每个 task 遵循 TDD: 写测试 → 验证失败 → 最小实现 → 验证通过
 > - 完成有意义的 task 后 commit（**须用户确认**；确认后 `git add .` → **必须**提交前代码审查：有 aicr-local 则 `/cr` 或该技能流程，无则 Agent 自审暂存区 → 再 commit Command 或终端提交，见阶段 3），不要求每个 TDD 循环都 commit
 >
 > **测试分层**
+>
 > - L1 契约测试: 基于 proposal 中 API 契约，使用 mock 数据
 > - L2 行为测试: 基于 spec.md 中 Scenario（WHEN/THEN）
 > - L3 联调验证: 后端 spec 到达 → 校准 mock；联调 → 真实 API 重跑
@@ -374,6 +380,7 @@ T1 前端开发完成（tasks.md 全部 `[x]`）后，根据用户触发语执�
 ### 事件 A：后端 Spec / YApi 到达 → 联调
 
 **触发语示例**：
+
 - "后端spec到了 `<GitLab链接>`"
 - "后端接口文档来了 `<链接>`"
 - "API文档到了 `<链接>`"
@@ -383,29 +390,32 @@ T1 前端开发完成（tasks.md 全部 `[x]`）后，根据用户触发语执�
 - "只拉 YApi" / "只落盘契约" / "从 YApi 拉 interface `<id>`"（**仅文档**，不改代码）
 
 **无感路由**（对话中含飞书/YApi 链接且能唯一定位 change-id）：
+
 - 默认 → **`re-check`**（若需对齐 mock/实现，或 `contract_source: inferred`）
 - 用户明确「只拉文档/只落盘/不要改代码」→ 仅 **`pull-yapi`**
 
 **按输入选择技能**：
 
-| 用户输入 | 技能 | 产出 |
-|----------|------|------|
-| GitLab / workspace / 粘贴叙事 spec | **`pull-spec`** | `backend-*.md` 或 `qa-*.md` |
-| YApi 对齐 mock/实现（默认） | **`re-check`** | 落盘 + 改代码 + TDD（内含 pull-yapi） |
-| 仅 YApi 契约文档 | **`pull-yapi`** | `backend-yapi-<slug>.md` + diff，**不改业务代码** |
-| GitLab + YApi 对齐实现 | **pull-spec + re-check** | 分别落盘；字段以 YApi 为准（3a） |
+| 用户输入                           | 技能                     | 产出                                              |
+| ---------------------------------- | ------------------------ | ------------------------------------------------- |
+| GitLab / workspace / 粘贴叙事 spec | **`pull-spec`**          | `backend-*.md` 或 `qa-*.md`                       |
+| YApi 对齐 mock/实现（默认）        | **`re-check`**           | 落盘 + 改代码 + TDD（内含 pull-yapi）             |
+| 仅 YApi 契约文档                   | **`pull-yapi`**          | `backend-yapi-<slug>.md` + diff，**不改业务代码** |
+| GitLab + YApi 对齐实现             | **pull-spec + re-check** | 分别落盘；字段以 YApi 为准（3a）                  |
 
 **REQUIRED SUB-SKILL:** `pull-spec` 和/或 `re-check` 或 `pull-yapi`（按上表）
 
 `pull-spec`：workspace-aware 三级读取（见 pull-spec 技能）。
 
 `re-check`（**YApi 联调默认**）：
+
 - REQUIRED 调用 **`pull-yapi`** 落盘与 proposal diff
 - 划定 scope（`modules` → git diff → 交集；皆空则只报告）
 - 扫描 mock、分级差异、破坏性/批量（≥3 接口或 ≥5 文件）须用户确认
 - 详见 **`re-check`** 技能
 
 `pull-yapi`（仅文档）：
+
 - 用户提供 YApi 链接或 `interfaceID`；**不得**修改业务代码
 - 详见 **`pull-yapi`** 技能
 
@@ -416,6 +426,7 @@ T1 前端开发完成（tasks.md 全部 `[x]`）后，根据用户触发语执�
 ### 事件 B：测试 Spec 到达
 
 **触发语示例**：
+
 - "测试spec到了 `<GitLab链接>`"
 - "测试用例来了 `<链接>`"
 - "QA文档到了 `<链接>`"
@@ -446,6 +457,7 @@ T1 前端开发完成（tasks.md 全部 `[x]`）后，根据用户触发语执�
 2. **测试 spec 到达后的提示**：在**事件 B** 拉取并解析 `qa-*.md` 后，可向用户询问是否**马上**做 Browser 交叉验证；**用户确认后**再进入 `e2e-verify`（不得在未确认时自动执行浏览器自动化）。
 
 **触发语示例**：
+
 - 常规："跑自动化验证" / "跑e2e" / "浏览器验证一下" / "跑一下 `<change-id>` 的e2e"
 - 延迟（代码已提交，无活跃变更）："用这个spec跑e2e `<链接/路径>`" / "按这个测试用例验证一下"
 
