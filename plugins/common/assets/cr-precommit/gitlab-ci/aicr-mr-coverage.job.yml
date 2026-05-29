@@ -1,0 +1,45 @@
+# AICR MR 覆盖率（增量 job，不阻塞现有 pipeline）
+#
+# ⚠️ 根 .gitlab-ci.yml 前置条件：
+#    1) workflow: rules 须放行 merge_request_event
+#    2) stages: 须包含 .post（本 job 的 stage）
+#    见 workflow-rules.md / starter.gitlab-ci.yml
+#
+# 认证：CI 默认 CI_JOB_TOKEN；本机 pre-push 上传 events 需 GITLAB_TOKEN。
+
+aicr-mr-coverage:
+  stage: .post
+  image: node:20-alpine
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      exists:
+        - .githooks/aicr/aggregate-mr.mjs
+  allow_failure: true
+  needs: []
+  variables:
+    AICR_EVENTS_FILE: ".git/aicr/events.ndjson"
+    AICR_COVERAGE_FILE: "coverage.json"
+    AICR_MR_COMMITS_FILE: "mr-commits.json"
+  script:
+    - node .githooks/aicr/fetch-events-ci.mjs
+      --output "$AICR_EVENTS_FILE"
+      --branch "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"
+      --project-id "$CI_PROJECT_ID"
+      || true
+    - node .githooks/aicr/list-mr-commits.mjs
+      --output "$AICR_MR_COMMITS_FILE"
+      --project-id "$CI_PROJECT_ID"
+      --mr-iid "$CI_MERGE_REQUEST_IID"
+    - COMMITS="$(node -e "const fs=require('fs'); const ids=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(JSON.stringify(ids));" "$AICR_MR_COMMITS_FILE")"
+    - node .githooks/aicr/aggregate-mr.mjs
+      --events "$AICR_EVENTS_FILE"
+      --commits "$COMMITS"
+      --output "$AICR_COVERAGE_FILE"
+    - node .githooks/aicr/publish-gitlab-note.mjs
+      --project-id "$CI_PROJECT_ID"
+      --mr-iid "$CI_MERGE_REQUEST_IID"
+      --report-file "$AICR_COVERAGE_FILE"
+  artifacts:
+    when: always
+    paths:
+      - coverage.json

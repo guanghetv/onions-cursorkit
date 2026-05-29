@@ -1,0 +1,157 @@
+---
+description: 代码提交前必须完整执行 /cr，Agent 禁止主动跳过审查流程
+alwaysApply: true
+---
+
+# 提交前 /cr 门禁
+
+本仓库已安装 AICR pre-commit 门禁（`.githooks/`）。Agent 协助提交时**必须**遵守本规则。
+
+## 优先级（冲突时以此为准）
+
+1. **必须**完整执行 `/cr`（遵守 `aicr-local` 技能）
+2. **禁止**为通过 pre-commit 而伪造审查
+3. 仅当用户**明确**要求跳过时，才允许 `AICR_BYPASS_CR=1`
+4. **最后**才是完成 commit
+
+> 宁可告知用户「需先 /cr」并中止，也不得用假 cr 换 commit 成功。
+
+## 强制流程
+
+```
+git add <files>
+/cr                              # 完整审查 → 输出 ## 审查报告 → 写入 cr_completed(status=pass)
+团队 /commit 或 git commit       # 门禁通过后提交；message 规范以团队 /commit 为准
+```
+
+> 本插件**不提供** `/commit` Command，避免与团队版重名冲突。提交格式由团队 Command 维护；**审查门禁**由本 Rule + pre-commit hook  enforce。
+
+## 完整 `/cr` 的定义
+
+完整 `/cr` = 先 Read `aicr-local` 技能，再按其步骤 1–11 执行。**不得**用「快速读 diff」代替。
+
+| 步骤 | 必须动作 | 可跳过 |
+|------|----------|--------|
+| 1 | `git diff --cached` 获取变更 | 暂存区为空则中止 |
+| 2 | 判断代码类型 | — |
+| 3 | 读取对应规范（frontend/backend_standard） | 纯 `.md`/`.mdc` 可读 review_guidance |
+| 4–6 | 检查 spec、项目 rules | 无相关文件时标注 N/A |
+| 7 | 影响范围（Grep / ReadLints 等） | 纯文档可简化，须在报告中说明 |
+| 10 | **向用户输出 `## 审查报告`** | **不可跳过** |
+| 11 | 结论为 `✅ 无明显问题` 时写 `cr_completed`（`status=pass`） | 有 🔴/🟠 时**禁止**写 pass |
+
+技能路径：`~/.cursor/plugins/local/common/skills/aicr-local/SKILL.md`
+
+## hook 硬校验（机器 enforce）
+
+pre-commit 通过 `validate-cr-gate.mjs` 校验：
+
+- 存在有效的 `cr_completed`（在本次提交尝试之后）
+- `cr_completed.status` === `"pass"`（有 🔴/🟠 时不得为 pass）
+- `cr_completed.files` === `git diff --cached --name-only`
+- `cr_completed.diff_fingerprint` === 当前暂存区文件列表 hash
+
+**暂存区变更后必须重新 `/cr`**，旧 cr 记录无法复用。
+
+## 允许 commit 的条件（全部满足）
+
+- [ ] 本轮对话已输出 `## 审查报告`（含 **执行清单** + **结论**）
+- [ ] 结论为 `✅ 无明显问题`（**无** 🔴/🟠）
+- [ ] 已 Read 并按 `aicr-local` 步骤执行（非仅读 diff）
+- [ ] `cr_completed` 在本轮报告**之后**写入，且 `status=pass`、含完整 `files` 列表
+- [ ] 暂存区文件与审查范围一致（hook 会校验 fingerprint）
+- [ ] 未使用 `AICR_BYPASS_CR=1`（除非用户明确要求跳过）
+- [ ] **审查过程中未擅自修改**待提交的业务代码
+
+**任一不满足 → 禁止执行 `git commit`**，告知用户需先处理审查问题或重新 `/cr`。
+
+## 审查发现问题时（🔴/🟠）— 最高优先级
+
+当 `/cr` 或用户请求提交（含团队 `/commit`）时发现 🔴/🟠 问题时：
+
+1. **立即中止提交**，不得执行 `git commit` 或团队 `/commit`
+2. **禁止** Agent 未经用户明确要求就修改业务代码以「通过审查后再提交」
+3. **禁止**写入 `status=pass` 的 `cr_completed`
+4. **必须**向用户完整列出问题，并说明：须由用户自行决定是否修复、如何修复
+5. 用户修复并 `git add` 后，须对**新暂存区**重新执行完整 `/cr`
+
+> 典型错误：审查发现「删除了函数但模板仍引用」→ Agent 自行改回部分逻辑 → 写 pass → commit。**一律禁止。**
+
+## 提交动作专用规则（含团队 `/commit`）
+
+用户触发团队 `/commit`、或要求 Agent 执行 `git commit` 时：
+
+1. 若本轮**尚未**输出 `## 审查报告` → **先执行完整 `/cr`**，不得直接 commit
+2. 若审查结论含 🔴/🟠 → **中止 commit**，不得擅自改代码后重试
+3. **禁止**在同一轮中「写 cr_completed + git commit」而跳过报告
+4. commit 被 hook 拦截 → 回到 `/cr`，**禁止** bypass 重试
+
+## 无例外文件类型
+
+以下变更同样必须完整 `/cr`，不得以「配置/文档/规则/简单改动」为由跳过：
+
+- `.cursor/rules/**`、`.githooks/**`
+- `*.md`、`*.mdc`
+- CI、脚本、依赖锁文件等
+
+## 禁止行为
+
+- **禁止**未完成完整 `/cr` 就写入 `cr_completed`
+- **禁止**审查有 🔴/🟠 时写入 `status=pass` 的 `cr_completed`
+- **禁止**在 `/cr` 或提交流程中**擅自修改**待提交业务代码以通过审查
+- **禁止**发现问题后「先改代码 → 再 /cr → 再 commit」的单轮闭环（除非用户**逐步明确**要求修复某条问题）
+- **禁止**主动设置 `AICR_BYPASS_CR=1`（除非用户**明确**要求跳过）
+- **禁止**提交被 hook 拦截后用 bypass 代替 `/cr`
+- **禁止**将「快速阅读 diff」等同于 `/cr`
+- **禁止**把历史 `cr_completed` 当作本次已审查的证据
+- **禁止**在提交流程中单独调用 `event-log.mjs` 绕过审查（仅允许作为 aicr-local 步骤 11）
+
+## 审查报告格式（门禁证据）
+
+写入 `cr_completed` 前，回复中**必须**包含：
+
+```markdown
+## 审查报告
+
+**执行清单**
+- [x] Read aicr-local/SKILL.md
+- [x] git diff --cached
+- [x] 读取规范（frontend_standard / backend_standard / review_guidance 或 N/A + 原因）
+- [x] spec / 项目 rules 检查（或 N/A + 原因）
+- [x] 影响范围（Grep / ReadLints 或 N/A + 原因）
+
+**结论**
+✅ 无明显问题
+```
+
+若存在 🔴/🟠，结论须为 `❌ 存在问题` 并列出问题；**此时禁止 commit，禁止写 pass 的 cr_completed**。
+
+## 被 hook 拦截时
+
+1. 告知用户缺少有效 `/cr` 或 fingerprint 不匹配
+2. 对**当前暂存区**执行完整 `/cr`（`aicr-local`，输出含执行清单的报告）
+3. 报告输出并写入 `cr_completed` 后，再执行团队 `/commit` 或 `git commit`
+
+## 允许跳过的唯一条件
+
+仅当用户在**当前对话中明确**说出「跳过 cr」「bypass cr」「紧急提交不审查」等意图时，才可使用 `AICR_BYPASS_CR=1`，且必须设置 `AICR_BYPASS_REASON` 并在回复中说明原因。
+
+## 示例
+
+```
+# ❌ 错误：commit 失败后直接 bypass
+AICR_BYPASS_CR=1 git commit -m "..."
+
+# ❌ 错误：未输出 ## 审查报告 就写 cr_completed
+node .githooks/aicr/event-log.mjs '{"event":"cr_completed",...}'
+
+# ❌ 错误：审查有问题仍写 pass 并 commit
+# 报告含 🔴 → 禁止 node ... cr_completed status=pass → 禁止 git commit
+
+# ❌ 错误：审查发现问题后 Agent 擅自改代码再提交
+/cr → 发现 bug → Agent 自行修复 → git add → /cr → 提交
+
+# ✅ 正确：有问题则中止，等用户决定
+/cr → 报告 ❌ 存在问题 → 停止，告知用户
+# 用户明确要求修复后，Agent 可改代码；用户 git add 后重新 /cr → 结论 ✅ → 团队 /commit 或 git commit
+```

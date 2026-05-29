@@ -62,6 +62,20 @@ git add <files>
 /cr https://gitlab.yc345.tv/backend/foo/-/merge_requests/123
 ```
 
+## 与提交前提醒链路协同（可选）
+
+当仓库安装了 `cr-precommit-setup`（可通过 `/cr-setup` 安装）后，`/cr` 与 pre-commit 提醒链路协同工作：
+
+- 开发者仍然手动执行 `/cr` 做代码自检；
+- 执行 `git commit` 时，pre-commit hook 自动检查是否存在最近的 `cr_completed` 证据；
+- 若缺失证据，默认阻断 commit；可通过 `AICR_BYPASS_CR=1` 显式跳过（原因可选：`AICR_BYPASS_REASON`）；
+- MR 阶段可基于事件日志聚合 `/cr` 覆盖率。
+
+默认参数：
+
+- 事件日志：`AICR_EVENT_LOG`（默认 `.git/aicr/events.ndjson`）
+- 门禁模式：`AICR_ENFORCEMENT_MODE`（默认 `hard`，可切 `soft`）
+
 ## 审查流程
 
 ### 步骤 1: 获取变更
@@ -313,7 +327,55 @@ MR 模式下，根据 `branch_state` 分三层策略，逐层递减 Cursor Agent
 
 ### 步骤 10: 执行审查并输出报告
 
-基于构建的提示词进行审查，输出极简报告。
+基于构建的提示词进行审查，输出极简报告。报告末尾须给出**审查结论**（二选一）：
+
+- `✅ 无明显问题` — 可进入步骤 11 写入 `status=pass` 的 `cr_completed`
+- `❌ 存在问题` — 报告中含 🔴 或 🟠 时**必须**使用此结论
+
+**审查发现问题时，Agent 禁止行为**：
+
+- **禁止**未经用户明确要求就修改业务代码以「通过审查」
+- **禁止**在发现问题后擅自 `git add` 修复并继续提交
+- **禁止**写入 `status=pass` 的 `cr_completed`
+- **必须**告知用户提交已阻断，由用户自行决定是否修复、如何修复；用户修复并 `git add` 后须重新完整 `/cr`
+
+### 步骤 11: 写入审查结果事件（与 pre-commit 协同）
+
+当仓库已安装 pre-commit 提醒链路时（存在 `event-log.mjs`），在审查报告输出**之后**写入事件。
+
+**仅当步骤 10 结论为 `✅ 无明显问题` 时**，写入 `cr_completed` 且 **`status` 必须为 `"pass"`**：
+
+```bash
+logger_path=""
+if [ -f ".githooks/aicr/event-log.mjs" ]; then
+  logger_path=".githooks/aicr/event-log.mjs"
+elif [ -f ".git-hooks/aicr/event-log.mjs" ]; then
+  logger_path=".git-hooks/aicr/event-log.mjs"
+fi
+
+if [ -n "$logger_path" ]; then
+  repo_name="$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
+  branch_name="$(git branch --show-current 2>/dev/null || echo unknown)"
+  author_name="$(git config user.email 2>/dev/null || echo unknown)"
+  files_json="$(git diff --cached --name-only | node -e 'const fs=require("node:fs"); const lines=fs.readFileSync(0,"utf8").split("\n").filter(Boolean); process.stdout.write(JSON.stringify(lines));')"
+  node "$logger_path" "{\"event\":\"cr_completed\",\"repo\":\"$repo_name\",\"branch\":\"$branch_name\",\"author\":\"$author_name\",\"status\":\"pass\",\"files\":$files_json}" >/dev/null 2>&1 || true
+fi
+```
+
+**当报告含 🔴 或 🟠（结论为 `❌ 存在问题`）时**：
+
+1. **禁止**写入 `status=pass` 的 `cr_completed`
+2. 可选写入 `cr_failed` 便于统计：
+
+```bash
+node "$logger_path" "{\"event\":\"cr_failed\",\"repo\":\"$repo_name\",\"branch\":\"$branch_name\",\"author\":\"$author_name\",\"status\":\"fail\"}" >/dev/null 2>&1 || true
+```
+
+3. 明确告知：**提交已阻断**，须用户修复后重新 `/cr`
+
+> pre-commit 的 `validate-cr-gate.mjs` 只接受 `cr_completed` 且 `status=pass`。任一步失败都不应中断 `/cr` 主流程（event 写入失败可忽略）。
+
+**重要**：`files` 必须来自当前 `git diff --cached --name-only`。pre-commit 会校验 `files` 与 `diff_fingerprint` 是否与暂存区一致；暂存区变更后须重新 `/cr`。
 
 ## 四维度审查逻辑
 
@@ -473,6 +535,8 @@ MR 模式下，根据 `branch_state` 分三层策略，逐层递减 Cursor Agent
 - **暂存区为空**：先执行 `git add <files>`
 - **审查结果过于简短**：极简输出是设计的，只关注核心问题
 - **可以审查未暂存的文件吗**：不可以，必须先 `git add`
+- **如何安装提交前提醒**：执行 `/cr-setup` 一次性安装，日常无需重复执行
+- **提醒是手动还是自动**：`/cr` 手动，`git commit` 时 hook 自动提醒
 - **MR 模式行号对应哪个分支**：对应 MR 源分支。若当前在源分支且无本地变更（`branch_state = source`），文件位置可直接点击跳转；否则行号可能与当前分支不一致，报告末尾会有提示
 - **MR 模式如何获取分支名与 MR 描述**：优先配置本地 `GITLAB_TOKEN`（或 `GITLAB_PRIVATE_TOKEN`）；无 Token 时可尝试 **GitLab MCP**（备选）；均不可用时按提示手动输入分支名（多数人未配置 MCP，以 Token 为主）
 - **MR 模式提示权限错误**：检查 git 凭证（SSH key 或 credential）是否有该仓库的访问权限
@@ -483,8 +547,9 @@ MR 模式下，根据 `branch_state` 分三层策略，逐层递减 Cursor Agent
 
 1. 添加文件到暂存区：`git add src/components/UserProfile.tsx`
 2. 在 Cursor Agent 中输入：`/cr`
-3. 查看审查报告，点击文件位置跳转到对应行。
-4. 修复后重新审查：`git add <fixed-files>` → `/cr`
+3. （可选）若已安装提醒链路，`git commit` 时会自动提醒是否遗漏 `/cr`
+4. 查看审查报告，点击文件位置跳转到对应行。
+5. 修复后重新审查：`git add <fixed-files>` → `/cr`
 
 ### MR 模式
 
@@ -506,6 +571,9 @@ MR 模式下，根据 `branch_state` 分三层策略，逐层递减 Cursor Agent
 
 ### 版本历史
 
+- v1.4.0 (2026-05-29): 审查有问题时禁止写 pass 的 cr_completed；步骤 10 明确禁止 Agent 擅自改代码
+- v1.3.0 (2026-05-28): 新增步骤 11，支持在安装提醒链路后自动写入 `cr_completed` 事件
+- v1.2.0 (2026-05-28): 新增与 `cr-precommit-setup` 协同说明，支持 `/cr-setup` 提醒链路入口与自动提醒解释
 - v1.1.0 (2026-04-01): 支持 `/cr <GitLab MR 链接>` MR 模式；在源分支上时报告文件位置可点击跳转
 - v1.0.1 (2026-02-20): Markdown 链接升级为首选文件位置格式，提升 monorepo 兼容性
 - v1.0.0 (2026-02-10): 初始版本，支持三维度审查、极简输出、可点击链接

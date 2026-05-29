@@ -45,6 +45,124 @@ git add .
 - 每次审查控制在10个文件以内
 - 将大的变更拆分为多个小的提交
 
+### Q: 为什么每次提交都被阻断并提示先执行 /cr？
+
+**可能原因**：
+1. 尚未安装 pre-commit 提醒链路（未执行 `/cr-setup`）
+2. 事件日志路径不正确（默认 `.git/aicr/events.ndjson`）
+3. 上一次 `/cr` 发生在更早的提交周期（每次 commit 前都需要新的 `/cr` 记录）
+4. 当前分支或用户与事件记录不匹配
+
+**排查步骤**：
+```bash
+# 1) 查看是否存在 cr_completed 事件
+rg "cr_completed" ".git/aicr/events.ndjson"
+
+# 2) 检查 pre-commit hook 是否正确指向
+ls -l ".git/hooks/pre-commit"
+
+# 3) 检查环境变量（可选）
+echo "${AICR_EVENT_LOG:-.git/aicr/events.ndjson}"
+echo "${AICR_ENFORCEMENT_MODE:-hard}"
+```
+
+临时跳过（单次提交）：
+```bash
+AICR_BYPASS_CR=1 AICR_BYPASS_REASON="hotfix" git commit -m "..."
+```
+
+### Q: `/cr-setup` 和 `/cr` 的关系是什么？
+
+`/cr-setup` 是**一次性安装命令**，用于接入提醒与统计链路；`/cr` 是**日常自检命令**，开发提交前仍需手动执行。
+
+工作模式：
+- 人工：开发者执行 `/cr`
+- 自动：执行 `git commit` 时 hook 自动校验（默认阻断，可显式跳过）
+- 自动：MR 阶段聚合覆盖率并输出统计
+
+### Q: 执行了 `/cr`，为什么仍然提示没有 `cr_completed` 记录？
+
+**可能原因**：
+1. 仓库未安装提醒链路（缺少 `.githooks/aicr/event-log.mjs`）
+2. `/cr` 的步骤 11 未执行到（被中断或脚本路径不匹配）
+3. 当前工作区没有暂存文件，`files` 指纹为空且不满足后续策略
+
+**排查步骤**：
+```bash
+# 检查 logger 是否存在
+ls ".githooks/aicr/event-log.mjs"
+
+# 手动验证写事件
+repo="$(basename "$(git rev-parse --show-toplevel)")"
+branch="$(git branch --show-current)"
+author="$(git config user.email || echo unknown)"
+node ".githooks/aicr/event-log.mjs" "{\"event\":\"cr_completed\",\"repo\":\"$repo\",\"branch\":\"$branch\",\"author\":\"$author\"}"
+
+# 检查日志中是否落盘
+rg "cr_completed" ".git/aicr/events.ndjson"
+```
+
+### Q: `/cr` 报告有问题，为什么 commit 仍被阻断？
+
+**设计如此**：pre-commit 只接受 `cr_completed` 且 `status=pass`。报告含 🔴/🟠 时：
+
+1. **不得**写入 `status=pass` 的 `cr_completed`
+2. Agent **不得**擅自改代码后再提交
+3. 须由开发者修复 → `git add` → 重新完整 `/cr` → 结论 `✅ 无明显问题` 后再 commit
+
+若 hook 提示「报告存在问题」或「未标记为 pass」，检查最近一条 `cr_completed` 的 `status` 字段。
+
+## MR 覆盖率与 GitLab CI
+
+### Q: MR 覆盖率 comment 恒为 0%？
+
+**排查顺序**：
+
+1. post-commit 是否安装：`ls .githooks/post-commit`，commit 后是否有 `commit_cr_linked`：
+   ```bash
+   rg "commit_cr_linked" ".git/aicr/events.ndjson"
+   ```
+2. pre-push 是否上传 events（**本机**需 `GITLAB_TOKEN`，PAT 等；`CI_JOB_TOKEN` 仅在 Runner 内可用）：
+   ```bash
+   git push  # 观察 UPLOAD_OK 或 SKIP_UPLOAD_NO_TOKEN
+   ```
+3. CI 是否 include `.gitlab/ci/aicr-mr-coverage.yml`（或 `/cr-setup-ci` 接入）
+4. CI **默认用 `CI_JOB_TOKEN`**，一般无需项目 Variables；若 job 报 403，再配 `GITLAB_TOKEN` fallback
+
+**本地 smoke**：
+
+```bash
+RUN_SMOKE=true bash .githooks/aicr/smoke-mr-coverage.sh .
+```
+
+### Q: 业务仓库已有 GitLab CI，如何接入？
+
+1. 确保已 `/cr-setup`
+2. 在 Cursor 执行 **`/cr-setup-ci`** — Agent 扫描现有 pipeline（**含 `workflow: rules` 与 `stages:`**）并给出方案
+3. Agent **可改 CI 文件但不 commit**；你 review 后自行提交
+4. 参考：`.gitlab/ci/aicr-integration-checklist.md`、`workflow-rules.md`
+
+### Q: 已 include AICR job，但 MR 没有 pipeline？
+
+**常见原因**：根 `.gitlab-ci.yml` 的 **`workflow: rules` 未放行 `merge_request_event`**。Job 级 `rules` 无法单独创建 pipeline。
+
+**处理**：
+
+1. 打开 `.gitlab-ci.yml`，检查 `workflow:` 段（可能在 remote include 里）
+2. 追加：`- if: $CI_PIPELINE_SOURCE == "merge_request_event"`
+3. 若仓库尚无 CI，使用 install 复制的 `starter.gitlab-ci.yml` 作根配置
+4. 重新开 MR 或 push，确认 Pipelines 页签出现 merge request pipeline
+
+### Q: CI Lint 报 stage `.post` does not exist？
+
+**常见原因**：根 `.gitlab-ci.yml` **显式定义了 `stages:`**，但未包含 AICR job 使用的 **`.post`**。
+
+**处理**：
+
+1. 在 `stages:` 列表**末尾**追加 `- .post`（保留原有 build/test/deploy 等）
+2. 若仓库尚无 CI，使用 install 复制的 `starter.gitlab-ci.yml`（已含 `stages: [.post]`）
+3. 运行 CI Lint 或重新 push，确认 job `aicr-mr-coverage` 出现在 pipeline 中
+
 ### Q: 点击文件位置链接无法跳转？
 
 **可能原因**：
