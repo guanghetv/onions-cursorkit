@@ -58,8 +58,10 @@ git add .
 # 1) 查看是否存在 cr_completed 事件
 rg "cr_completed" ".git/aicr/events.ndjson"
 
-# 2) 检查 pre-commit hook 是否正确指向
-ls -l ".git/hooks/pre-commit"
+# 2) 检查 pre-commit hook 是否正确安装（/cr-setup 使用 core.hooksPath）
+git config core.hooksPath   # 预期输出 .githooks
+ls -l ".githooks/pre-commit"
+ls -l "vendor/aicr-runtime/hook-pre-commit.sh" 2>/dev/null || ls -l ".githooks/aicr/hook-pre-commit.sh"
 
 # 3) 检查环境变量（可选）
 echo "${AICR_EVENT_LOG:-.git/aicr/events.ndjson}"
@@ -83,24 +85,58 @@ AICR_BYPASS_CR=1 AICR_BYPASS_REASON="hotfix" git commit -m "..."
 ### Q: 执行了 `/cr`，为什么仍然提示没有 `cr_completed` 记录？
 
 **可能原因**：
-1. 仓库未安装提醒链路（缺少 `.githooks/aicr/event-log.mjs`）
+1. 仓库未安装提醒链路（缺少 `vendor/aicr-runtime/event-log.mjs` 或 `.githooks/aicr/event-log.mjs`）
 2. `/cr` 的步骤 11 未执行到（被中断或脚本路径不匹配）
 3. 当前工作区没有暂存文件，`files` 指纹为空且不满足后续策略
 
 **排查步骤**：
 ```bash
-# 检查 logger 是否存在
-ls ".githooks/aicr/event-log.mjs"
+# 检查 logger 是否存在（resolve-runtime-dir 统一探测）
+AICR_DIR=""
+for resolver in vendor/aicr-runtime/resolve-runtime-dir.sh .githooks/aicr/resolve-runtime-dir.sh; do
+  if [ -x "$resolver" ]; then
+    AICR_DIR="$(bash "$resolver" 2>/dev/null || true)"
+    [ -n "$AICR_DIR" ] && [ -f "$AICR_DIR/event-log.mjs" ] && break
+    AICR_DIR=""
+  fi
+done
+ls "${AICR_DIR:+$AICR_DIR/event-log.mjs}" 2>/dev/null
 
 # 手动验证写事件
 repo="$(basename "$(git rev-parse --show-toplevel)")"
 branch="$(git branch --show-current)"
 author="$(git config user.email || echo unknown)"
-node ".githooks/aicr/event-log.mjs" "{\"event\":\"cr_completed\",\"repo\":\"$repo\",\"branch\":\"$branch\",\"author\":\"$author\"}"
+node "${AICR_DIR}/event-log.mjs" "{\"event\":\"cr_completed\",\"repo\":\"$repo\",\"branch\":\"$branch\",\"author\":\"$author\"}"
 
 # 检查日志中是否落盘
 rg "cr_completed" ".git/aicr/events.ndjson"
 ```
+
+### Q: 升级 runtime 后提示「暂存区变更与 /cr 记录不匹配」？
+
+**原因**：`diff_fingerprint` 已改为基于 `git diff --cached` 内容 hash；旧的 `cr_completed` 仍使用文件路径 hash，与新版门禁不兼容。
+
+**处理**：对当前暂存区重新执行完整 `/cr`，再提交。
+
+### Q: commit 成功但 MR 覆盖率未增加（无 `commit_cr_linked`）？
+
+**排查**：
+
+```bash
+rg "commit_attempted|commit_cr_linked" ".git/aicr/events.ndjson" | tail -5
+```
+
+常见原因：
+
+1. 使用了 `AICR_BYPASS_CR=1` 或 soft/telemetry 放行 → post-commit 不会关联（仅 `status=allowed` 才写入 `commit_cr_linked`）
+2. `/cr` 发生在更早的提交周期，或 commit 后又执行了新的 `/cr` → 输出 `CR_NOT_FOR_THIS_COMMIT`
+3. 同文件多次提交时旧版 runtime 因 fingerprint 去重跳过 → 升级 `vendor/aicr-runtime` 后对新 commit 重新 `/cr` + commit
+
+### Q: pre-commit 报 validator 崩溃或 `maxBuffer exceeded`？
+
+**原因**：单次暂存 diff 过大（默认上限约 10MB）。
+
+**处理**：拆分提交、缩小暂存范围，或排除大体积生成物后再 `/cr`。
 
 ### Q: `/cr` 报告有问题，为什么 commit 仍被阻断？
 
@@ -112,9 +148,11 @@ rg "cr_completed" ".git/aicr/events.ndjson"
 
 若 hook 提示「报告存在问题」或「未标记为 pass」，检查最近一条 `cr_completed` 的 `status` 字段。
 
-## MR 覆盖率与 GitLab CI
+## MR 覆盖率与服务端上报
 
-### Q: MR 覆盖率 comment 恒为 0%？
+MR 覆盖率由 **AI-CodeReview 服务**聚合并写入 GitLab MR description（非业务仓 GitLab CI job）。
+
+### Q: MR 覆盖率恒为 0% 或偏低？
 
 **排查顺序**：
 
@@ -122,46 +160,33 @@ rg "cr_completed" ".git/aicr/events.ndjson"
    ```bash
    rg "commit_cr_linked" ".git/aicr/events.ndjson"
    ```
-2. pre-push 是否上传 events（**本机**需 `GITLAB_TOKEN`，PAT 等；`CI_JOB_TOKEN` 仅在 Runner 内可用）：
+2. pre-push 是否上报 events 至 AI-CodeReview：
    ```bash
-   git push  # 观察 UPLOAD_OK 或 SKIP_UPLOAD_NO_TOKEN
+   git push  # 观察 UPLOAD_OK；失败见 UPLOAD_EVENTS_FAILED
+   echo "${AICR_INGEST_URL:-https://aicrfe.yc345.tv/review/aicr/events}"
    ```
-3. CI 是否 include `.gitlab/ci/aicr-mr-coverage.yml`（或 `/cr-setup-ci` 接入）
-4. CI **默认用 `CI_JOB_TOKEN`**，一般无需项目 Variables；若 job 报 403，再配 `GITLAB_TOKEN` fallback
+3. 服务端是否收到事件（需 `project_path` 或 `project_id`）；Ingress 须放行 `POST /review/aicr/events`
+4. GitLab webhook 是否触发 MR 覆盖率刷新（`merge_request` open/update 或 `push`）
 
-**本地 smoke**：
+**本地自检**（在业务仓根目录）：
 
 ```bash
-RUN_SMOKE=true bash .githooks/aicr/smoke-mr-coverage.sh .
+AICR_DIR="$(bash vendor/aicr-runtime/resolve-runtime-dir.sh 2>/dev/null || bash .githooks/aicr/resolve-runtime-dir.sh)"
+node "$AICR_DIR/event-log.mjs" --self-check
+node "$AICR_DIR/validate-cr-gate.mjs" --self-check
+node "$AICR_DIR/link-cr-commit.mjs" --self-check
+node "$AICR_DIR/upload-events-ci.mjs" --self-check
 ```
 
-### Q: 业务仓库已有 GitLab CI，如何接入？
+### Q: push 时上传失败但不阻断 push？
 
-1. 确保已 `/cr-setup`
-2. 在 Cursor 执行 **`/cr-setup-ci`** — Agent 扫描现有 pipeline（**含 `workflow: rules` 与 `stages:`**）并给出方案
-3. Agent **可改 CI 文件但不 commit**；你 review 后自行提交
-4. 参考：`.gitlab/ci/aicr-integration-checklist.md`、`workflow-rules.md`
+**设计如此**：pre-push 上传失败会保留 `.git/aicr/ci-export/*.ndjson` 快照，不阻断 `git push`。修复网络/`AICR_INGEST_URL` 后重新 push 即可。
 
-### Q: 已 include AICR job，但 MR 没有 pipeline？
+若 stderr 含 `MISSING_PROJECT_SCOPE`，说明 `project_path` 与 `project_id` 均未解析到：设置 `AICR_PROJECT_PATH=group/repo`，或在 CI 中依赖 `CI_PROJECT_ID`，并确认 `git remote get-url origin` 可解析 GitLab 路径。
 
-**常见原因**：根 `.gitlab-ci.yml` 的 **`workflow: rules` 未放行 `merge_request_event`**。Job 级 `rules` 无法单独创建 pipeline。
+### Q: 升级 runtime 后覆盖率未上升？
 
-**处理**：
-
-1. 打开 `.gitlab-ci.yml`，检查 `workflow:` 段（可能在 remote include 里）
-2. 追加：`- if: $CI_PIPELINE_SOURCE == "merge_request_event"`
-3. 若仓库尚无 CI，使用 install 复制的 `starter.gitlab-ci.yml` 作根配置
-4. 重新开 MR 或 push，确认 Pipelines 页签出现 merge request pipeline
-
-### Q: CI Lint 报 stage `.post` does not exist？
-
-**常见原因**：根 `.gitlab-ci.yml` **显式定义了 `stages:`**，但未包含 AICR job 使用的 **`.post`**。
-
-**处理**：
-
-1. 在 `stages:` 列表**末尾**追加 `- .post`（保留原有 build/test/deploy 等）
-2. 若仓库尚无 CI，使用 install 复制的 `starter.gitlab-ci.yml`（已含 `stages: [.post]`）
-3. 运行 CI Lint 或重新 push，确认 job `aicr-mr-coverage` 出现在 pipeline 中
+确认已用新版 `link-cr-commit`（按 `commit_sha` 关联，非 fingerprint 去重）。历史漏记 commit 可手工补 `commit_cr_linked` 后重新 push 上报。
 
 ### Q: 点击文件位置链接无法跳转？
 
@@ -366,7 +391,7 @@ git pull origin <source_branch>
 
 查看 `SKILL.md` frontmatter 中的 `metadata.version` 字段。
 
-当前版本：**v1.1.0**
+当前版本：**v1.4.0**
 
 ---
 

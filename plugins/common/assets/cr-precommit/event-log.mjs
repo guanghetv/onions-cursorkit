@@ -1,20 +1,12 @@
 #!/usr/bin/env node
 import fs from "node:fs/promises";
 import path from "node:path";
-import crypto from "node:crypto";
 import process from "node:process";
+import { authorEmail, branchName, repoName } from "./repo-context.mjs";
+import { stagedDiffFingerprint } from "./diff-fingerprint.mjs";
 
-const schemaPath = new URL("./schema.json", import.meta.url);
 const defaultEventFile = ".git/aicr/events.ndjson";
 const eventFile = process.env.AICR_EVENT_LOG || defaultEventFile;
-
-function fingerprint(files) {
-  const normalized = [...files]
-    .map((file) => String(file))
-    .sort()
-    .join("|");
-  return crypto.createHash("sha256").update(normalized).digest("hex");
-}
 
 async function appendEvent(event) {
   await fs.mkdir(path.dirname(eventFile), { recursive: true });
@@ -38,18 +30,57 @@ function parsePayload() {
   return JSON.parse(jsonArg);
 }
 
+function parseFlagArgs(argv) {
+  const args = { event: "", extra: "{}" };
+  for (let i = 2; i < argv.length; i += 1) {
+    const token = argv[i];
+    if (!token.startsWith("--")) {
+      continue;
+    }
+    const key = token.slice(2);
+    const value = argv[i + 1];
+    if (!value || value.startsWith("--")) {
+      throw new Error(`missing value for --${key}`);
+    }
+    args[key] = value;
+    i += 1;
+  }
+  return args;
+}
+
 async function main() {
   if (process.argv.includes("--self-check")) {
-    await fs.access(schemaPath);
     console.log("SELF_CHECK_OK");
     return;
   }
 
-  const payload = parsePayload();
+  let payload;
+  if (process.argv.includes("--event")) {
+    const args = parseFlagArgs(process.argv);
+    if (!args.event) {
+      throw new Error("missing --event");
+    }
+    let extra = {};
+    try {
+      extra = JSON.parse(args.extra || "{}");
+    } catch (error) {
+      throw new Error(`invalid --extra json: ${error.message}`);
+    }
+    payload = {
+      event: args.event,
+      repo: repoName(),
+      branch: branchName(),
+      author: authorEmail(),
+      ...extra
+    };
+  } else {
+    payload = parsePayload();
+  }
+
   ensureRequiredFields(payload);
 
   if (Array.isArray(payload.files) && payload.files.length > 0) {
-    payload.diff_fingerprint = fingerprint(payload.files);
+    payload.diff_fingerprint = stagedDiffFingerprint(payload.files);
   }
 
   payload.timestamp = payload.timestamp || new Date().toISOString();

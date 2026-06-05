@@ -49,7 +49,7 @@ pre-commit 通过 `validate-cr-gate.mjs` 校验：
 - 存在有效的 `cr_completed`（在本次提交尝试之后）
 - `cr_completed.status` === `"pass"`（有 🔴/🟠 时不得为 pass）
 - `cr_completed.files` === `git diff --cached --name-only`
-- `cr_completed.diff_fingerprint` === 当前暂存区文件列表 hash
+- `cr_completed.diff_fingerprint` === 当前暂存区 diff 内容 hash（`git diff --cached`）
 
 **暂存区变更后必须重新 `/cr`**，旧 cr 记录无法复用。
 
@@ -143,7 +143,7 @@ pre-commit 通过 `validate-cr-gate.mjs` 校验：
 AICR_BYPASS_CR=1 git commit -m "..."
 
 # ❌ 错误：未输出 ## 审查报告 就写 cr_completed
-node .githooks/aicr/event-log.mjs '{"event":"cr_completed",...}'
+node vendor/aicr-runtime/event-log.mjs '{"event":"cr_completed",...}'
 
 # ❌ 错误：审查有问题仍写 pass 并 commit
 # 报告含 🔴 → 禁止 node ... cr_completed status=pass → 禁止 git commit

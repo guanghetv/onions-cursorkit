@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LOGGER="$SCRIPT_DIR/log-hook-event.mjs"
+EVENT_LOGGER="$SCRIPT_DIR/event-log.mjs"
 VALIDATOR="$SCRIPT_DIR/validate-cr-gate.mjs"
 EVENT_LOG_FILE="${AICR_EVENT_LOG:-.git/aicr/events.ndjson}"
 ENFORCEMENT_MODE="${AICR_ENFORCEMENT_MODE:-hard}"
@@ -10,8 +10,8 @@ BYPASS_FLAG="${AICR_BYPASS_CR:-0}"
 BYPASS_REASON="${AICR_BYPASS_REASON:-}"
 
 log_event() {
-  if [[ -f "$LOGGER" ]]; then
-    node "$LOGGER" "$1" "$2" >/dev/null 2>&1 || true
+  if [[ -f "$EVENT_LOGGER" ]]; then
+    node "$EVENT_LOGGER" --event "$1" --extra "$2" >/dev/null 2>&1 || true
   fi
 }
 

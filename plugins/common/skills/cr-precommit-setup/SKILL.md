@@ -1,16 +1,16 @@
 ---
 name: cr-precommit-setup
-description: 在业务仓库安装 /cr 提交前默认阻断与 MR 覆盖率统计模板。用于一次性接入 pre-commit 门禁链路，后续由 hook 与 CI 自动执行。
+description: 在业务仓库安装 /cr 提交前默认阻断与事件上报链路。用于一次性接入 pre-commit 门禁链路，后续由 hook 自动执行并上报 AI-CodeReview。
 ---
 
 # CR Precommit Setup
 
-用于在目标业务仓库一次性安装 `/cr` 提交前提醒与统计链路。该能力默认是**硬门禁**：缺少有效 `/cr` 记录会阻断 commit，但支持显式跳过。
+用于在目标业务仓库一次性安装 `/cr` 提交前提醒与事件上报链路。该能力默认是**硬门禁**：缺少有效 `/cr` 记录会阻断 commit，但支持显式跳过。
 
 ## 何时使用
 
 - 团队希望开发提交前有 `/cr` 遗漏提醒
-- 希望在 MR 维度统计 `/cr` 覆盖率
+- 希望将 `/cr` 事件统一上报至 AI-CodeReview
 - 需要先小范围灰度，再逐步推广
 
 ## 安装步骤
@@ -26,12 +26,11 @@ bash "plugins/common/assets/cr-precommit/install.sh" /path/to/target-repo
 脚本会自动完成：
 
 - 复制 hook 脚本（pre-commit / **post-commit** / **pre-push**）与 Node 工具链
-- 同步规则 `cr-before-commit.mdc` 到目标仓库 `.cursor/rules/`（/cr 门禁；**不**安装 `/commit`）
-- 复制 GitLab CI 模板到 `.gitlab/ci/aicr-mr-coverage.yml`
+- 默认 bundled 模式：安装 thin hooks + `vendor/aicr-runtime`
+- `cr-before-commit.mdc` 由 common 插件统一下发（不再复制到业务仓）
 - 写入 `.githooks/{pre-commit,post-commit,pre-push}` 启动器
 - 执行 `git config core.hooksPath .githooks`
-- 可选：`RUN_SMOKE=true` 运行 `smoke-mr-coverage.sh`
-- 安装完成提示执行 **`/cr-setup-ci`**（可用 `AICR_SKIP_CI_PROMPT=1` 跳过）
+- 上报地址通过 `AICR_INGEST_URL` 配置
 
 预览模式：
 
@@ -41,9 +40,24 @@ DRY_RUN=true bash "plugins/common/assets/cr-precommit/install.sh" /path/to/targe
 
 ### 2) 本地链路自检
 
+bundled 模式（默认）runtime 在 `vendor/aicr-runtime/`；legacy 模式在 `.githooks/aicr/`。
+
 ```bash
-node ".githooks/aicr/event-log.mjs" --self-check
-node ".githooks/aicr/validate-cr-gate.mjs" --self-check
+# 自动探测 runtime 目录（bundled 优先）
+AICR_DIR=""
+for resolver in vendor/aicr-runtime/resolve-runtime-dir.sh .githooks/aicr/resolve-runtime-dir.sh; do
+  if [ -x "$resolver" ]; then
+    AICR_DIR="$(bash "$resolver" 2>/dev/null || true)"
+    if [ -n "$AICR_DIR" ] && [ -f "$AICR_DIR/event-log.mjs" ]; then
+      break
+    fi
+    AICR_DIR=""
+  fi
+done
+
+node "$AICR_DIR/event-log.mjs" --self-check
+node "$AICR_DIR/validate-cr-gate.mjs" --self-check
+node "$AICR_DIR/link-cr-commit.mjs" --self-check
 bash ".githooks/pre-commit"
 ```
 
@@ -63,15 +77,15 @@ bash ".githooks/pre-commit"
 - 本次提交通过（每次 commit 前都需有新的 `/cr` 记录）
 - 提交恢复通过
 
-### 4) MR 聚合链路自检
+### 4) 事件上报链路自检
 
 ```bash
-node ".githooks/aicr/aggregate-mr.mjs" --events ".git/aicr/events.ndjson" --commits '[]'
+node "$AICR_DIR/upload-events-ci.mjs" --self-check
 ```
 
 预期：
 
-- 输出包含 `coverage_rate`、`missing_commits` 的 JSON
+- 输出 `SELF_CHECK_OK`
 
 ## 默认策略
 

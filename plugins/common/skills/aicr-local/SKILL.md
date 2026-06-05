@@ -5,7 +5,7 @@ license: MIT
 compatibility: 需要Git环境；暂存区模式需暂存区有内容，MR模式需本地有对应项目
 metadata:
   author: AI-CodeReview
-  version: "1.1.0"
+  version: "1.4.0"
   source: 基于conf/prompt_templates.yml和团队规范文档
 ---
 
@@ -347,11 +347,16 @@ MR 模式下，根据 `branch_state` 分三层策略，逐层递减 Cursor Agent
 
 ```bash
 logger_path=""
-if [ -f ".githooks/aicr/event-log.mjs" ]; then
-  logger_path=".githooks/aicr/event-log.mjs"
-elif [ -f ".git-hooks/aicr/event-log.mjs" ]; then
-  logger_path=".git-hooks/aicr/event-log.mjs"
-fi
+AICR_DIR=""
+for resolver in vendor/aicr-runtime/resolve-runtime-dir.sh .githooks/aicr/resolve-runtime-dir.sh; do
+  if [ -x "$resolver" ]; then
+    AICR_DIR="$(bash "$resolver" 2>/dev/null || true)"
+    if [ -n "$AICR_DIR" ] && [ -f "$AICR_DIR/event-log.mjs" ]; then
+      logger_path="$AICR_DIR/event-log.mjs"
+      break
+    fi
+  fi
+done
 
 if [ -n "$logger_path" ]; then
   repo_name="$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
@@ -375,7 +380,7 @@ node "$logger_path" "{\"event\":\"cr_failed\",\"repo\":\"$repo_name\",\"branch\"
 
 > pre-commit 的 `validate-cr-gate.mjs` 只接受 `cr_completed` 且 `status=pass`。任一步失败都不应中断 `/cr` 主流程（event 写入失败可忽略）。
 
-**重要**：`files` 必须来自当前 `git diff --cached --name-only`。pre-commit 会校验 `files` 与 `diff_fingerprint` 是否与暂存区一致；暂存区变更后须重新 `/cr`。
+**重要**：`files` 必须来自当前 `git diff --cached --name-only`。`diff_fingerprint` 由暂存区 diff 内容（`git diff --cached`）计算，非仅文件路径；pre-commit 会校验 `files` 与 `diff_fingerprint` 是否与暂存区一致，暂存区内容变更后须重新 `/cr`。
 
 ## 四维度审查逻辑
 
