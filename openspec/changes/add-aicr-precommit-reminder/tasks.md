@@ -51,6 +51,6 @@
 - [x] 6.1 设计并实现平台批量改造脚本（`dry-run/apply`、幂等、失败报告）
 - [x] 6.2 落地 repo-bundled runtime 目录规范（`vendor/subtree` 最小运行时）
 - [x] 6.3 改造薄入口（`.githooks/pre-commit`）为本地 runtime 跳转，禁止在线拉取
-- [x] 6.4 编写旧结构迁移脚本（从 `.githooks/aicr/*` 切换到新结构）与批次回滚脚本
+- [x] 6.4 编写安装脚本 `install.sh`（幂等、dry-run；无 `.aicr-migration-backup/`）
 - [x] 6.5 在 `AI-CodeReview` 服务实现 MR 覆盖率聚合与 GitLab 发布主链路
-- [ ] 6.6 试点仓执行 batch rollout，输出成功率/失败分类/回滚演练记录
+- [ ] 6.6 试点仓执行 batch rollout，输出成功率/失败分类记录

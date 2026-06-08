@@ -2,7 +2,7 @@
 import fs from "node:fs";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
-import { authorEmail, branchName, headSha, repoName } from "./repo-context.mjs";
+import { authorEmail, branchName, headSha, repoName } from "./aicr-utils.mjs";
 
 const eventFile = process.env.AICR_EVENT_LOG || ".git/aicr/events.ndjson";
 const loggerPath = fileURLToPath(new URL("./event-log.mjs", import.meta.url));

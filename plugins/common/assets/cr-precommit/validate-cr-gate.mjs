@@ -2,7 +2,7 @@
 import fs from "node:fs";
 import { execSync } from "node:child_process";
 import process from "node:process";
-import { stagedDiffFingerprint } from "./diff-fingerprint.mjs";
+import { stagedDiffFingerprint } from "./aicr-utils.mjs";
 
 function parseArgs(argv) {
   const args = { selfCheck: false };

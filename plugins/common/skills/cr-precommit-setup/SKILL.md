@@ -25,12 +25,12 @@ bash "plugins/common/assets/cr-precommit/install.sh" /path/to/target-repo
 
 脚本会自动完成：
 
-- 复制 hook 脚本（pre-commit / **post-commit** / **pre-push**）与 Node 工具链
-- 默认 bundled 模式：安装 thin hooks + `vendor/aicr-runtime`
+- 安装 thin hooks + `vendor/aicr-runtime`（见下方清单）
 - `cr-before-commit.mdc` 由 common 插件统一下发（不再复制到业务仓）
 - 写入 `.githooks/{pre-commit,post-commit,pre-push}` 启动器
 - 执行 `git config core.hooksPath .githooks`
 - 上报地址通过 `AICR_INGEST_URL` 配置
+- **不**生成本地 `.aicr-migration-backup/`（回滚见下方）
 
 预览模式：
 
@@ -38,22 +38,29 @@ bash "plugins/common/assets/cr-precommit/install.sh" /path/to/target-repo
 DRY_RUN=true bash "plugins/common/assets/cr-precommit/install.sh" /path/to/target-repo
 ```
 
-### 2) 本地链路自检
+### 2) runtime 文件清单
 
-bundled 模式（默认）runtime 在 `vendor/aicr-runtime/`；legacy 模式在 `.githooks/aicr/`。
+`vendor/aicr-runtime/`：
+
+| 文件 | 职责 |
+|------|------|
+| `hook-pre-commit.sh` | pre-commit 门禁编排 |
+| `aicr-utils.mjs` | git 上下文 + `diff_fingerprint` |
+| `validate-cr-gate.mjs` | 校验 `cr_completed` 与暂存区 |
+| `event-log.mjs` | 写 NDJSON 事件 |
+| `link-cr-commit.mjs` | post-commit 写 `commit_cr_linked` |
+| `upload-events-ci.mjs` | pre-push 上报 events |
+
+另由 install 生成 `.githooks/{pre-commit,post-commit,pre-push}` 薄入口（指向上述 runtime）。
+
+升级时会自动删除已废弃的旧 runtime 文件（如 `repo-context.mjs`、`resolve-runtime-dir.sh`）。
+
+### 3) 本地链路自检
+
+runtime 位于 `vendor/aicr-runtime/`。
 
 ```bash
-# 自动探测 runtime 目录（bundled 优先）
-AICR_DIR=""
-for resolver in vendor/aicr-runtime/resolve-runtime-dir.sh .githooks/aicr/resolve-runtime-dir.sh; do
-  if [ -x "$resolver" ]; then
-    AICR_DIR="$(bash "$resolver" 2>/dev/null || true)"
-    if [ -n "$AICR_DIR" ] && [ -f "$AICR_DIR/event-log.mjs" ]; then
-      break
-    fi
-    AICR_DIR=""
-  fi
-done
+AICR_DIR="vendor/aicr-runtime"
 
 node "$AICR_DIR/event-log.mjs" --self-check
 node "$AICR_DIR/validate-cr-gate.mjs" --self-check
@@ -68,7 +75,7 @@ bash ".githooks/pre-commit"
 - hook 在无 `/cr` 证据时阻断提交（退出码非 0）
 - hook 在 cr 与暂存区 fingerprint 不一致时阻断提交
 
-### 3) `/cr` 后复测
+### 4) `/cr` 后复测
 
 先执行一次 `/cr`（或写入 `cr_completed` 测试事件），再执行 hook。
 
@@ -77,7 +84,7 @@ bash ".githooks/pre-commit"
 - 本次提交通过（每次 commit 前都需有新的 `/cr` 记录）
 - 提交恢复通过
 
-### 4) 事件上报链路自检
+### 5) 事件上报链路自检
 
 ```bash
 node "$AICR_DIR/upload-events-ci.mjs" --self-check
@@ -86,6 +93,33 @@ node "$AICR_DIR/upload-events-ci.mjs" --self-check
 预期：
 
 - 输出 `SELF_CHECK_OK`
+
+## 平台批量改造
+
+多仓扩面时使用 `batch-rollout.sh`（插件侧脚本，不进业务仓）：
+
+```bash
+# repos.txt：每行一个仓库绝对路径
+MODE=dry-run REPORT_FILE=/tmp/aicr-rollout-preview.csv \
+  bash "plugins/common/assets/cr-precommit/batch-rollout.sh" --repos-file /tmp/repos.txt
+
+MODE=apply REPORT_FILE=/tmp/aicr-rollout-apply.csv \
+  bash "plugins/common/assets/cr-precommit/batch-rollout.sh" --repos-file /tmp/repos.txt
+```
+
+可选环境变量：`LOG_DIR`、`REPORT_FILE`。
+
+输出 CSV 列：`repo,status,reason,log_file`；`status` 为 `PREVIEW` / `UPDATED` / `UNCHANGED` / `FAILED`。
+
+## 升级与还原
+
+升级 runtime 后，开发者须对当前暂存区**重新执行 `/cr`**（`diff_fingerprint` 已改为基于 `git diff --cached` 内容 hash）。
+
+若需还原 hook 与 runtime，用 Git：
+
+```bash
+git -C /path/to/target-repo restore --source=HEAD~1 -- .githooks vendor/aicr-runtime
+```
 
 ## 默认策略
 

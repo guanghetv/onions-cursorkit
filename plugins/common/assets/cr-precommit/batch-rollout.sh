@@ -2,10 +2,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-MIGRATOR="$SCRIPT_DIR/migrate-to-bundled-runtime.sh"
+INSTALLER="$SCRIPT_DIR/install.sh"
 MODE="${MODE:-dry-run}" # dry-run|apply
-WITH_POST_COMMIT="${WITH_POST_COMMIT:-1}"
-WITH_PRE_PUSH="${WITH_PRE_PUSH:-1}"
 REPOS_FILE="${REPOS_FILE:-}"
 REPORT_FILE="${REPORT_FILE:-}" # optional csv output path
 LOG_DIR="${LOG_DIR:-$(mktemp -d "${TMPDIR:-/tmp}/aicr-rollout.XXXXXX")}"
@@ -17,8 +15,6 @@ Usage:
 
 Env:
   MODE=dry-run|apply
-  WITH_POST_COMMIT=0|1
-  WITH_PRE_PUSH=0|1
   REPORT_FILE=/path/to/report.csv   optional
   LOG_DIR=/path/to/log-dir          optional (default: temp dir)
 EOF
@@ -93,8 +89,7 @@ while IFS= read -r repo || [[ -n "$repo" ]]; do
   fi
 
   set +e
-  MODE="$MODE" WITH_POST_COMMIT="$WITH_POST_COMMIT" WITH_PRE_PUSH="$WITH_PRE_PUSH" \
-    bash "$MIGRATOR" "$repo" >"$repo_log" 2>&1
+  MODE="$MODE" bash "$INSTALLER" "$repo" >"$repo_log" 2>&1
   code=$?
   set -e
   if [[ "$code" -ne 0 ]]; then
@@ -123,5 +118,5 @@ while IFS= read -r repo || [[ -n "$repo" ]]; do
   print_row "$repo,$status,$reason,$repo_log"
 done <"$REPOS_FILE"
 
-echo "[aicr-rollout] mode=$MODE with_post_commit=$WITH_POST_COMMIT with_pre_push=$WITH_PRE_PUSH log_dir=$LOG_DIR"
+echo "[aicr-rollout] mode=$MODE log_dir=$LOG_DIR"
 echo "[aicr-rollout] summary updated=$updated_count unchanged=$unchanged_count preview=$preview_count failed=$failed_count"

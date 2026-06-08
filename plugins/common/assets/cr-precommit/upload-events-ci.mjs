@@ -2,7 +2,7 @@
 import fs from "node:fs";
 import fsp from "node:fs/promises";
 import process from "node:process";
-import { authorEmail, branchName, gitRemoteProjectPath, repoName } from "./repo-context.mjs";
+import { authorEmail, branchName, gitRemoteProjectPath, repoName } from "./aicr-utils.mjs";
 
 const eventFile = process.env.AICR_EVENT_LOG || ".git/aicr/events.ndjson";
 const SNAPSHOT_RETAIN = Math.max(1, Number.parseInt(process.env.AICR_SNAPSHOT_RETAIN || "3", 10) || 3);

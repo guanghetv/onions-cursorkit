@@ -2,8 +2,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
-import { authorEmail, branchName, repoName } from "./repo-context.mjs";
-import { stagedDiffFingerprint } from "./diff-fingerprint.mjs";
+import { authorEmail, branchName, repoName, stagedDiffFingerprint } from "./aicr-utils.mjs";
 
 const defaultEventFile = ".git/aicr/events.ndjson";
 const eventFile = process.env.AICR_EVENT_LOG || defaultEventFile;

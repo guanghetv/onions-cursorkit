@@ -69,7 +69,7 @@ git add <files>
 - 开发者仍然手动执行 `/cr` 做代码自检；
 - 执行 `git commit` 时，pre-commit hook 自动检查是否存在最近的 `cr_completed` 证据；
 - 若缺失证据，默认阻断 commit；可通过 `AICR_BYPASS_CR=1` 显式跳过（原因可选：`AICR_BYPASS_REASON`）；
-- MR 阶段可基于事件日志聚合 `/cr` 覆盖率。
+- MR 覆盖率由业务仓 pre-push 上报 events，`AI-CodeReview` 服务聚合并写入 GitLab MR。
 
 默认参数：
 
@@ -347,16 +347,10 @@ MR 模式下，根据 `branch_state` 分三层策略，逐层递减 Cursor Agent
 
 ```bash
 logger_path=""
-AICR_DIR=""
-for resolver in vendor/aicr-runtime/resolve-runtime-dir.sh .githooks/aicr/resolve-runtime-dir.sh; do
-  if [ -x "$resolver" ]; then
-    AICR_DIR="$(bash "$resolver" 2>/dev/null || true)"
-    if [ -n "$AICR_DIR" ] && [ -f "$AICR_DIR/event-log.mjs" ]; then
-      logger_path="$AICR_DIR/event-log.mjs"
-      break
-    fi
-  fi
-done
+AICR_DIR="vendor/aicr-runtime"
+if [ -f "$AICR_DIR/event-log.mjs" ]; then
+  logger_path="$AICR_DIR/event-log.mjs"
+fi
 
 if [ -n "$logger_path" ]; then
   repo_name="$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"

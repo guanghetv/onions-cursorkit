@@ -43,6 +43,9 @@
 - **WHEN** 仓库执行初始化或升级后
 - **THEN** runtime 必需脚本与 `.githooks` 入口 SHALL 完整可用
 - **AND** 缺失关键文件时应提示修复
+- **AND** 升级时 SHALL 移除已废弃的旧 runtime 文件（如 `repo-context.mjs`、`resolve-runtime-dir.sh`）
+
+runtime 包含：`hook-pre-commit.sh`、`aicr-utils.mjs`、`validate-cr-gate.mjs`、`event-log.mjs`、`link-cr-commit.mjs`、`upload-events-ci.mjs`。
 
 ### Requirement: 本地门禁语义保持不变
 
@@ -129,18 +132,18 @@
 - **THEN** 由服务端发布到 GitLab MR（comment 或 description）
 - **AND** 发布失败不应影响本地提交门禁
 
-### Requirement: 迁移脚本应支持一次切换与回滚
+### Requirement: 安装脚本应支持幂等与 Git 还原
 
-本次升级允许不兼容旧结构；系统 SHALL 提供迁移与回滚机制，确保可控切换。
+系统 SHALL 通过 `install.sh` 提供幂等安装与 Git 还原能力，确保可控接入。
 
-#### Scenario: 旧结构迁移
+#### Scenario: 首次安装
 
-- **WHEN** 仓库存在旧结构（如 `.githooks/aicr/*`）
-- **THEN** 迁移脚本备份旧内容并切换到新结构
-- **AND** 切换后执行自检
+- **WHEN** 仓库执行 `install.sh` 或批量改造 apply
+- **THEN** 写入薄 hook 与 `vendor/aicr-runtime/`（不写入 `.aicr-migration-backup/` 本地备份）
+- **AND** 安装后执行自检
 
-#### Scenario: 批次回滚
+#### Scenario: 批次还原
 
 - **WHEN** 批量改造出现系统性问题
-- **THEN** 平台可按批次回滚到改造前状态
-- **AND** 回滚结果可审计
+- **THEN** 平台通过 Git（`git restore --source=<git_ref> -- .githooks vendor/aicr-runtime`）还原 `.githooks` 与 `vendor/aicr-runtime`
+- **AND** 回滚结果可经 Git 历史审计

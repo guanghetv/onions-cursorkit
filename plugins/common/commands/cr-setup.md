@@ -23,29 +23,29 @@ description: 安装 /cr 提交前提醒与事件上报链路（默认阻断，�
 /cr-setup
 ```
 
-推荐落地命令（仓库级一次性）：
+推荐落地命令（仓库级一次性，薄入口 + `vendor/aicr-runtime`）：
 
 ```bash
 bash "plugins/common/assets/cr-precommit/install.sh" .
 ```
 
-默认即 bundled 模式（薄入口 + `vendor/aicr-runtime`），若需显式指定：
-
-```bash
-INSTALL_MODE=bundled bash "plugins/common/assets/cr-precommit/install.sh" .
-```
+安装后业务仓写入 `vendor/aicr-runtime/` 与 `.githooks/` 薄入口。升级时会自动清理已废弃的旧 runtime 文件。
 
 平台批量改造（试点/扩面）：
 
 ```bash
-MODE=dry-run bash "plugins/common/assets/cr-precommit/batch-rollout.sh" --repos-file /tmp/repos.txt
-MODE=apply   bash "plugins/common/assets/cr-precommit/batch-rollout.sh" --repos-file /tmp/repos.txt
+MODE=dry-run REPORT_FILE=/tmp/aicr-rollout-preview.csv \
+  bash "plugins/common/assets/cr-precommit/batch-rollout.sh" --repos-file /tmp/repos.txt
+MODE=apply REPORT_FILE=/tmp/aicr-rollout-apply.csv \
+  bash "plugins/common/assets/cr-precommit/batch-rollout.sh" --repos-file /tmp/repos.txt
 ```
 
-回滚：
+升级 runtime 后须对当前暂存区**重新执行 `/cr`**（`diff_fingerprint` 算法变更）。
+
+还原安装（经 Git）：
 
 ```bash
-bash "plugins/common/assets/cr-precommit/rollback-bundled-runtime.sh" /path/to/repo
+git -C /path/to/repo restore --source=HEAD~1 -- .githooks vendor/aicr-runtime
 ```
 
 仅预览（不落盘）：

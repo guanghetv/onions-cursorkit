@@ -61,7 +61,7 @@ rg "cr_completed" ".git/aicr/events.ndjson"
 # 2) 检查 pre-commit hook 是否正确安装（/cr-setup 使用 core.hooksPath）
 git config core.hooksPath   # 预期输出 .githooks
 ls -l ".githooks/pre-commit"
-ls -l "vendor/aicr-runtime/hook-pre-commit.sh" 2>/dev/null || ls -l ".githooks/aicr/hook-pre-commit.sh"
+ls -l "vendor/aicr-runtime/hook-pre-commit.sh"
 
 # 3) 检查环境变量（可选）
 echo "${AICR_EVENT_LOG:-.git/aicr/events.ndjson}"
@@ -72,6 +72,17 @@ echo "${AICR_ENFORCEMENT_MODE:-hard}"
 ```bash
 AICR_BYPASS_CR=1 AICR_BYPASS_REASON="hotfix" git commit -m "..."
 ```
+
+### Q: 迁移后出现 `.aicr-migration-backup/` 目录怎么办？
+
+旧版迁移脚本会生成本地备份；**新版已不再创建**。若目录仍存在：
+
+```bash
+rm -rf .aicr-migration-backup/
+echo ".aicr-migration-backup/" >> .gitignore
+```
+
+还原请用 Git：`git restore --source=<ref> -- .githooks vendor/aicr-runtime`。
 
 ### Q: `/cr-setup` 和 `/cr` 的关系是什么？
 
@@ -85,22 +96,15 @@ AICR_BYPASS_CR=1 AICR_BYPASS_REASON="hotfix" git commit -m "..."
 ### Q: 执行了 `/cr`，为什么仍然提示没有 `cr_completed` 记录？
 
 **可能原因**：
-1. 仓库未安装提醒链路（缺少 `vendor/aicr-runtime/event-log.mjs` 或 `.githooks/aicr/event-log.mjs`）
+1. 仓库未安装提醒链路（缺少 `vendor/aicr-runtime/event-log.mjs`）
 2. `/cr` 的步骤 11 未执行到（被中断或脚本路径不匹配）
 3. 当前工作区没有暂存文件，`files` 指纹为空且不满足后续策略
 
 **排查步骤**：
 ```bash
-# 检查 logger 是否存在（resolve-runtime-dir 统一探测）
-AICR_DIR=""
-for resolver in vendor/aicr-runtime/resolve-runtime-dir.sh .githooks/aicr/resolve-runtime-dir.sh; do
-  if [ -x "$resolver" ]; then
-    AICR_DIR="$(bash "$resolver" 2>/dev/null || true)"
-    [ -n "$AICR_DIR" ] && [ -f "$AICR_DIR/event-log.mjs" ] && break
-    AICR_DIR=""
-  fi
-done
-ls "${AICR_DIR:+$AICR_DIR/event-log.mjs}" 2>/dev/null
+# 检查 logger 是否存在
+AICR_DIR="vendor/aicr-runtime"
+ls "$AICR_DIR/event-log.mjs" 2>/dev/null
 
 # 手动验证写事件
 repo="$(basename "$(git rev-parse --show-toplevel)")"
@@ -117,6 +121,12 @@ rg "cr_completed" ".git/aicr/events.ndjson"
 **原因**：`diff_fingerprint` 已改为基于 `git diff --cached` 内容 hash；旧的 `cr_completed` 仍使用文件路径 hash，与新版门禁不兼容。
 
 **处理**：对当前暂存区重新执行完整 `/cr`，再提交。
+
+### Q: `vendor/aicr-runtime/` 里仍有 `repo-context.mjs` 等旧文件？
+
+**原因**：旧版 install 复制了已废弃脚本；新版 `install.sh` 升级时会自动删除。
+
+**处理**：在业务仓重新执行 `install.sh`（或平台 `batch-rollout.sh` apply）。预期 runtime 与 `cr-precommit-setup` 技能清单一致。
 
 ### Q: commit 成功但 MR 覆盖率未增加（无 `commit_cr_linked`）？
 
@@ -171,7 +181,7 @@ MR 覆盖率由 **AI-CodeReview 服务**聚合并写入 GitLab MR description（
 **本地自检**（在业务仓根目录）：
 
 ```bash
-AICR_DIR="$(bash vendor/aicr-runtime/resolve-runtime-dir.sh 2>/dev/null || bash .githooks/aicr/resolve-runtime-dir.sh)"
+AICR_DIR="vendor/aicr-runtime"
 node "$AICR_DIR/event-log.mjs" --self-check
 node "$AICR_DIR/validate-cr-gate.mjs" --self-check
 node "$AICR_DIR/link-cr-commit.mjs" --self-check

@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-import { execSync } from "node:child_process";
+import crypto from "node:crypto";
+import { execFileSync, execSync } from "node:child_process";
+import process from "node:process";
 
 export function gitTopLevel() {
   try {
@@ -46,4 +48,23 @@ export function gitRemoteProjectPath() {
   } catch {
     return "";
   }
+}
+
+/**
+ * Hash staged diff content for the given paths (not file names alone).
+ * Used by pre-commit gate and cr_completed event logging.
+ */
+export function stagedDiffFingerprint(files) {
+  const sorted = [...(files || [])].map(String).filter(Boolean).sort();
+  if (sorted.length === 0) {
+    return "";
+  }
+
+  const repoRoot = gitTopLevel();
+  const diff = execFileSync("git", ["-C", repoRoot, "diff", "--cached", "--", ...sorted], {
+    encoding: "utf8",
+    maxBuffer: 10 * 1024 * 1024
+  });
+
+  return crypto.createHash("sha256").update(diff).digest("hex");
 }
