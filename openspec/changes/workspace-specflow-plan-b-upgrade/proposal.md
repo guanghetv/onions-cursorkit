@@ -14,15 +14,20 @@
   - 用于快速产出或迭代原型资产（`prototypes/` 与 `assets/`）
   - 生成前扫描工作区前端上下文（样式规范、页面逻辑、核心交互）并进行脑暴澄清
   - 默认流程中先于 `/pm-spec` 执行，支持“先原型后 PRD”
+  - 原型已存在时默认快速迭代（最小改动），全量重构需显式确认
+  - 每轮通过结构化变更单执行（保留/新增/删除/调整），并输出改动摘要
+  - 首轮确认后锁定视觉与交互基线；迭代结束通过快速验收门（主路径、锚点、视觉错位）
+  - 须先完成 Superpowers brainstorming 并获用户确认，才可写入 `prototypes/`
   - 与 `/pm-spec` 解耦，避免职责混杂
 - 升级 `/pm-spec`
   - 保持对飞书文档读取能力兼容，且优先使用 `lark-cli`
   - `lark-cli` 不可用时降级可用方案并提示建议安装
-  - 输入冲突时默认本地 `prd.md` 为准
-  - 增加 AI Review（高风险项 + 评分 + 改进建议），详细记录外置到 `prototypes/ai-review.md`
+  - 输入冲突时采用条件化优先策略（本地有实质内容则本地优先；空模板时飞书优先回填）
+  - 须先完成 Superpowers brainstorming 并获用户确认，才可结构化改写 `prd.md`
+  - 增加 AI Review（9 条 P0 + 五维评分 + P0/P1 可定位问题项），详细记录外置到 `prototypes/ai-review.md`；迭代需求按本轮变更 MODULE 清单聚焦评审
   - `prd.md` 仅保留 AI Review 可开工结论，不混入评分明细与改进建议
   - 保持 metadata 轻量，不新增复杂状态字段
-  - 默认开启面向 WYSIWYG 的自适应富文本输出（适量使用 callout/checklist/mermaid/行内状态）
+  - 默认开启面向 WYSIWYG 的富文本输出，并将可读性作为 confirmed 强门禁（禁止大段文字、关键关注 callout 必填、复杂流程强制 Mermaid）
   - MODULE 标题统一为 `MODULE-N: <模块名> [新增/修改]`
   - 每个 MODULE 采用轻量 5 块结构（含可选边界/异常），引用优先“原型锚点 + 截图”
   - 无截图场景仅提示建议补充，不阻断 `/pm-spec` 完成
@@ -38,7 +43,7 @@
 
 ### Modified Capabilities
 
-- `workspace-specflow-pm-spec`: PRD 结构化与评审能力升级，兼容飞书读取并坚持本地优先
+- `workspace-specflow-pm-spec`: PRD 结构化与评审能力升级，兼容飞书读取并采用条件化优先策略
 
 ## Impact
 

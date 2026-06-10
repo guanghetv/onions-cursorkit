@@ -40,7 +40,7 @@
 
 **权限与边界**（需求目录内）：可读写 `prd.md`、`metadata.yaml`、`prototypes/`、`assets/`；对代码仓库仅 **只读扫描**（用于业务影响分析，不写实现细节到 PRD）。**禁止**改业务代码仓库文件。
 
-**依赖提示**：`/req-new`、`/pm-spec` 在需要读飞书文档时优先使用 **lark-cli**；`lark-cli` 不可用时可降级 **feishu-mcp**；两者都不可用时应提示安装 **lark-cli**。结构化讨论依赖 **Superpowers** 的 brainstorming。
+**依赖提示**：`/req-new`、`/pm-spec` 在需要读飞书文档时优先使用 **lark-cli**；`lark-cli` 不可用时可降级 **feishu-mcp**；两者都不可用时应提示安装 **lark-cli**。**`/pm-proto` 与 `/pm-spec` 必须先 Read 并遵循 Superpowers `brainstorming` 技能**，与用户确认灰区并获放行后，才可写入 `prototypes/` 或改写 `prd.md`（禁止「先出一版」跳过澄清）。
 
 ---
 

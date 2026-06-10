@@ -40,6 +40,16 @@ specs 仓库是多角色共享的，产品、测试、开发的产出都提交�
 
 适用于 `/dev-start`、`/qa-spec`、`/req-status` 等所有需要扫描 `requirements/` 的操作。若 Agent 检测到 specs 仓库有未拉取的远程更新（`git status` 显示 behind），**必须先提示用户 pull**，再继续操作。
 
+## 产品流程脑暴门禁（`/pm-proto`、`/pm-spec`）
+
+写入 `prototypes/` 或结构化改写 `prd.md` **之前**，必须同时满足：
+
+1. 已 **Read 并遵循** `superpowers:brainstorming` 的 SKILL.md（「做了澄清」≠ 正式调用）
+2. 已与用户完成灰区确认（一次一问；迭代需求须确认本轮变更 MODULE 清单）
+3. 用户已用自然语言**明确放行**（如「可以」「按这个来」「继续」）
+
+未满足时**立即停止写入**，并说明当前卡在哪一步。
+
 ## 关键约束
 
 - 需求层文件只在 `requirements/` 下操作，不直接修改代码仓库
