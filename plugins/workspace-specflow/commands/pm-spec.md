@@ -1,8 +1,8 @@
 ---
 name: pm-spec
-description: 在 prd.md 上做结构化增强。保留产品原始内容，叠加 MODULE 拆分、验收标准、业务规则；含 brainstorming、逐段 review、完整性校验，可选同步回飞书、生成交互演示。
+description: 在原型基础上补充并结构化增强 prd.md，默认启用 WYSIWYG 友好输出；AI Review 详细记录外置，prd.md 仅保留可开工结论。
 ---
 
 # /pm-spec
 
-在 prd.md 上做结构化增强。保留产品原始内容，叠加 MODULE 拆分、验收标准、业务规则。包含 brainstorming、逐段 review、完整性校验，可选同步回飞书、生成交互演示。
+在原型基础上补充并结构化增强 `prd.md`。保留产品原始内容，输出阅读友好且结构清晰的 MODULE 文档（默认启用面向 WYSIWYG 的自适应富文本）；支持本地空模板时读取飞书文档回填（`lark-cli` 优先，`feishu-mcp` 兜底）。AI Review 详细结果写入 `prototypes/ai-review.md`，`prd.md` 仅保留可开工结论。

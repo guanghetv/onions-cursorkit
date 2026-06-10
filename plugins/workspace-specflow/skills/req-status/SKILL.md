@@ -25,20 +25,8 @@ description: >-
 - 需求名称和 ID
 - prd 状态（pending / confirmed）
 - 测试 spec 状态（pending / confirmed）
-- 关联的 changes 列表
 
-### Step 2: 扫描执行层（可选）
-
-如果 `metadata.yaml` 中有 `changes` 字段，通过 `workspace-repos.json` 解析各仓库路径，扫描对应的 `openspec/changes/<change-id>/` 目录。
-
-推断 change 进度：
-- 无 change 目录 → 未开始
-- 有 `proposal.md` 无 `tasks.md` → 设计中
-- 有 `tasks.md` → 统计完成/总数
-- 有 `e2e-report.md` → 待归档
-- change 已归档 → 完成
-
-### Step 3: 输出
+### Step 2: 输出
 
 **按角色最终产出状态汇总**：
 
@@ -48,14 +36,10 @@ description: >-
 example-feature-a (示例需求 A)
   PRD:      confirmed (MM-DD)
   测试用例:  pending
-  开发:
-    frontend-app  tasks 3/7
-    backend-api   tasks 5/8
 
 example-feature-b (示例需求 B)
   PRD:      pending
   测试用例:  pending
-  开发:     未开始
 ```
 
 ## 约束

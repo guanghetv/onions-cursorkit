@@ -2,7 +2,7 @@
   "name": "workspace-specflow",
   "displayName": "Workspace Specflow 多角色协作工作流",
   "version": "0.1.0",
-  "description": "统一工作区多角色协作：产品 spec 转换、测试 spec 生成、开发桥接、进度追踪。需求层管理 + 执行层衔接，配合 fe-specflow / be-specflow 使用",
+  "description": "统一工作区多角色协作：产品 spec 转换、测试 spec 生成、开发启动、进度追踪。",
   "author": {
     "name": "wenli"
   },

@@ -17,8 +17,6 @@ prd:
 test_spec:
   status: pending
   confirmed_at: null
-
-changes: []
 ```
 
 ## prd.md（空模板）
