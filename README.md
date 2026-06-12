@@ -54,4 +54,13 @@ node scripts/validate-template.mjs
 
 每个同步插件根目录的 `.sync-meta.json` 记录了内容源版本、commit 与同步时间。内容到插件的映射表维护在 `scripts/sync-guardrails.mjs` 的 `PLUGIN_MAPPING` 中。
 
+### CI 发版联动
+
+ai-guardrails 打仓库级 tag `vX.Y.Z` 发版时，其 CI 会通过 trigger token 调起本仓库的 `sync-guardrails` 流水线（见 `.gitlab-ci.yml` 与 `scripts/ci-sync-guardrails.sh`）：自动拉取对应 tag 内容、运行同步与校验，有变更则推 `sync/ai-guardrails-*` 分支并创建 MR。也支持定时任务与 Web 手动触发兜底。
+
+启用前需配置：
+
+- cursorkit：CI 变量 `SYNC_GITLAB_TOKEN`（ai-guardrails read_repository + cursorkit write_repository/api），并在 Settings → CI/CD 创建 Pipeline trigger token；
+- ai-guardrails：CI 变量 `CURSORKIT_TRIGGER_TOKEN`（填上一步的 trigger token）。
+
 ## Reviewer

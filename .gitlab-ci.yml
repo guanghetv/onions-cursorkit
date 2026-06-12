@@ -1,0 +1,24 @@
+# cursorkit CI
+#
+# sync-guardrails：从 ai-guardrails 同步 skills/rules/mcp 并自动提 MR。
+# 触发方式：
+#   1. ai-guardrails 发版流水线通过 trigger token 调起（携带 GUARDRAILS_REF=vX.Y.Z）
+#   2. 定时任务（Schedules）兜底
+#   3. Web 手动触发（Run pipeline）
+# 所需 CI 变量见 scripts/ci-sync-guardrails.sh 头部注释。
+
+stages:
+  - sync
+
+sync-guardrails:
+  stage: sync
+  image: node:20
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "trigger"
+    - if: $CI_PIPELINE_SOURCE == "pipeline"
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web"
+  variables:
+    GIT_DEPTH: "0"
+  script:
+    - bash scripts/ci-sync-guardrails.sh
