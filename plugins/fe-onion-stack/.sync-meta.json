@@ -1,0 +1,16 @@
+{
+  "syncedAt": "2026-06-12T10:04:08.423Z",
+  "source": "/Users/huangqian/Documents/works/git/ai-guardrails",
+  "sourceName": "ai-guardrails",
+  "sourceVersion": "0.0.0",
+  "sourceCommit": "47a29b7e661cae96e42c76befcba2485a9289864",
+  "plugin": "fe-onion-stack",
+  "skills": [
+    "onion-ui-skill",
+    "onion-utils-skill",
+    "onion-video",
+    "axios-skill"
+  ],
+  "rules": [],
+  "mcp": false
+}

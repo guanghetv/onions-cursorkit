@@ -1,0 +1,10 @@
+{
+  "name": "fe-onion-stack",
+  "displayName": "前端洋葱内部技术栈",
+  "version": "0.1.0",
+  "description": "洋葱内部前端技术栈接入技能：onion-ui 组件库、onion-utils 工具库、洋葱视频播放、API 层规范（axios）。内容同步自 ai-guardrails，请勿手改。",
+  "author": {
+    "name": "洋葱学园",
+    "email": "lihui@guanghe.tv"
+  }
+}
