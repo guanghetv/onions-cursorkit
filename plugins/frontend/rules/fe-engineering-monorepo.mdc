@@ -1,0 +1,43 @@
+---
+description: Monorepo（pnpm/npm/yarn workspaces + 任务编排）下的包边界、依赖协议与构建过滤约定。仅在检测到 workspace / 任务编排配置时由编辑器动态加载。
+globs:
+  - "pnpm-workspace.yaml"
+  - "pnpm-workspace.yml"
+  - "**/pnpm-workspace.yaml"
+  - "**/pnpm-workspace.yml"
+  - "turbo.json"
+  - "**/turbo.json"
+  - "lerna.json"
+  - "nx.json"
+  - "**/nx.json"
+alwaysApply: false
+---
+
+# 前端工程：Monorepo 补充规范
+
+## 何时适用
+
+当仓库使用 **workspaces**（如 `pnpm-workspace.yaml`）和/或 **任务编排工具**（如 Turborepo、Nx、Lerna 等）管理多个子包时，在**本文件**与 `fe-engineering-workspace-layout` 冲突时，**以 Monorepo 实践优先**。
+
+## MUST
+
+- **根清单职责**：根 `package.json` 承载工作区脚本（如统一 `build`/`lint`/`test`）、共享开发依赖策略由团队明确；子包保留自身可运行的最小脚本（如本包 `build`/`test`）。
+- **内部依赖声明**：工作区内包与包之间的依赖使用**工作区协议**（业界常见为 `workspace:*` 或工具文档推荐写法），禁止用「写死文件路径」或「未声明的隐式链接」代替包名依赖。
+- **可构建性**：每个对外发布的子包或应用应能**单独**在 CI 中按过滤条件构建成功；新增子包时必须同步更新 workspace 包含范围（glob），避免「本地能跑、CI 未纳入」。
+- **版本与变更**：若多包需要协调发版，采用团队选定的行业标准做法（例如 Changesets、统一版本策略等），并在文档中说明；禁止在无策略下手工改多个 `version` 字段导致不一致。
+- **任务过滤**：在 CI 或本地使用编排工具的 **filter / scope** 能力仅构建受影响子图，避免「改一处却全量构建所有包」成为默认习惯（除非团队明确要求全量）。
+
+## SHOULD
+
+- **分层命名**：`apps/`（可部署单元）、`packages/`（可复用库）等目录语义与团队模板一致；若团队使用其他划分（如 `libs/`、`components/`），须在 README 说明边界，全仓统一。
+- **共享配置抽包**：`tsconfig`、`eslint`、构建预设等重复配置可抽为共享配置包或根配置 + 子包 extend，避免复制粘贴漂移。
+
+## MUST NOT
+
+- 在应用包中直接引用**未在 `package.json` 声明**的工作区包路径（绕过依赖图），除非使用构建工具官方支持的 alias 且团队明文允许并文档化。
+
+## 对 AI / Agent
+
+- 安装依赖、改 `package.json`、加子包或改 workspace glob 时，默认按 **Monorepo 依赖图** 思考，先定位「当前子包根目录」再执行命令。
+- 新增内部包时，同步：**workspace 注册**、**内部依赖声明**、**根/编排工具任务链路** 三处之一如有必要则更新。
+- 不假设具体编排工具品牌以外的目录结构；以仓库内**已有** `apps/`、`packages/` 等为准。

@@ -1,0 +1,54 @@
+---
+description: |
+  在新建页面/组件/功能时主动应用的性能预防清单。
+  当用户表达「新增/新建/加一个/实现/搭建/做一个 XX 页面/组件/功能/弹窗/列表/详情页」
+  或类似新功能意图时，在写代码前加载本规则，按映射表显式调用
+  user-optimization/ 下对应 skill 进行预防性设计。
+globs: "**/*.{vue,ts,tsx,jsx}"
+alwaysApply: false
+---
+
+# 新建功能性能预防清单
+
+当你识别到用户在描述新建/新增/搭建/实现一个新功能、页面、组件、弹窗、列表、详情页等任意「从无到有」的开发任务时，**在写第一行代码前**，按以下流程执行。
+
+## 适用场景识别
+
+用户消息出现以下任一表达 → 触发本规则：
+
+- 新增 / 新建 / 加一个 / 加个 / 添加 / 实现 / 搭建 / 做一个
+- 后接对象：页面 / 组件 / 功能 / 模块 / 弹窗 / 列表 / 详情页 / 表单 / 抽屉 / 卡片 / Tab
+
+## 工作流
+
+1. 列出本次新功能涉及的核心交互：数据获取 / 组件挂载 / 列表渲染 / DOM 操作 / 状态切换；
+2. 对照下方「信号 → skill」映射表，逐条判断是否会出现对应反例；
+3. 命中即通过 **Skill 工具加载对应 skill**（skill 名见表）；
+4. 按 skill 中的正例写**初版代码**，而非先写反例再优化。
+
+## 信号 → skill 映射表
+
+| # | 性能信号 | 调用 skill |
+|---|---|---|
+| 1 | 多个相互独立的 `await` 串联；`for...of` 内 `await` | `async-parallel` |
+| 2 | 后置 `await` 阻塞了不依赖它的同步逻辑 | `async-defer-await` |
+| 3 | 多步 await 间存在真依赖关系（链式 then） | `async-dependencies` |
+| 4 | `await` 之前没有便宜的本地校验（缓存命中/参数判空） | `async-cheap-condition-before-await` |
+| 5 | 组件静态 import | `bundle-dynamic-imports` |
+| 6 | 已 dynamic 但首次点击仍卡 1–5 秒 | `bundle-preload` |
+| 7 | 仅在分支/条件下使用的依赖被无条件 import | `bundle-conditional` |
+| 8 | 循环读写 DOM/style，layout thrashing | `js-batch-dom-css` |
+| 9 | 大列表/复杂组件状态切换造成主线程长任务 | `rerender-transitions` |
+
+## 显式调用要求（不可省略）
+
+匹配到信号表中任一条时：
+
+1. **必须**通过 Skill 工具加载对应 skill —— 不允许凭记忆复述 skill 内容；
+2. 加载后**按 skill 中的正例**给出代码，不得只输出「建议你 xxx」；
+3. 一次回复中可加载多个 skill，每个被命中的信号都必须显式声明对应 skill 名；
+4. 在回复开头列出本次命中的 skill 清单，例如：
+
+   > 本次新建涉及：`async-parallel`、`bundle-dynamic-imports`
+
+不符合上述任一项视为未完成任务。

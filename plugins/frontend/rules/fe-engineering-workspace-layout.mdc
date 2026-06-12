@@ -1,0 +1,34 @@
+---
+description: 单仓库前端工程的目录与模块边界约定。编辑应用源码、入口 HTML、各包 package.json 或静态资源目录时加载；与 Monorepo 叠加时请同时参考 fe-engineering-monorepo。
+globs:
+  - "**/package.json"
+  - "**/index.html"
+  - "**/src/**"
+  - "**/public/**"
+alwaysApply: false
+---
+
+# 前端工程：工作区与目录结构（单仓库为主）
+
+## 适用范围
+
+- **单仓库应用**：一个 `package.json` 对应一个可独立构建、部署的前端应用。
+- **Monorepo 内的某个 app**：在遵循本文件的同时，**必须**遵守 `fe-engineering-monorepo`（当该仓库存在 workspace 时由编辑器按需加载）。
+
+## MUST
+
+- **源码主目录**：业务代码放在 `src/`（或团队已在 README 中声明的等价目录），避免在仓库根目录散落业务 `.vue`/`.ts`。
+- **静态资源**：公共静态资源放在 `public/`（或构建工具约定的目录）；需参与哈希与打包的静态资源随模块引用，不依赖「手写 URL 猜路径」。
+- **路径与别名**：路径别名（如 `@/`）须在构建配置与类型解析（如 TS paths）中**同时**配置，且保持单一事实来源，禁止仅在一处生效。
+- **环境配置**：按构建工具惯例使用 `.env`、`.env.local`、`.env.[mode]` 等；**不得**将密钥、令牌提交进仓库；示例文件可提交为 `.env.example`（不含真实秘密）。
+- **入口清晰**：构建入口（如 `index.html`、`main.ts`/`main.js`）位置明确，新增页面/路由时遵循现有路由与目录约定，不另起一套平行结构。
+
+## SHOULD
+
+- **按领域或功能分模块**：在 `src/` 内用 `views`、`components`、`composables`、`api`、`stores` 等子目录表达边界；避免「巨型单目录」堆文件。
+- **共享 UI 与业务分离**：通用展示组件与强业务耦合模块分开放置，降低循环依赖与误用。
+
+## 对 AI / Agent
+
+- 修改或新增文件前，先确认当前仓库是**单仓**还是 **Monorepo 子包**，并采用对应根目录与别名。
+- 若仓库根存在 `pnpm-workspace.yaml`（或同等 workspace 声明），**额外**应用 Monorepo 规则，不得按单仓根目录假设依赖关系。

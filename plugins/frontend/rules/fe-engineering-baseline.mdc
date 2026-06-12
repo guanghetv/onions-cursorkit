@@ -1,0 +1,10 @@
+---
+description: 前端工程化总则：技术栈以 frontend-tech-stack-skill 为准；与 fe-engineering-* 分项规则配合使用。
+alwaysApply: true
+---
+
+# 前端工程化总则（常驻）
+
+- **技术选型**：UI 框架、路由、状态管理、HTTP 客户端、组件库、CSS 方案、打包工具选型等，以本仓库 **`frontend-tech-stack-skill`**（`packages/skills/src/frontend-tech-stack-skill/SKILL.md`，链接后一般为 `.cursor/frontend-tech-stack-skill/SKILL.md`）为权威；**未覆盖场景须询问人类**，禁止自行拍板。
+- **工程细则**：目录与 Monorepo、工具链与锁文件、依赖治理、构建与测试、发布与部署见各 **`fe-engineering-*`** `.mdc`（按需由 `globs` 加载）；与总则冲突时以**更具体的分项规则**为准。
+- **版本与锁文件**：不在对话中臆造「允许的依赖版本」；以仓库 **lockfile**、`packageManager` 与团队文档为准。

@@ -1,0 +1,58 @@
+---
+description: |
+  既有代码的性能诊断与修复清单。当用户表达
+  「优化/重构/性能问题/卡顿/慢/首屏慢/打开慢/瀑布流/加载慢/打包过大/包体积/
+   Lighthouse/INP/LCP」等优化意图，或要求 review/audit 既有代码时加载本规则，
+  先扫描信号、定位问题，再显式调用 user-optimization/ 下对应 skill 给出修复方案。
+globs: "**/*.{vue,ts,tsx,jsx}"
+alwaysApply: false
+---
+
+# 性能重构 / 诊断清单
+
+当你识别到用户在描述「优化 / 重构 / 慢 / 卡顿 / 包过大 / 首屏慢 / INP / LCP」等既有代码的性能问题，或要求 review、audit 既有代码时，按以下流程执行。
+
+## 适用场景识别
+
+用户消息出现以下任一表达 → 触发本规则：
+
+- 优化 / 重构 / 改一下 / 提升 / 加速
+- 卡 / 卡顿 / 慢 / 加载慢 / 打开慢 / 首屏慢 / 瀑布流
+- 包过大 / 包体积 / bundle size
+- Lighthouse / INP / LCP / FCP / TTI
+- review / audit / 性能分析 / 性能问题
+
+## 工作流
+
+1. 先**读取**用户给出的相关代码，**不要立刻给方案**；
+2. 对照下方「信号 → skill」映射表，逐条扫描代码中的命中位置（带文件:行号）；
+3. 列出「命中信号 → 文件:行号 → 应调用 skill」清单后再开始；
+4. 逐个通过 **Skill 工具加载对应 skill**；
+5. 按 skill 中的正例给出**可直接套用的修复 diff**。
+
+## 信号 → skill 映射表
+
+| # | 性能信号 | 调用 skill |
+|---|---|---|
+| 1 | 多个相互独立的 `await` 串联；`for...of` 内 `await` | `async-parallel` |
+| 2 | 后置 `await` 阻塞了不依赖它的同步逻辑 | `async-defer-await` |
+| 3 | 多步 await 间存在真依赖关系（链式 then） | `async-dependencies` |
+| 4 | `await` 之前没有便宜的本地校验（缓存命中/参数判空） | `async-cheap-condition-before-await` |
+| 5 | 组件静态 import | `bundle-dynamic-imports` |
+| 6 | 已 dynamic 但首次点击仍卡 1–5 秒 | `bundle-preload` |
+| 7 | 仅在分支/条件下使用的依赖被无条件 import | `bundle-conditional` |
+| 8 | 循环读写 DOM/style，layout thrashing | `js-batch-dom-css` |
+| 9 | 大列表/复杂组件状态切换造成主线程长任务 | `rerender-transitions` |
+
+## 显式调用要求（不可省略）
+
+1. **先列命中清单再调用 skill** —— 不允许「边扫边写代码」；
+2. **必须**通过 Skill 工具加载对应 skill，不允许凭记忆复述；
+3. 若用户的代码与 skill 中的反例完全一致，必须在回复开头点名：
+
+   > 匹配 `<skill-name>` 反例
+
+4. 一次回复中可加载多个 skill，每个 skill 名都必须显式出现；
+5. 修复 diff 必须可直接套用，不输出「建议你 xxx」类话术。
+
+不符合上述任一项视为未完成任务。

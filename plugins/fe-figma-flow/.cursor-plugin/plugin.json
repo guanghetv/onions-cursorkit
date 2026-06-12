@@ -1,0 +1,10 @@
+{
+  "name": "fe-figma-flow",
+  "displayName": "前端 Figma 还原工作流",
+  "version": "0.1.0",
+  "description": "Figma 设计稿 → 高保真前端代码工作流：figma-read 三阶段编排、img-* 图层 CDN 处理、响应式布局分析与实现规范、design-tokens 接入映射，内置 Figma/CDN/DevTools MCP 配置。内容同步自 ai-guardrails，请勿手改。",
+  "author": {
+    "name": "洋葱学园",
+    "email": "lihui@guanghe.tv"
+  }
+}

@@ -1,0 +1,41 @@
+---
+description: 依赖治理、供应链与版本对齐的通用规范。编辑 package.json、锁文件或 overrides 相关配置时加载。
+globs:
+  - "**/package.json"
+  - "pnpm-lock.yaml"
+  - "package-lock.json"
+  - "yarn.lock"
+  - "**/.syncpackrc"
+  - "**/syncpack.config.*"
+alwaysApply: false
+---
+
+# 前端工程：依赖与供应链
+
+## MUST
+
+- **最小依赖原则**：新增依赖须有明确用途；优先使用**维护活跃**、**许可证清晰**、**体量和传递依赖可控**的库。
+- **开发/生产分离**：构建期、测试期工具放在 `devDependencies`；仅在运行时需要的包放在 `dependencies`。
+- **安全与审计**：团队应定期执行包管理器提供的 **audit** 流程；对高危漏洞按优先级升级、替换或采取官方缓解措施，并留痕（issue/变更说明）。若修复路径涉及 **major** 或不兼容变更，仍须**用户知情同意**后再改（与 **`fe-engineering-toolchain-env`** 中版本线变更约定一致）。
+- **覆盖与补丁（overrides / resolutions / patchedDependencies）**：仅在有明确理由时使用（如修复上游缺陷、统一传递依赖版本）；每一处须在注释或变更说明中写清**原因**与**移除条件**，避免永久「技术债堆叠」。
+- **技术选型红线**：涉及 UI 框架、状态管理、HTTP 客户端、组件库等**选型级**依赖时，须遵守团队 **`frontend-tech-stack-skill`**（或等价规范）；本文件不重复列举允许/禁止清单。
+- **代码侧视同选型**：在实现中引入或切换框架级能力（如新组件库、替换状态管理方案、新的 HTTP 客户端体系、整体 CSS 方案变更）时，**即使本次未改** `package.json`，也须与 **`frontend-tech-stack-skill`** 一致；若需新增依赖，再按本文件流程声明。
+
+## SHOULD
+
+- **版本范围语义**：使用符合 semver 的合理范围；对关键路径依赖避免过于宽泛的 `*` / `latest` 进入主分支。
+- **重复依赖收敛**：Monorepo 或大型仓库可使用业界常见的**版本对齐工具**（如 syncpack 等）保持 workspace 内同名包版本一致，减少重复安装与行为分裂。
+- **私有源与 scope**：内部 scope（如 `@org/`）与 registry 映射在 `.npmrc` 或 CI 中配置一致。
+
+## MUST NOT
+
+- 为绕过审计或规范而使用**未知 tarball URL**、**私有未审查源**安装生产依赖（除非经团队安全流程批准）。
+- 在未阅读仓库现有策略且未获**用户明确同意**前，不得**批量或单独**升级依赖 **major** 或替换核心框架；与 **`fe-engineering-toolchain-env`** 中「Node / 包管理器 / 依赖 major 须用户同意」的约定一致，避免两条规则口径分叉。
+
+## 对 AI / Agent
+
+- **引入新依赖前**先检索仓库是否已有同类能力（内部包、utils、既有库）。
+- 若用户要求添加依赖，先对照 **`frontend-tech-stack-skill`**；不在本规则中臆造「允许版本号」。
+- **仅编辑 `.vue` / `.ts` 等业务文件**时，若涉及上述「代码侧视同选型」的库或 API（如新 UI 组件库、`createStore` 体系替换等），仍须**主动按 `frontend-tech-stack-skill` 校验**，不可因未打开 `package.json` 而跳过。
+- 依赖 **major** 升级、核心框架替换、audit 触发的**不兼容**升级：与 **`fe-engineering-toolchain-env`** 相同，**未获用户明确同意不得执行**；Node 与包管理器主版本以该规则为准。
+- 修改 `overrides` / `pnpm.patchedDependencies` 等属**高风险变更**，需明确理由并建议人工审查。

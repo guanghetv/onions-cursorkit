@@ -1,0 +1,40 @@
+---
+description: Node 运行时、包管理器、锁文件与本地/CI 环境对齐的通用规范。编辑 package.json、锁文件或环境相关文件时加载。
+globs:
+  - "**/package.json"
+  - "pnpm-lock.yaml"
+  - "package-lock.json"
+  - "yarn.lock"
+  - ".npmrc"
+  - ".yarnrc.yml"
+  - ".nvmrc"
+  - ".node-version"
+  - "**/.env.example"
+alwaysApply: false
+---
+
+# 前端工程：工具链与环境
+
+## MUST
+
+- **Node 与运行时版本**：以**当前仓库已声明**的约束为唯一准绳（如 `package.json` 的 `engines`、`.nvmrc`、`.node-version`、CI 中指定的 Node 镜像/版本等）；本地与 CI 应与该声明一致，避免「本地与流水线各用一套未对齐的版本」。
+- **包管理器唯一**：同一仓库**只选一种**主包管理器（npm / pnpm / Yarn）；根 `package.json` 使用 **`packageManager` 字段**（配合 Corepack）锁定包管理器**主版本线**，避免贡献者混用导致锁文件冲突。
+- **锁文件提交**：锁文件（如 `pnpm-lock.yaml`、`package-lock.json`、`yarn.lock`）**必须**提交版本库；禁止「仅本地生成锁文件从不提交」或「多锁文件并存且不同步」。
+- **依赖安装可重现**：CI 与生产安装使用**冻结依赖**的安装模式（如 `npm ci`、pnpm 的 frozen、Yarn 的 immutable 等），具体命令以所选包管理器文档为准。
+- **环境变量**：仅通过构建工具支持的前缀（如 Vite 的 `VITE_`）向客户端暴露变量；敏感配置留在服务端或 CI 密钥存储，**不**写入前端 bundle。
+
+## SHOULD
+
+- **Volta / asdf**：若团队使用版本管理工具，应在文档中说明；与 `.nvmrc` 等二选一或明确优先级。
+- **registry 与镜像**：私有源、镜像配置落在 `.npmrc`（或团队标准位置）并由文档说明，避免在个人机器全局配置中「隐性」生效导致他人无法安装。
+
+## MUST NOT
+
+- **擅自升级 Node / 运行时（高风险）**：未获**用户明确同意**前，不得修改 `engines`、`.nvmrc`、`.node-version`、CI 中的 Node 版本，也不得建议或执行「换用更高/不同主版本 Node」作为默认操作；须由人类确认影响面（CI、镜像、依赖兼容性）后再改。
+- **擅自升级依赖与包管理器主版本（高风险）**：未获**用户明确同意**前，不得批量或单独升级 `dependencies` / `devDependencies` 的 **major**（及团队未约定范围内的版本跃迁），不得更换与当前 **`packageManager`** / 锁文件体系冲突的包管理器或主版本线；须在用户确认后再动，并在变更说明中留痕。
+
+## 对 AI / Agent
+
+- 添加脚本或建议安装命令前，先读当前仓库**已有**的 `engines`、`.nvmrc`、锁文件与 `packageManager` 字段，**以项目现状为准**，不臆测「应该用哪个 Node」。
+- **禁止**在未获用户**明确同意**的情况下升级 Node、包管理器主版本或依赖 major；属**危险操作**。仅当用户主动提出升级或书面确认「可以升级」时，再执行相关修改，并同步提醒 CI、Dockerfile、协作者环境等需一并调整。
+- 若用户仅要求「修 bug / 加功能」，默认**不改变** Node 与依赖版本线，除非为修复安全漏洞等且用户已知情同意。
