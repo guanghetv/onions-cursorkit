@@ -15,35 +15,43 @@ description: >-
 
 ### Step 0: 确保 specs 仓库最新
 
-提示用户在 specs 仓库目录执行 `git pull`，确保查看的进度数据是团队最新版本。可通过 `git status` 检测是否 behind remote，若 behind 则**必须先提示 pull**。
+提示用户 `git pull`。若 behind remote，**必须先提示 pull**。
 
 ### Step 1: 扫描需求层
 
-扫描 `requirements/` 下所有需求目录的 `metadata.yaml`。
+扫描 `requirements/` 下所有子目录的 `metadata.yaml`（跳过 `snapshots` 等非需求目录；兼容中文目录名与既有英文目录）。
 
-收集每个需求的：
-- 需求名称和 ID
-- prd 状态（pending / confirmed）
-- 测试 spec 状态（pending / confirmed）
+收集：
+
+- 目录名（中文或英文）
+- `metadata.name`、`metadata.id`（slug）
+- `prd.stage`、`prd.v5.status`、`prd.v9.status`、`prd.status`
+- `prd.v5.snapshot`、`prd.v9.snapshot`（如有）
+- `test_spec.status`
 
 ### Step 2: 输出
-
-**按角色最终产出状态汇总**：
 
 ```
 需求进度总览
 
-example-feature-a (示例需求 A)
-  PRD:      confirmed (MM-DD)
-  测试用例:  pending
+订单退款流程优化（id: order-refund-flow-opt）
+  PRD 5稿:  confirmed (06-10) → snapshots/prd-v5-2026-06-10.md
+  PRD 9稿:  pending
+  测试用例: pending
 
-example-feature-b (示例需求 B)
-  PRD:      pending
-  测试用例:  pending
+contract-subject-tree（id: contract-subject-tree）  # 既有英文目录
+  PRD 5稿:  —
+  PRD 9稿:  confirmed (05-20)
+  测试用例: confirmed
 ```
+
+**显示规则**：
+
+- 主标识：`name` 或目录名（中文优先）
+- 辅助：`id: <slug>`
+- 5稿/9稿：读 `prd.v5` / `prd.v9`；旧 metadata 无 v5/v9 时仅显示 `prd.status`
 
 ## 约束
 
-- 只读操作，不修改任何文件
-- `_archive/` 与 `requirements/` 同级，不在扫描范围内（决策 D16）
-- 对方仓库不可访问时（未克隆），标记为"不可达"而非报错
+- 只读，不修改文件
+- `_archive/` 不在扫描范围（D16）

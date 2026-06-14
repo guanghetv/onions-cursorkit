@@ -1,8 +1,14 @@
 ---
 name: req-new
-description: 初始化新需求目录：输入需求想法或飞书需求链接，创建 prd.md、metadata.yaml、prototypes/、test/ 等标准结构，并默认引导先执行 /pm-proto。
+description: 初始化新需求目录（中文目录名 + 英文 id slug）：飞书七章 prd 骨架、metadata、snapshots/、prototypes/、test/。默认引导 /pm-proto → /pm-spec-5。
 ---
 
 # /req-new
 
-初始化一个新的需求目录。可直接输入需求想法，或贴上飞书需求文档链接（`lark-cli` 优先，`feishu-mcp` 兜底）提取标题和概要，创建标准目录结构（prd.md + metadata.yaml + prototypes/ + test/）。默认下一步执行 `/pm-proto`，再执行 `/pm-spec`。
+初始化需求目录。支持飞书链接或一句话需求（`lark-cli` 优先）。
+
+- **目录名**：清洗后中文（重名 `-2` / `-MMDD`）
+- **metadata.id**：英文关键词 slug，创建后不变
+- **prd.md**：飞书七章骨架
+
+默认下一步：`/pm-proto`（可选）→ `/pm-spec-5` → 交互评审 → `/pm-spec`（9稿）。

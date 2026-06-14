@@ -6,7 +6,7 @@
 
 ## 插件解决什么问题
 
-- **单一真相源**：`requirements/<requirement-id>/` 下的 `prd.md` 与 `test/test-spec.md` 是产品与测试产出的权威版本；飞书文档可作为展示层，但以 specs 仓库为准。
+- **单一真相源**：`requirements/<中文目录名>/` 下的 `prd.md` 与 `test/test-spec.md` 是权威版本；`metadata.id` 为稳定英文 slug。
 - **角色分工清晰**：每人通过对应命令完成本角色步骤，减少在聊天里重复解释流程。
 - **需求与代码分层、多根友好**：需求与讨论在 specs 仓库；编码与契约处理在各自业务仓完成。多根工作区下可直接读取本地需求资料，减少手工同步。
 
@@ -27,20 +27,23 @@
 
 ### 产品（PM）
 
-**你在流程中的位置**：发起需求目录（最小初始化）→ 先生成并完善原型 → 执行 `/pm-spec` 补充与结构化 PRD → 确认后流转开发和测试。
+**你在流程中的位置**：发起需求目录 → 原型（可选）→ **5稿** `/pm-spec-5` → 交互评审 → **9稿** `/pm-spec` 定稿 → 流转开发和测试。
 
 | 能力 | 命令 | 说明 |
 |------|------|------|
-| 新建需求骨架 | `/req-new` | 输入需求想法或飞书需求文档链接，自动生成 `requirements/<id>/`（含 `metadata.yaml`、`prd.md` 模板、`test/test-spec.md` 空模板等）。目录名为 kebab-case。 |
-| 原型快速生成（可选） | `/pm-proto` | 在需求目录生成或迭代 `prototypes/` 与可选 `assets/`，为 `prd.md` 提供可引用素材。 |
-| PRD 结构化增强 | `/pm-spec` | 在原型基础上补充并增强 **已有** `prd.md`（不覆盖原文）：brainstorming、MODULE 拆分、验收标准、AI Review；详细评审记录写入 `prototypes/ai-review.md`，`prd.md` 仅保留可开工结论。 |
-| 看进度 | `/req-status` | 查看各需求 PRD / 测试状态。 |
+| 新建需求骨架 | `/req-new` | 飞书链接或一句话；**中文目录名** + 英文 `id` slug；飞书七章 `prd.md` 骨架 |
+| 原型快速生成（可选） | `/pm-proto` | 生成或迭代 `prototypes/`、`assets/` |
+| 5稿结构化增强 | `/pm-spec-5` | 内审/交互评审前；允许 `[待定]`；快照 `snapshots/prd-v5-*.md` |
+| 9稿定稿 | `/pm-spec` | 交互评审后；严格 AI Review；`prd.status=confirmed`；快照 `snapshots/prd-v9-*.md` |
+| 看进度 | `/req-status` | 5稿/9稿/测试状态 |
 
-**典型顺序**：`/req-new` → `/pm-proto`（先原型）→ `/pm-spec`（补充并结构化 PRD）→ 确认后通知测试与开发可并行推进。
+**典型顺序**：`/req-new` → `/pm-proto`（可选）→ `/pm-spec-5` → 交互评审（可改 `prd.md`）→ `/pm-spec` → 通知测试与开发。
+
+**PRD 模板**：[飞书标准模板](https://guanghe.feishu.cn/docx/S38Id4fxAofdz8xsWCVcRkHjnHg) 一~七章节 + `3.3 关键关注` / `3.4 回归范围`。
 
 **权限与边界**（需求目录内）：可读写 `prd.md`、`metadata.yaml`、`prototypes/`、`assets/`；对代码仓库仅 **只读扫描**（用于业务影响分析，不写实现细节到 PRD）。**禁止**改业务代码仓库文件。
 
-**依赖提示**：`/req-new`、`/pm-spec` 在需要读飞书文档时优先使用 **lark-cli**；`lark-cli` 不可用时可降级 **feishu-mcp**；两者都不可用时应提示安装 **lark-cli**。**`/pm-proto` 与 `/pm-spec` 必须先 Read 并遵循 Superpowers `brainstorming` 技能**，与用户确认灰区并获放行后，才可写入 `prototypes/` 或改写 `prd.md`（禁止「先出一版」跳过澄清）。
+**依赖提示**：`/req-new`、`/pm-spec-5`、`/pm-spec` 读飞书时优先 **lark-cli**。**`/pm-proto`、`/pm-spec-5`、`/pm-spec` 须先 brainstorming 并获用户放行**。
 
 ---
 
@@ -145,9 +148,10 @@
 
 | 命令 | 主要角色 | 一句话 |
 |------|----------|--------|
-| `/req-new` | 产品 / TL | 最小初始化需求目录（想法或飞书链接） |
-| `/pm-proto` | 产品 | 原型快速生成与迭代（可选） |
-| `/pm-spec` | 产品 | PRD 结构化增强 + AI Review |
+| `/req-new` | 产品 / TL | 中文目录 + 飞书七章骨架 |
+| `/pm-proto` | 产品 | 原型（可选） |
+| `/pm-spec-5` | 产品 | 5稿（交互评审前） |
+| `/pm-spec` | 产品 | 9稿定稿 |
 | `/qa-spec` | 测试 | PRD → 测试 spec |
 | `/qa-sync-xmind` | 测试 | test-spec.md ↔ XMind |
 | `/dev-start` | 开发 | 需求层资料导入当前仓库开发流程 |
@@ -165,18 +169,17 @@
 
 ```
 <specs-repo>/
-  requirements/                 # 活跃需求（扁平：一级子目录即需求）
-    <requirement-id>/
-      prd.md                    # 产品 PRD（撰写 + /pm-spec 增强）
-      metadata.yaml             # prd / test_spec 等状态
-      prototypes/               # 原型（可选）
-      assets/                   # 截图、流程图等可视化素材（可选）
-      test/
-        test-spec.md            # 测试 spec
-  _archive/                     # 历史需求（与 requirements 同级）
-  docs/context/                 # 业务上下文知识库
-  scripts/
-    workspace-repos.json        # 仓库路径注册表
+  requirements/
+    订单退款流程优化/           # 中文目录名（新需求）
+      prd.md                    # 飞书七章 + MODULE
+      metadata.yaml             # id: order-refund-flow-opt
+      snapshots/                # prd-v5-*.md, prd-v9-*.md
+      prototypes/
+      assets/
+      test/test-spec.md
+    contract-subject-tree/      # 既有英文目录（共存）
+  _archive/
+  scripts/workspace-repos.json
 ```
 
 ---

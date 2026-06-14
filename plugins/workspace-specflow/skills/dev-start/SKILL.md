@@ -31,7 +31,10 @@ description: >-
 ### Step 1: 定位需求
 
 **自动模式**：扫描 `requirements/` 下 `prd.status = confirmed` 的需求，列出供选择。
-**手动模式**：用户直接指定路径。
+
+列表展示：`订单退款流程优化（id: order-refund-flow-opt）` — 中文目录名或 `name` 为主，`id` slug 为辅。兼容既有英文目录名。
+
+**手动模式**：用户直接指定路径（支持中文目录路径）。
 
 读取完整的 `prd.md` 内容。
 

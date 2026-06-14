@@ -20,33 +20,59 @@ description: >-
 
 - 若 `lark-cli` 不可用：降级使用 `feishu-mcp`（如可用）
 - 若两者都不可用：提示建议安装 `lark-cli`
-- 若用户未提供飞书链接：直接基于用户输入的需求想法继续初始化，不额外提示补链
+- 若用户未提供飞书链接：直接基于用户输入的需求想法继续初始化
 
 ### Step 2: 生成目录信息
 
 自动生成：
-- `id`: kebab-case 英文目录名（决策 D14）
-- `name`: 中文显示名
-- `module`: 业务模块名（扫描已有 `metadata.yaml` 自动识别，或用户指定新模块）
+
+- **name**：中文显示名（飞书标题或用户输入归纳）
+- **目录名**：清洗后中文（见下方规则）
+- **id**：英文关键词 kebab-case slug（从标题提取英文关键词，**创建后不变**）
+- **module**：业务模块名（扫描已有 `metadata.yaml` 自动识别，或用户指定）
+
+**中文目录名规则**：
+
+1. 从 `name` 清洗：去除 `\ / : * ? " < > |`、首尾空白
+2. 最长 30 字（超出截断）
+3. 扫描 `requirements/` 消歧：
+   - 无冲突 → 直接用
+   - 有冲突 → 追加 `-2`、`-3` …
+   - 序号至 `-9` 仍冲突 → 追加 `-MMDD`（如 `订单退款-0612`）
+4. **不使用随机数**
+
+**id slug 规则**：
+
+- 从中文标题生成**英文关键词** slug（非拼音），如「订单退款流程优化」→ `order-refund-flow-opt`
+- 仅小写字母、数字、连字符；创建后禁止修改
 
 ### Step 3: 用户确认
 
-展示生成结果（标题、ID、模块、目录结构），用户确认或修正。
+展示并允许修正：
+
+- 中文目录名：`requirements/<目录名>/`
+- `id` slug
+- `name`、`module`
+
+用户确认后进入 Step 4。
 
 ### Step 4: 创建目录和文件
 
-按 `references/templates.md` 中的模板创建：
-- `metadata.yaml`（prd: pending, test_spec: pending）
-- `prd.md`（空模板，不预设 MODULE 结构）
-- `prototypes/`（空目录含 .gitkeep）
-- `test/test-spec.md`（空模板）
+按 `references/templates.md` 创建：
+
+- `requirements/<中文目录名>/`
+- `metadata.yaml`（`prd.stage = v5_pending`，`prd.v5/v9` 初始 pending）
+- `prd.md`（飞书七章空骨架；Agent 用 Step 1 信息填充标题与概述占位）
+- `snapshots/.gitkeep`
+- `prototypes/.gitkeep`
+- `test/test-spec.md`
 
 ### Step 5: 提示下一步
 
-默认流程：`/req-new` → `/pm-proto`（原型生成/完善）→ `/pm-spec`（补充并结构化 `prd.md`）。
+默认流程：`/req-new` → `/pm-proto`（可选）→ `/pm-spec-5` → 交互评审 → `/pm-spec`（9稿）。
 
 ## 约束
 
-- 目录名 kebab-case 英文（决策 D14）
-- prd.md 空模板不预设 MODULE（由 /pm-spec 增强时生成）
-- 不记录 feishu_task（决策 D17）、不记录 created_by（决策 D18）
+- 目录名中文、可读；`id` 英文 slug 稳定（废除原 D14「目录 kebab-case」）
+- 1稿由 Agent 代写骨架，产品不单独维护
+- 不记录 feishu_task（D17）、不记录 created_by（D18）

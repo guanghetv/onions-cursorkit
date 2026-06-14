@@ -1,12 +1,14 @@
 ---
 name: pm-spec
-description: 在原型基础上补充并结构化增强 prd.md，可读性强门禁（9 条 P0 阻断）；AI Review 详细记录外置，prd.md 仅保留可开工结论。
+description: 9稿 PRD 定稿（交互评审后）：结构化增强、消除待定项、严格 AI Review；确认后 prd.status=confirmed，解锁 qa-spec/dev-start。
 ---
 
-# /pm-spec
+# /pm-spec（9稿定稿）
 
-在原型基础上补充并结构化增强 `prd.md`。保留产品原始内容，输出阅读友好且结构清晰的 MODULE 文档。
+交互评审后的 **9稿** 结构化增强 `prd.md`。须先 **Read 并遵循 `superpowers:brainstorming`**，确认待定项已决议、MODULE 与回归范围后，才可改写并执行 AI Review。
 
-**门禁（不可跳过）**：须先 **Read 并遵循 `superpowers:brainstorming`**，与产品确认 MODULE 拆分、需求类型、灰区与（迭代时）本轮变更 MODULE 清单后，才可改写 `prd.md` 并执行 AI Review。禁止因「prd/飞书已有内容」跳过澄清。
+读取最新 `snapshots/prd-v5-*.md` 与当前 `prd.md` 做 5→9 差异摘要。禁止残留 `[待定]`。
 
-可读性作为 `confirmed` 强门禁（9 条 P0：内容 5 + 可读性 3 + 用户场景 1）。迭代需求按「本轮变更 MODULE 清单」聚焦评审。支持本地空模板时读取飞书文档回填（`lark-cli` 优先，`feishu-mcp` 兜底）。AI Review 详细结果写入 `prototypes/ai-review.md`，`prd.md` 仅保留可开工结论。
+严格 AI Review（`ai-review-rubric.md`）。确认后快照 `snapshots/prd-v9-<date>.md`，`prd.status = confirmed`。
+
+典型顺序：`/pm-spec-5` → 交互评审 → `/pm-spec`。
