@@ -5,7 +5,7 @@ description: >-
   Triggers when prd.status is confirmed and developer wants to start coding.
 ---
 
-# /dev-start — 桥接需求层 → 启动开发工作流
+# /dev-start — 读取需求并启动开发流程
 
 ## 前置条件
 
@@ -14,16 +14,13 @@ description: >-
 
 ## 定位
 
-轻量上下文准备 + dev-workflow 启动器。
+轻量上下文准备 + 开发流程启动器。
 
-**不创建 change 目录，不包含 brainstorming，不写入任何文件。**
-
-change 目录由 dev-workflow 内部的 `design-to-opsx` 在 brainstorming 结束后创建。
+**不创建需求层目录，不包含 brainstorming，不写入任何文件。**
 
 ## 权限约束
 
 ⛔ **严禁修改 requirements/ 下的任何文件**（决策 D33）。
-唯一例外：design-to-opsx 回写 metadata.yaml 的 changes 字段。
 
 ## 流程
 
@@ -34,7 +31,10 @@ change 目录由 dev-workflow 内部的 `design-to-opsx` 在 brainstorming 结�
 ### Step 1: 定位需求
 
 **自动模式**：扫描 `requirements/` 下 `prd.status = confirmed` 的需求，列出供选择。
-**手动模式**：用户直接指定路径。
+
+列表展示：`订单退款流程优化（id: order-refund-flow-opt）` — 中文目录名或 `name` 为主，`id` slug 为辅。兼容既有英文目录名。
+
+**手动模式**：用户直接指定路径（支持中文目录路径）。
 
 读取完整的 `prd.md` 内容。
 
@@ -77,29 +77,28 @@ AI 自动匹配 prd.md 中的 MODULE，展示匹配结果：
 - **已在工作区**：直接继续
 - **不在工作区**：提示建议操作
 
-### Step 5: 无缝启动 dev-workflow
+### Step 5: 启动开发流程
 
 在同一会话中切换到目标仓库上下文：
 
-1. 将以下信息作为上下文传递给 dev-workflow：
+1. 将以下信息作为上下文传递给开发流程：
    - prd.md 全文（已读取）
    - 匹配的 MODULE 列表
    - 需求层路径（`requirements/<requirement>/`）
    - specs 仓库逻辑名称
-   - specs 仓库的工作区根路径（`/dev-start` 运行于 specs 仓库内，可直接获取当前仓库根路径；传递给执行层后，`design-to-opsx` 回写 metadata.yaml 和 `pull-spec` 读取测试 spec 时可直接使用，无需反向查找）
-   - 建议的 change-id 格式：`<requirement-id>-<repo-name>`
+   - specs 仓库的工作区根路径（`/dev-start` 运行于 specs 仓库内，可直接获取当前仓库根路径；用于后续读取测试 spec）
 
-2. dev-workflow 检测到上下文中有需求层信息 → 跳过"询问需求来源" → 直接进入 brainstorming
+2. 开发流程检测到上下文中有需求层信息 → 跳过"询问需求来源" → 直接进入 brainstorming
 
-3. 后续流程完全由 dev-workflow 接管
+3. 后续流程完全由目标仓库内的开发流程接管
 
 ## 多仓库场景
 
-如需为多个仓库创建 change：在不同会话中分别执行 `/dev-start`。
+如需为多个仓库并行开发：在不同会话中分别执行 `/dev-start`。
 
 ## 约束
 
 - **不写入任何文件**
-- **不创建 change**（由 design-to-opsx 完成）
-- **不做 brainstorming**（由 dev-workflow 负责）
+- **不创建需求层目录**
+- **不做 brainstorming**（由后续开发流程负责）
 - **禁止修改 requirements/**（决策 D33）

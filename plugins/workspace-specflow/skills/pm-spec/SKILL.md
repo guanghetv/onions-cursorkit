@@ -1,72 +1,105 @@
 ---
 name: pm-spec
 description: >-
-  Use when user mentions: 产品spec/pm-spec/转换需求/增强prd/spec转换/结构化需求。
-  Triggers when prd.status is pending and requirements directory exists.
+  Use when user mentions: 9稿/pm-spec-9/产品spec/pm-spec/转换需求/增强prd/spec转换/PRD评审/定稿。
+  Triggers when requirements directory exists and prd needs 9稿 finalization after interaction review.
 ---
 
-# /pm-spec — prd.md 结构化增强
+# /pm-spec — 9稿定稿：结构化增强与 AI Review
+
+<HARD-GATE>
+在 Step 3 Brainstorming 完成且用户**明确确认**之前，**禁止**：
+
+- 写入或大幅改写 `prd.md` 的结构化内容（Step 4）
+- 执行 AI Review 并更新 `metadata.yaml.prd.status`（Step 5–6）
+- 以「prd 已有内容 / 飞书已拉取」为由跳过澄清
+
+必须 **Read 并遵循** `superpowers:brainstorming` 的 SKILL.md 全流程。
+</HARD-GATE>
 
 ## 前置条件
 
 - 需求目录已创建（`/req-new` 已执行）
-- `metadata.yaml` 中 `prd.status` 为 `pending`
+- 建议已完成 `/pm-spec-5`（5稿）与交互评审；非强制但 Step 1 会对比 v5 快照
+- 目标目录存在 `prd.md` 与 `metadata.yaml`
 
 ## 核心原则
 
-**prd.md 就是产品 spec**（决策 D28）。不生成新文件，在产品已写的 prd.md 上做结构化增强：保留原始内容，叠加 MODULE 结构、验收标准、业务规则。
+**9稿**为交互评审后的需求评审定稿；`prd.md` 确认后即为下游权威输入。
+
+- 模板见 `references/prd-template.md`（飞书一~七 + 3.3/3.4）
+- **禁止**残留 `[待定]` / `[待交互确认]`（P0）
+- 飞书读取：`lark-cli` 优先；按 h2 **一~七** 映射；本地优先策略同 plan-b
+- AI Review 见 `references/ai-review-rubric.md`（9稿）
+- 确认后 `prd.status = confirmed` → 解锁 `/qa-spec`、`/dev-start`
 
 ## 流程
 
 ### Step 1: 定位需求 & 读取输入
 
-扫描 `requirements/` 下 `prd.status = pending` 的需求。读取 prd.md，判断场景：
+扫描 `requirements/` 下目标需求，读取 `prd.md`。
 
-- **prd.md 已有内容**：直接使用
-- **prd.md 为空模板**：从 `metadata.yaml` 的 `feishu_doc` 通过 feishu-mcp 拉取。feishu-mcp 不可用时**必须明确提示**。
+若 `snapshots/prd-v5-*.md` 存在：读取**最新** v5 快照，与当前 `prd.md` 对比，输出 **5→9 差异摘要**（待定项是否已决议、交互结论是否已写入）。
 
-如有 Figma 链接，更新 `metadata.yaml` 的 `figma` 字段。`prototypes/` 下有原型文件时读取作为补充。
+- 本地有内容：直接使用（含会中手工修改）
+- 空模板 + `feishu_doc`：拉取飞书按章节映射回填
 
-### Step 2: 扫描前后端服务（业务层面）
+### Step 2: 读取原型与引用（可选）
 
-从 `workspace-repos.json` 解析仓库路径，输出业务层面影响分析。**安全护栏**：只提取业务影响，不提技术实现细节（决策 D6）。
+若 `prototypes/`、`assets/` 存在，作为增强输入。
 
-### Step 3: Brainstorming
+### Step 3: Brainstorming【阻断】
 
-调用 `superpowers:brainstorming`，引导产品同学：澄清模糊点 → 发现遗漏场景 → 讨论 MODULE 划分 → 确认优先级 → 明确验收标准。
+**REQUIRED SUB-SKILL:** `superpowers:brainstorming`（一次一问）
 
-### Step 4: 在 prd.md 上增强为 MODULE 结构
+澄清重点：
 
-保留产品原始内容，叠加结构化内容。**模板详情**：读取 `references/prd-template.md`。
+- 消除所有 `[待定]` 项（交互评审结论）
+- 确认 MODULE 拆分与验收标准
+- 需求类型、影响范围；迭代时**本轮变更 MODULE 清单**
+- 回归范围（`3.4`）：需回归项 + 不纳入项
 
-### Step 5: 逐段 review
+用户确认后进入 Step 4。
 
-分段展示：需求背景 → MODULE 概览 → 逐个 MODULE → 全局约束 → 名词解释。每段可修改。
+### Step 4: 结构化增强 `prd.md`
 
-### Step 6: 完整性校验
+按 `references/prd-template.md` 输出：
 
-AI 对照飞书原文检查未纳入内容、列出新增场景、确认验收标准覆盖。确认后写入 `prd.md`，更新 `metadata.yaml`：`prd.status = confirmed`。
+- **一、需求概述**：开发速览表含 `当前阶段: 9稿`；复杂流程 Mermaid 放本节末尾
+- **二、版本及进度跟踪**：PM 不覆盖；**本步不追加版本行**
+- **三、背景和价值**：`3.3` `3.4` 必填 callout
+- **四、Feature List**：含 `MODULE` 列
+- **五、需求详情说明**：每 MODULE 3 列表格 + 完整验收 checklist；**无待定**
+- **六、设计图地址** / **七、埋点需求**
 
-### Step 7: 可选同步回飞书
+### Step 5: AI Review（9稿）
 
-workspace-specflow 不负责飞书同步（决策 D32）。提示产品同学：
+读取 `references/ai-review-rubric.md`：
 
-- "prd.md 已确认。如需同步到飞书，可执行 `prd-sync push`。"
-- 如 `metadata.yaml` 有 `feishu_doc` 字段 → 展示飞书文档链接，方便确认是更新已有文档还是创建新文档。
-- 首次同步时 `prd-sync` 会自动在 `.cursor/prd-sync-mappings.json` 建立映射，后续可增量同步。
+1. 按开发速览需求类型确定深审范围
+2. P0 阻断（含「残留待定」规则 6）
+3. 五维评分 + P0/P1 问题项 → `prototypes/ai-review.md`
+4. `prd.md` **二、变更内容** 记结论摘要
 
-### Step 8: 可选生成交互演示
+### Step 6: 确认、快照与状态
 
-如确认：读取 prd.md → 扫描前端样式（只读） → 生成 `prodspecs/<requirement-id>/index.html`（资源内联）→ 更新索引。**严禁修改代码仓库文件**。
+用户确认通过后：
 
-### Step 9: 提示下一步
+1. **二、版本表** 追加：`9-n`、当天日期、`AI Review: 可开工`（等）、`snapshots/prd-v9-<date>.md`
+2. 复制 `prd.md` → `snapshots/prd-v9-<YYYY-MM-DD>.md`
+3. 更新 `metadata.yaml`：
+   - `prd.status = confirmed`
+   - `prd.confirmed_at = <date>`
+   - `prd.v9.status = confirmed`
+   - `prd.v9.snapshot = snapshots/prd-v9-<date>.md`
+   - `prd.stage = confirmed`
 
-测试同学 → `/qa-spec`；开发同学 → `/dev-start`（不需要等测试 spec）。
+### Step 7: 提示下一步
+
+测试 → `/qa-spec`；开发 → `/dev-start`（不需等测试 spec）。
 
 ## 约束
 
-- 增强而非覆盖（决策 D30）
-- 产品 spec 只描述需求本质，不涉及技术实现（决策 D6）
-- demo 只写 specs 仓库的 `prodspecs/`，禁写代码仓库
-- MODULE ID 是稳定锚点（决策 D21）
-- 增量更新暂不支持（决策 D34）
+- 增强而非覆盖产品原始决策
+- 产品 spec 只描述需求本质，不涉及技术实现
+- MODULE ID 稳定锚点；版本表仅在 Step 6 确认时追加
