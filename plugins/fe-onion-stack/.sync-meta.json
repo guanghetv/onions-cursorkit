@@ -1,9 +1,9 @@
 {
-  "syncedAt": "2026-06-12T10:04:08.423Z",
-  "source": "/Users/huangqian/Documents/works/git/ai-guardrails",
+  "syncedAt": "2026-06-15T01:58:23.158Z",
+  "source": "/tmp/tmp.HCmoTpNCRS/ai-guardrails",
   "sourceName": "ai-guardrails",
   "sourceVersion": "0.0.0",
-  "sourceCommit": "47a29b7e661cae96e42c76befcba2485a9289864",
+  "sourceCommit": "b478412dff9c7644c146d30c5e1bec86335f0723",
   "plugin": "fe-onion-stack",
   "skills": [
     "onion-ui-skill",
