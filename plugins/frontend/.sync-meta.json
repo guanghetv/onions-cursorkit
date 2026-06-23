@@ -1,9 +1,9 @@
 {
-  "syncedAt": "2026-06-15T01:51:43.081Z",
-  "source": "/tmp/tmp.jKwALVVbL2/ai-guardrails",
+  "syncedAt": "2026-06-23T08:28:26.725Z",
+  "source": "/tmp/tmp.UXgbqkEPvE/ai-guardrails",
   "sourceName": "ai-guardrails",
   "sourceVersion": "0.0.0",
-  "sourceCommit": "06b3609fcce1e89de05aaf8766aad503dab5965f",
+  "sourceCommit": "02d4f8bdc35ba2df054263923d927b8fa237913d",
   "plugin": "frontend",
   "skills": [
     "fe-security",

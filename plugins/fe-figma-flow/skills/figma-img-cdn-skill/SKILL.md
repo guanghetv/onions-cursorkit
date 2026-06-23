@@ -1,38 +1,61 @@
 ---
 name: figma-img-cdn-skill
 description: >-
-  Figma 设计稿中 `data-name` 以 `img-` / `img-bg-` 开头的图片图层处理：
-  localhost 资源下载 → CDN MCP 上传（`cdn_compress_and_upload` /
-  `cdn_batch_compress_and_upload`）→ 按命名规则生成 CSS background
-  或 OIImgLoad / `<img>` 实现；上传失败降级到 `assets/`。
-  是 `figma-read-skill` 工作流的必经环节，**跳过会凭印象编出"原型阶段不上 CDN /
+  仅识别 data-name 以 img- 开头的 Figma 图层（含合成图层），整层导出为一张图并上传 CDN；
+  禁止深层遍历子图层或引用 get_design_context 内子图 localhost 资源。
+  按命名规则选择实现方式（img-bg- 用 CSS background，内容图用 OIImgLoad）。
+  是 figma-read-skill 工作流的必经环节，**跳过会凭印象编出"原型阶段不上 CDN /
   生产化阶段才上 CDN"等不存在的分阶段路径**。
 
   触发条件：
-  (1) 用户提供 Figma URL（含 `figma.com`、`node-id=`、`123:456` 节点 ID 格式），
-  或要求"实现 / 还原 / 开发 / 生成 / 写"某个 Figma 页面或组件——必须与
-  `figma-read-skill` 同步触发；
-  (2) Figma MCP 返回节点 `data-name` 出现 `img-` / `img-bg-` 前缀；
-  (3) 任务涉及 `@guanghe-pub/yc-cdn-mcp-server` 的图片上传 / CDN URL 生成。
+  (1) 用户提供 Figma URL（含 figma.com、node-id=、123:456 节点 ID 格式），
+  或要求实现 / 还原 / 开发 / 生成 / 写某个 Figma 页面或组件——必须与
+  figma-read-skill 同步触发；
+  (2) Figma MCP 返回节点 data-name 出现 img- / img-bg- 前缀；
+  (3) 任务涉及 @guanghe-pub/yc-cdn-mcp-server 的图片上传 / CDN URL 生成；
+  (4) 识别 img- 图层、合成图层切图、或生成图片 URL 映射表。
 
   不触发：
   (1) 与 Figma 无关的前端图片渲染 / 懒加载逻辑；
-  (2) 节点 `data-name` 不以 `img-` 开头（如 `bg-banner` / `pic-avatar` /
-  `photo` / `IMAGE`），即便含 `fills.IMAGE` 或 `localhost` 资源也不进入本 skill。
+  (2) 节点 data-name 不以 img- 开头（如 bg-banner / pic-avatar / photo / IMAGE），
+  即便含 fills.IMAGE 或 localhost 资源也不进入本 skill。
 requires:
   - figma-read-skill  # 图片处理是 figma-read-skill 工作流的一部分，其他布局/token/验证规则遵循该 skill
   - onion-ui-skill    # 使用 OIImgLoad 组件时需查阅组件库文档
 mcp:
-  - figma-read-mcp                      # 【主路径】本地 Figma Desktop Dev Mode，读 img- 资源的 localhost URL
-  - figma-write-mcp                     # 【降级路径】Figma 官方在线 MCP，主路径不可用时通过同名工具读取
+  - figma-read-mcp                      # 【主路径】get_metadata / get_screenshot 整层导出
+  - figma-write-mcp                     # 【降级/在线】download_assets 整层导出（export.url）
   - user-@guanghe-pub/yc-cdn-mcp-server  # cdn_compress_and_upload / cdn_batch_compress_and_upload（图片上传 CDN）
 ---
 
 # Figma 图片资源处理 Skill
 
-识别 Figma 设计稿中 `img-` 开头的图片图层，自动上传 CDN 获取链接，并根据命名规则选择正确的代码实现方式。
+识别 Figma 设计稿中 `data-name` 以 `img-` 开头的图层，将**整层视觉**导出为一张图片资源，上传 CDN 并生成代码。
 
-> **准入门禁：只有 `data-name` 精确以小写 `img-` 开头的节点才允许进入本 skill 的自动识别、下载、上传 CDN、生成 CDN URL、按 `img-bg-*` / `img-*` 规则生成代码流程。非 `img-` 前缀节点仍可能是真实图片素材，但不属于本 CDN 上传流程；如实现确实需要，可在 `figma-read-skill` 主流程中临时保存到项目 `assets` 目录并本地引用。**
+> **准入门禁：只有 `data-name` 精确以小写 `img-` 开头的节点才允许进入本 skill 的自动识别、整层导出、上传 CDN、生成 CDN URL、按 `img-bg-*` / `img-*` 规则生成代码流程。非 `img-` 前缀节点仍可能是真实图片素材，但不属于本 CDN 上传流程；如实现确实需要，可在 `figma-read-skill` 主流程中临时保存到项目 `assets` 目录并本地引用。**
+
+## 边界原则（强制，不可违背）
+
+> **一个 `img-` 图层 = 一张图片资源 = 一个 URL。无论图层内部是单图还是蒙版/多图合成，均按此规则处理。**
+
+### 允许
+
+- 遍历节点树，**仅收集** `data-name`（或 `name`）以 `img-` 开头的图层
+- 对每个 `img-` 图层记录：`data-name`、`node-id`、宽高、位置
+- 以该 `img-` 图层的 `node-id` 整层导出图片（见 Step 2）
+- `data-name` 含 `https://` 时，直接提取链接，跳过导出与上传
+
+### 禁止
+
+- **禁止**进入 `img-` 图层内部，识别、下载或上传其子图层/子元素的资源
+- **禁止**使用 `get_design_context` 返回代码中的 `const imgX = "http://localhost:3845/..."` 等子图常量
+- **禁止**使用 `download_assets` 返回的 `rawImages` 列表映射到 `img-` 图层（只用 `export` 字段）
+- **禁止**单独处理子图层内的蒙版 SVG、mask-image 引用、内部 `<img>` src
+- **禁止**将子图层 localhost URL 映射到父级 `img-` 图层名
+- **禁止**在输出中声称「合成图层无法一对一映射」而改用子图资源
+- **禁止**为还原合成效果而在代码中复刻蒙版/翻转/多图叠加（图片阶段只交付整层导出图）
+
+布局与样式还原仍遵循 `figma-read-skill`；**图片资源阶段**只处理 `img-` 整层导出图。
 
 ## 命名规则与实现方式
 
@@ -45,30 +68,38 @@ mcp:
 
 ### Step 1：识别图片图层
 
-在 Figma MCP 返回的设计数据中，先读取节点完整 `data-name`，只筛选 `data-name.startsWith('img-') === true` 的元素进入本 skill。
+1. 调用 `figma-read-mcp` 的 `get_metadata`（主路径不可用时降级 `figma-write-mcp` 同名工具），在节点树中筛选 **`name` 以 `img-` 开头** 的图层（可在任意层级出现，但只认图层自身名称）
+2. 对每个匹配图层记录：
+   - **完整名称**：`data-name` / `name`
+   - **node-id**：用于整层导出
+   - **类型**：是否 `img-bg-` 开头
+   - **尺寸与位置**：width、height、top、left
+3. **到此为止**：不得再读取该图层下任何子节点的名称或资源
 
-不满足该条件的节点必须立即排除，禁止执行以下动作：
+不满足 `data-name.startsWith('img-') === true` 的节点必须立即排除，禁止执行 CDN 上传、生成 CDN URL、按 `img-*` 命名规则生成代码。
 
-- 调用 `cdn_compress_and_upload` / `cdn_batch_compress_and_upload`；
-- 生成或替换为 CDN URL；
-- 按 `img-bg-*` / `img-*` 命名规则决定 `OIImgLoad`、`<img>` 或图片 `background` 实现方式。
+可选校验：用 `get_design_context` 获取布局时，只提取带 `data-name="img-*"` 的**节点本身**的 node-id 与尺寸，**不得**解析其 JSX/HTML 子树中的图片常量。
 
-反例（均不得进入本 skill 的 CDN 上传流程）：`bg-banner`、`banner-image`、`pic-avatar`、`photo`、`IMAGE`，以及任何名称不是 `img-` 开头但带有 `fills.IMAGE` 或 `localhost` 资源地址的节点。这类素材如页面还原必须使用，可在主流程中临时落到本地 `assets`。
+### Step 2：整层导出图片资源（禁止用子图 URL）
 
-对每个匹配的元素，记录以下信息：
-- **完整名称**：`data-name` 的值
-- **类型判断**：是否包含 `bg-`（即 `img-bg-` 开头）
-- **元素尺寸**：width、height
-- **元素位置**：top、left 等布局信息
+对每个 `img-` 图层，**只导出该图层节点自身的渲染结果**：
 
-### Step 2：获取图片资源文件
+1. **名称含 `https://`**（如 `img-https://xxx.com/pic.png`）→ 提取链接直接使用，跳过 Step 3
+2. **其余图层** → 按优先级整层导出（**只取导出结果，忽略 `rawImages`**）：
+   - **优先**：`figma-write-mcp` 的 `download_assets`：
+     ```
+     download_assets(
+       fileKey: "<设计稿 fileKey>",
+       nodeId: "<img-图层的 node-id>",
+       defaultFormat: "png",
+       defaultScale: 2
+     )
+     ```
+     使用返回的 **`export.url`** 下载到本地临时文件（建议 `/tmp/figma-img/<data-name去img前缀>.png`），再进入 Step 3
+   - **备选**：`figma-read-mcp` 的 `get_screenshot(nodeId: "<img-图层的 node-id>")`，将返回图片保存到上述临时路径
+3. **不得**改用 `get_design_context` 内子图层的 `localhost:3845` 地址作为该 `img-` 图层的资源来源
 
-仅对 Step 1 命中的 `img-` 节点获取图片资源文件。Figma MCP 返回的图片资源通常以 `localhost` URL 形式提供。
-
-1. 如果 `data-name` 中直接包含 `https://` 链接（如 `img-https://xxx.com/pic.png`），提取该链接直接作为图片地址使用，**跳过 Step 3 的 CDN 上传**
-2. 如果 Figma MCP 返回了 `localhost` 形式的资源地址，先将文件下载到本地临时位置
-   - **注意**：下载图片时默认获取 **2x 分辨率的 PNG 格式**，在后续使用时需考虑实际显示尺寸为原始设计尺寸（即图片物理像素为显示尺寸的 2 倍）
-3. 根据资源内容判断文件格式（SVG / PNG / JPEG / WebP 等）
+**尺寸说明**：设计稿为 2x，导出图物理像素通常为显示尺寸的 2 倍；代码中容器宽高仍按 Figma 图层尺寸 **÷2** 设置。
 
 ### Step 3：上传 CDN
 
@@ -87,7 +118,7 @@ cdn_compress_and_upload(
 - `bucket`：使用 `fp`（图片/小文件加速）
 - `fileNameType`：使用 `2`（原名称 + 文件 hash，避免缓存问题）
 
-**多张图片时**：如果同一组件/页面有多张需要上传的图片，可以将它们放在同一个临时目录下，使用 `cdn_batch_compress_and_upload` 批量上传：
+**多张图片时**：将同一批 `img-` 整层导出文件放在同一临时目录，使用 `cdn_batch_compress_and_upload` 批量上传：
 
 ```
 cdn_batch_compress_and_upload(
@@ -223,49 +254,52 @@ import avatarImg from '@/assets/avatar.png'
 ## 完整处理流程图
 
 ```
-读取完整 data-name
+get_metadata 筛选 name 以 img- 开头的图层（不读子图层资源）
         │
-        ├── 以 img- 开头？
-        │       ├── 否 → 退出本 skill，不上传 CDN；必要时由主流程临时保存到 assets
-        │       └── 是 → 进入图片资源流程
-        │               │
-        │               ├── 名称中包含 https:// 链接？
-        │               │       ├── 是 → 直接提取链接使用（跳过 CDN 上传）
-        │               │       └── 否 → 下载 Figma localhost 资源到本地
-        │               │                       │
-        │               │                       ├── 调用 cdn_compress_and_upload 上传
-        │               │                       │       ├── 成功 → 使用 CDN URL
-        │               │                       │       └── 失败 → 保存到 assets 目录，使用本地路径
-        │               │
-        │               ├── img-bg-xxx？
-        │               │       └── 是 → 使用 CSS background 属性
-        │               │
-        │               └── img-xxx（非 bg-）？
-        │                       └── 是 → 查询 OIImgLoad 组件
-        │                               ├── 存在 → 使用 OIImgLoad
-        │                               └── 不存在 → 降级使用 <img> 标签
+        ├── 名称含 https://？
+        │       └── 是 → 直接提取链接（跳过导出与 CDN）
+        │
+        └── 否 → 对每个 img- 图层 node-id 整层导出
+                        │   download_assets.export.url（优先）
+                        │   或 get_screenshot（备选）
+                        │
+                        ├── cdn_compress_and_upload / batch 上传
+                        │       ├── 成功 → 一个 img- 图层对应一个 CDN URL
+                        │       └── 失败 → 保存到 assets（文件名来自 data-name）
+                        │
+                        ├── img-bg-xxx → CSS background
+                        └── img-xxx → OIImgLoad（降级 <img>）
 ```
+
+## 映射表输出格式
+
+生成本地 URL 或 CDN 映射表时，**每行只对应一个 `img-` 图层**：
+
+| data-name | node-id | 宽×高（代码尺寸 ÷2） | URL |
+|-----------|---------|---------------------|-----|
+
+不得出现「子图层素材 URL」「蒙版 SVG URL」「rawImages URL」或「同一 URL 映射多个 img- 图层（除非用户明确要求复用）」。
 
 ## 注意事项
 
 1. **前缀是本 CDN 流程的唯一准入条件**：不得因为节点包含图片填充、资源 URL 或视觉上像图片，就绕过 `img-` 命名门禁上传 CDN
-2. **尺寸缩小一倍**：Figma 设计稿是 2 倍尺寸，代码中图片容器的宽高需要除以 2
-3. **不要硬编码 CDN 地址为常量文件**：直接在使用处引用，除非同一张图多处复用
-4. **SVG 特殊处理**：如果图片资源是 SVG 格式且需要动态变色，优先保存为 `.svg` 文件并使用内联方式引入，而非作为普通图片
-5. **上传前确认**：调用 CDN 上传前，确保文件已完整下载且格式正确，且来源节点 `data-name` 以 `img-` 开头
-6. **保持与 figma-read-skill 一致**：本 skill 的图片处理逻辑优先级高于 figma-read-skill 中的「切图识别」章节，其他规则（布局、组件、token 等）仍遵循 figma-read-skill
+2. **一个 img- 图层一个资源**：合成图层必须整层导出，不得拆子图
+3. **尺寸缩小一倍**：代码中图片容器宽高 = Figma 图层尺寸 ÷ 2
+4. **不要硬编码 CDN 地址为常量文件**：直接在使用处引用，除非同一张图多处复用
+5. **上传前确认**：临时文件来自整层导出（`export.url` / `get_screenshot`），非子图 localhost 下载
+6. **保持与 figma-read-skill 一致**：本 skill 的图片资源规则优先于 `figma-read-skill` 中的「切图识别」章节，其他规则（布局、组件、token 等）仍遵循 `figma-read-skill`
 
 ## 检查清单
 
-- [ ] 是否正确识别了所有 `img-` 开头的图层？
-- [ ] 是否确认所有进入本 skill 自动识别 / CDN 上传 / CDN URL 生成流程的节点，`data-name` 都以 `img-` 开头？
+- [ ] 是否仅识别 `name`/`data-name` 以 `img-` 开头的图层？
 - [ ] 是否确认非 `img-` 前缀图片没有进入本 skill 的 CDN 上传和 CDN URL 生成流程？
+- [ ] **是否未进入子图层下载或映射任何子图 / rawImages 资源？**
+- [ ] **是否未使用 `get_design_context` 中的子图 localhost 常量？**
+- [ ] 每个 `img-` 图层是否通过 `download_assets.export` 或 `get_screenshot(nodeId)` 整层导出？
+- [ ] 映射表中是否「一行一个 img- 图层、一个 URL」？
 - [ ] 是否区分了 `img-bg-` 背景图和 `img-` 内容图片？
-- [ ] 是否尝试通过 CDN MCP 上传图片？
-- [ ] 上传失败时是否正确降级保存到 assets 目录？
-- [ ] 背景图是否使用了 CSS `background` 属性？
-- [ ] 内容图片是否优先使用了 `OIImgLoad` 组件？
-- [ ] `OIImgLoad` 不可用时是否降级为 `<img>` 标签？
-- [ ] 图片尺寸是否缩小了一倍？
-- [ ] **OIImgLoad 的 class 是否同时设置了 width、height、object-fit（contain/cover）？**
-- [ ] **生成后是否对接管页面截图并与设计稿 1:1 对比验证？（见 figma-read-skill 生成后验证步骤）**
+- [ ] 是否尝试通过 CDN MCP 上传？
+- [ ] 上传失败时是否降级保存到 assets（文件名来自 data-name）？
+- [ ] 背景图是否使用 CSS `background`？内容图是否优先 `OIImgLoad`？
+- [ ] 图片容器尺寸是否 ÷2？OIImgLoad class 是否设 width、height、object-fit？
+- [ ] **生成后是否对接管页面截图并与设计稿 1:1 对比？（见 figma-read-skill）**

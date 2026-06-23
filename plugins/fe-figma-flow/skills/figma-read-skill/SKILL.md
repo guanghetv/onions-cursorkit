@@ -114,7 +114,7 @@ figma-read-skill/
 
 | 红线主题 | 一句话禁令（速查） | 单点真理位置 |
 |---|---|---|
-| 外层命中即停 | `OI*` / `oi-*` / `icon-*` / `img-*` / `lottie-*` 一旦在外层命中，立即作为整体处理，**禁止下钻**识别内部子节点；外层无组合切图时用 `get_screenshot(<外层 nodeId>)` 拉一张，**禁止用内部子资源拼装还原** | [phase-2-audit-and-codegen.md](phase-2-audit-and-codegen.md) §一 · 外层命中即停 |
+| 外层命中即停 | `OI*` / `oi-*` / `icon-*` / `img-*` / `lottie-*` 一旦在外层命中，立即作为整体处理，**禁止下钻**识别内部子节点；`img-*` 必须对**外层 node-id** 整层导出（`download_assets.export` 或 `get_screenshot`），**禁止用 get_design_context 子图 localhost / rawImages 拼装还原** | [phase-2-audit-and-codegen.md](phase-2-audit-and-codegen.md) §一 · 外层命中即停 |
 | `icon-*` 落地路径 | 只允许两条：① `<OIIcon name="data-name 原值" />` 精确匹配（**禁止**语义裁剪如 `icon-location` → `location`）；② 图标库无匹配 → 占位块 + 在对话中显式提示用户。**任何切图 / 手写 SVG `<path>` / iconfont / CSS 自绘 / Vector 子节点拼装均视为违规** | [phase-2-audit-and-codegen.md](phase-2-audit-and-codegen.md) §一 · 图标识别补充 |
 | `img-*` CDN 默认上传 | 仅 `data-name.startsWith('img-') === true` 节点进入 CDN 流程；默认 `cdn_compress_and_upload`，**上传失败才降级 `assets/`**。**严禁虚构「原型阶段不上 CDN / 生产化阶段才上 CDN / v1 本地 v2 CDN」等分阶段路径**；用户明确"暂不走 CDN"必须在 audit 第 1 节引用其原话 | [phase-2-audit-and-codegen.md](phase-2-audit-and-codegen.md) §七 · 图片识别 + `figma-img-cdn-skill` |
 | 依赖 skill 强制加载 | 5 个 `requires` skill 必须**显式 Read** 入口文件后才允许进入 Step 1；audit 第 1.1 节 5 行不齐 / 关键产物列含占位（`vX.X.X` / `...`）即视为未完成 | 本文件 Step 0c + [phase-1-dependency-check.md](phase-1-dependency-check.md) §3d |
