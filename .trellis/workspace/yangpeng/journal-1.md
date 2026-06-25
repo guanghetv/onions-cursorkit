@@ -106,3 +106,38 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 4: onion-sdd Phase 1 Trellis adapter
+
+**Date**: 2026-06-25
+**Task**: onion-sdd Phase 1 Trellis adapter
+**Branch**: `yangpeng-test`
+
+### Summary
+
+完成 onion-sdd Trellis adapter 协议：新增 trellis-adapter skill，更新 continue/plan/rule/README/current 模板和设计文档，明确 OpenSpec/current/Trellis metadata 边界，并沉淀项目状态管理规范。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c3dd419` | (see git log) |
+| `ec25eb9` | (see git log) |
+| `5e6c58f` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
