@@ -1,25 +1,35 @@
 ---
-description: Onion SDD Phase 0 guardrails for OpenSpec changes.
+description: Onion SDD guardrails for mini/light/full OpenSpec changes.
 globs:
   - "openspec/**"
 ---
 
-# Onion SDD 试点规则
+# Onion SDD 规则
 
 当编辑 `openspec/**` 或处理 Onion SDD slash command 时，遵循本规则。
 
 ## 触发边界
 
-- Phase 0 只承诺 slash command 触发：`/onion-hotfix`、`/onion-tweak`、`/onion-plan`、`/onion-continue`、`/onion-finish`。
-- 不承诺自然语言弱触发，不实现 `/onion-auto`。
-- 不读写 Trellis workflow-state，不依赖外部指标平台或注册表。
+- 当前承诺 slash command 触发：`/onion-hotfix`、`/onion-tweak`、`/onion-plan`、`/onion-continue`、`/onion-finish`。
+- `/onion-auto`、Trellis adapter、metrics 和 marketplace 分发不属于当前基座能力。
+- OpenSpec 是变更正文唯一真相源；Trellis 后续只保存状态、引用、hash 和 journal。
 
 ## 分级写入
 
 - Tier 0：不创建 OpenSpec。
 - Tier 0+：使用 `skills/mini-change/SKILL.md`。
 - Tier 1：使用 `skills/light-change/SKILL.md`。
-- Tier 2+：进入 onion 完整 SDD 路径；不能把其他插件作为执行依赖。
+- Tier 2+：使用 `skills/full-change/SKILL.md`、`skills/openspec-change/SKILL.md`、`skills/external-spec/SKILL.md`、`skills/verify-change/SKILL.md`。
+
+## 写入门禁
+
+写入 `openspec/changes/**` 前必须满足：
+
+- 已完成 Tier 判断。
+- Tier 0+/1 已按 mini/light 模板确认目标、范围和验证。
+- Tier 2+ 已完成需求澄清、范围边界、验收口径和用户落盘确认。
+
+修改业务代码前应已存在当前 change 的 `tasks.md`；纯文档、配置或紧急 Tier 0++ 可按对应轻量规则处理并补记录。
 
 ## 上下文纪律
 
@@ -32,3 +42,4 @@ globs:
 - 不自动执行 `openspec archive`。
 - 不自动提交 git commit。
 - 输出完成结论时必须说明验证结果、未覆盖风险和是否建议归档。
+- Tier 2+ 以 `e2e-report.md` 的 `## 验收结论` 或用户确认的等价验收证据作为归档判断入口。

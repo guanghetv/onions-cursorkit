@@ -434,6 +434,21 @@ Phase 2 承诺 ROI 度量但没有 Phase 0 基线。
 
 ---
 
+## 十三、Phase 1 基座能力补齐
+
+Phase 1 先补齐 Onion SDD 的完整基座能力，再接入 Trellis runtime。补齐后的插件不再只用命令文档描述 Tier 2+，而是用 onion 自有 skills 承载完整流程：
+
+| 能力 | Onion skill | 说明 |
+|------|-------------|------|
+| 完整流程编排 | `full-change` | 需求接入、澄清、阶段推断、任务规划、事件路由 |
+| OpenSpec 落盘 | `openspec-change` | `proposal.md`、`specs/**/spec.md`、`tasks.md` 模板与质量自检 |
+| 外部 spec 接入 | `external-spec` | 后端/API/QA/外部文档写入当前 change 并做差异分析 |
+| E2E / 验收 | `verify-change` | 验证清单、浏览器或等价验收、`e2e-report.md` 门禁 |
+
+这四个 skill 是 `onion-sdd` 的自有能力，不要求用户调用其它 SDD 插件。Tier 0+/1 仍保持 mini/light 路径，跳过完整 brainstorming 和默认 E2E；Tier 2+ 才进入完整基座流程。
+
+完整流程仍遵循 Single Source of Truth：OpenSpec change 目录保存正文，`.onion-sdd/current.json` 只保存轻量运行态。后续 Trellis adapter 只同步 metadata、phase、hash、path、journal 和 parent/child 关系，不复制 OpenSpec 正文。
+
 ## 附录：与 Trellis 的衔接点（Phase 1 预留）
 
 以下内容 Phase 0 不实现，但设计文档中标注清楚，避免 Phase 1 返工：

@@ -12,7 +12,7 @@ description: 检查 Onion SDD 变更的验证证据、任务状态与归档条�
 1. 定位当前 `openspec/changes/<change-id>/`。
 2. 读取 `proposal.md`、`tasks.md`、`specs/**/spec.md`、验证记录和 `e2e-report.md`。
 3. 对 Tier 0+/1，检查 mini/light change 的目标、任务和定向验证是否闭合。
-4. 对 Tier 2+，检查 onion 完整 SDD 路径中的 E2E 或等价验收结论门禁。
+4. 对 Tier 2+，读取 `skills/verify-change/SKILL.md` 的验收口径，检查 `e2e-report.md` 或等价验收证据。
 5. 检查是否存在"带债项"：`proposal.md` 中 `## 带债项` 章节，逐条判断是否可接受。
 6. 输出是否可归档、仍需补哪些验证、是否存在已知风险、债项数。
 
@@ -20,6 +20,7 @@ description: 检查 Onion SDD 变更的验证证据、任务状态与归档条�
 
 - 变更目标清晰，相关任务已完成或明确标注不做。
 - 验证命令与结果可追溯。
+- Tier 2+ 默认需要 `e2e-report.md`；若使用等价验收证据，必须在最终输出中说明来源、覆盖范围和用户确认。
 - 若存在 `e2e-report.md`，以其中 `## 验收结论` 为准。
 - 如需归档，只提示用户在终端执行 `openspec archive <change-id>`。
 

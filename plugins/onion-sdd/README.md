@@ -1,13 +1,13 @@
 # onion-sdd
 
-Onion SDD 是一个全新的通用 SDD 试点插件，用 slash command 把变更按复杂度分层：小变更走轻量 OpenSpec 产物，中大型变更进入 onion 自有的完整 SDD 路径。Phase 0 只提供 Cursor 静态插件文件，不包含运行时代码。
+Onion SDD 是一个通用 SDD 试点插件，用 slash command 把变更按复杂度分层：小变更走轻量 OpenSpec 产物，中大型变更进入 onion 自有完整 SDD 基座能力。它保留成熟 SDD 闭环中的需求接入、OpenSpec、任务规划、外部 spec 接入、E2E/验收和归档门禁，同时降低小任务的流程厚度。
 
-## Phase 0 范围
+## 当前能力
 
-- 只承诺 slash command 触发，不承诺自然语言弱触发。
+- 承诺 slash command 触发，不依赖自然语言弱触发。
 - 通过 Tier 分级决定是否写 OpenSpec、写到什么粒度、何时升级到完整工作流。
 - 提供 Tier 0+/Tier 1 的 mini/light OpenSpec 模板与验证纪律。
-- Tier 2+ 先沉淀 onion 自有完整 SDD 路径说明；后续成熟能力应沉淀为 onion 自有技能、模板和门禁。
+- Tier 2+ 使用 onion 自有完整 SDD skills，覆盖需求接入、完整 OpenSpec、任务规划、外部 spec 接入、E2E/验收和 finish 门禁。
 - 按需读取与当前变更相关的需求、代码、OpenSpec、测试和验证材料，不设置全仓扫描硬约束。
 
 ## 目录
@@ -27,7 +27,11 @@ plugins/onion-sdd/
 ├── skills/
     ├── tier-triage/SKILL.md
     ├── mini-change/SKILL.md
-    └── light-change/SKILL.md
+    ├── light-change/SKILL.md
+    ├── full-change/SKILL.md
+    ├── openspec-change/SKILL.md
+    ├── external-spec/SKILL.md
+    └── verify-change/SKILL.md
 └── templates/
     └── current.example.json
 ```
@@ -38,9 +42,9 @@ plugins/onion-sdd/
 |------|------|----------|
 | `/onion-hotfix` | Tier 0+/0++ : 小修复/低风险配置调整/紧急故障 | `tier-triage` → `mini-change` |
 | `/onion-tweak` | Tier 1 : 单点轻量体验或行为调整 | `tier-triage` → `light-change` |
-| `/onion-plan` | 判断变更层级并进入合适流程（主入口） | `tier-triage`，必要时进入 onion 完整 SDD 路径 |
-| `/onion-continue` | 从已有 `openspec/changes/**` 产物恢复上下文 | `tier-triage`，根据产物 + `.onion-sdd/current.json` 推断阶段 |
-| `/onion-finish` | 检查验证证据、任务完成度与归档条件 | `mini-change` / `light-change` / onion 验收规则 |
+| `/onion-plan` | 判断变更层级并进入合适流程（主入口） | `tier-triage`，Tier 2+ 进入 `full-change` |
+| `/onion-continue` | 从已有 `openspec/changes/**` 产物恢复上下文 | `.onion-sdd/current.json` + OpenSpec 产物 + 对应 skill |
+| `/onion-finish` | 检查验证证据、任务完成度与归档条件 | `mini-change` / `light-change` / `verify-change` |
 
 ## Tier 路由
 
@@ -60,18 +64,31 @@ plugins/onion-sdd/
 
 `onion-sdd` 是独立的 SDD 插件流程，不要求安装其他 SDD 插件才能工作。所有用户可见的命令、技能、规则和产物口径都以 onion 自身为准；后续成熟能力应按 onion 的命名、模板和门禁沉淀到本插件内。
 
+## 完整 SDD 基座
+
+Tier 2+ 使用以下 onion 自有能力：
+
+| Skill | 作用 |
+|-------|------|
+| `full-change` | 完整流程编排：需求接入、澄清、阶段推断、任务规划和事件路由 |
+| `openspec-change` | 将设计结论写入 `proposal.md`、`specs/**/spec.md`、`tasks.md` |
+| `external-spec` | 接入后端/API/QA/外部 spec，写入 `backend-*.md`、`qa-*.md` 并做差异分析 |
+| `verify-change` | 生成验证清单，执行或记录 E2E/等价验收，写入 `e2e-report.md` |
+
+完整流程仍遵循 OpenSpec 分工：用户在终端执行 OpenSpec CLI，Agent 负责变更目录中的 Markdown 产物。
+
 ## 试点安装
 
 Phase 0 采用试点隔离方式：手动指定 `plugins/onion-sdd/` 路径在 Cursor 中试用。暂不注册 `.cursor-plugin/marketplace.json`，暂不更新仓库顶层 README，暂不进入插件市场分发。
 
-## 本期不做
+## 当前不做
 
 - 不做 `/onion-auto`；AI 自审、弱触发和自动推荐后续再补。
-- 不做 Trellis adapter，不读写 Trellis workflow-state。
+- 不做 Trellis adapter，不读写 Trellis workflow-state；后续由 adapter 把 onion 状态同步到 Trellis task runtime。
 - 不做运行时指标、注册表、marketplace 发布和脚本校验集成。
 - 不自动执行 `openspec archive`，不自动提交 git commit。
 - 不修改试点目录外的既有插件。
-- 不做 Tier 3 parent/child 任务自动化（仅做判定提示）。
+- 不做 Tier 3 parent/child 任务自动化（仅做判定提示；后续接入 Trellis task tree）。
 
 ## 运行时状态
 
@@ -96,7 +113,7 @@ Phase 0 使用 `.onion-sdd/current.json` 维护当前变更的轻量运行时状
 }
 ```
 
-该文件由 onion-sdd 命令自动维护，不要求手动编辑。Phase 1 接入 Trellis 后由 adapter 单向同步替换。
+该文件由 onion-sdd 命令自动维护，不要求手动编辑。后续接入 Trellis 后由 adapter 单向同步替换。
 
 模板见 `templates/current.example.json`。
 
@@ -131,4 +148,5 @@ Phase 0 使用 `.onion-sdd/current.json` 维护当前变更的轻量运行时状
 ```bash
 find plugins/onion-sdd -type f | sort
 python3 -m json.tool plugins/onion-sdd/.cursor-plugin/plugin.json
+rg -n "full-change|openspec-change|external-spec|verify-change" plugins/onion-sdd
 ```
