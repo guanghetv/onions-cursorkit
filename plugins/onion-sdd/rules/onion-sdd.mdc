@@ -1,0 +1,34 @@
+---
+description: Onion SDD Phase 0 guardrails for OpenSpec changes.
+globs:
+  - "openspec/**"
+---
+
+# Onion SDD 试点规则
+
+当编辑 `openspec/**` 或处理 Onion SDD slash command 时，遵循本规则。
+
+## 触发边界
+
+- Phase 0 只承诺 slash command 触发：`/onion-hotfix`、`/onion-tweak`、`/onion-plan`、`/onion-continue`、`/onion-finish`。
+- 不承诺自然语言弱触发，不实现 `/onion-auto`。
+- 不读写 Trellis workflow-state，不依赖外部指标平台或注册表。
+
+## 分级写入
+
+- Tier 0：不创建 OpenSpec。
+- Tier 0+：使用 `skills/mini-change/SKILL.md`。
+- Tier 1：使用 `skills/light-change/SKILL.md`。
+- Tier 2+：进入 onion 完整 SDD 路径；不能把其他插件作为执行依赖。
+
+## 上下文纪律
+
+- 按需读取与当前变更相关的需求、OpenSpec、代码、测试和验证材料。
+- 发现升级红线时停止轻量流程，转入 `/onion-plan`。
+- 不修改试点目录外的既有插件，不把其他插件作为执行依赖。
+
+## 收束纪律
+
+- 不自动执行 `openspec archive`。
+- 不自动提交 git commit。
+- 输出完成结论时必须说明验证结果、未覆盖风险和是否建议归档。

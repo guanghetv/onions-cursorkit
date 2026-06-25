@@ -1,0 +1,9 @@
+{"file": "docs/add-a-plugin.md", "reason": "插件目录、frontmatter、marketplace 规范；Phase 0 试点不注册但 frontmatter 仍须合规"}
+{"file": "plugins/fe-specflow/commands/fe-sdd.md", "reason": "对照旧 /fe-sdd 门禁与放行条件，改造 onion 命令层"}
+{"file": "plugins/fe-specflow/skills/dev-workflow/SKILL.md", "reason": "Tier 2+ 完整阶段表与事件驱动流程，onion-plan 引用而非重写"}
+{"file": "plugins/fe-specflow/skills/design-to-opsx/SKILL.md", "reason": "Tier 2+ 完整 OpenSpec 落盘模板与纪律"}
+{"file": "plugins/fe-specflow/skills/e2e-verify/SKILL.md", "reason": "Tier 2+ E2E 与 e2e-report 归档门禁"}
+{"file": "plugins/fe-specflow/skills/pull-spec/SKILL.md", "reason": "Tier 2+ 联调阶段 pull-spec 事件，continue/finish 弱恢复需知晓"}
+{"file": "plugins/fe-specflow/rules/dev-workflow.mdc", "reason": "对照旧 rule glob 与双门禁，设计 onion-sdd.mdc 共存策略"}
+{"file": "plugins/fe-specflow/README.md", "reason": "fe-specflow 能力地图与 OpenSpec CLI 分工说明"}
+{"file": "plugins/workspace-specflow/.cursor-plugin/plugin.json", "reason": "commands/skills/rules 三入口 manifest 范例"}

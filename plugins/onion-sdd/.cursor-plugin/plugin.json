@@ -1,0 +1,20 @@
+{
+  "name": "onion-sdd",
+  "displayName": "Onion SDD 试点工作流",
+  "version": "0.0.1",
+  "description": "通用 SDD 试点插件：slash command 触发、Tier 分级、mini/light OpenSpec 模板与按需上下文纪律。",
+  "author": {
+    "name": "wenli"
+  },
+  "keywords": [
+    "sdd",
+    "openspec",
+    "workflow",
+    "tier",
+    "onion"
+  ],
+  "license": "MIT",
+  "rules": "./rules/",
+  "skills": "./skills/",
+  "commands": "./commands/"
+}
