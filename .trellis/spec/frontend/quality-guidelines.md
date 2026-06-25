@@ -1,51 +1,77 @@
-# Quality Guidelines
+# 质量规范
 
-> Code quality standards for frontend development.
+## 基础校验
 
----
+正式插件改动后运行：
 
-## Overview
+```bash
+node scripts/validate-template.mjs
+```
 
-<!--
-Document your project's quality standards here.
+未注册的试点插件至少运行：
 
-Questions to answer:
-- What patterns are forbidden?
-- What linting rules do you enforce?
-- What are your testing requirements?
-- What code review standards apply?
--->
+```bash
+find plugins/<plugin> -type f | sort
+python3 -m json.tool plugins/<plugin>/.cursor-plugin/plugin.json
+rg -n "name:|description:" plugins/<plugin>/commands plugins/<plugin>/skills plugins/<plugin>/rules
+```
 
-(To be filled by the team)
+修改 `.trellis/spec/` 后检查是否还存在模板占位语、空章节或不符合本仓库实际结构的泛化说明。
 
----
+## 文档质量
 
-## Forbidden Patterns
+好的插件文档应该：
 
-<!-- Patterns that should never be used and why -->
+- 面向使用者，而不是只记录开发过程。
+- 明确触发方式、适用范围、不做范围。
+- 给出具体路径和命令。
+- 不暗示不存在的运行时依赖。
 
-(To be filled by the team)
+参考：
+- `plugins/onion-sdd/README.md`
+- `plugins/onion-sdd/DESIGN-SUPPLEMENT.md`
+- `docs/add-a-plugin.md`
 
----
+## 规则质量
 
-## Required Patterns
+规则文件应尽量小而明确：
 
-<!-- Patterns that must always be used -->
+- `globs` 不要过宽，避免和其他插件冲突。
+- `alwaysApply: true` 只用于真正全局规则，例如提交规范或文档语言规范。
+- rule 中的 MUST/MUST NOT 要可执行，不要写抽象价值观。
 
-(To be filled by the team)
+参考：
+- `plugins/common/rules/doc-writing-zh.mdc`
+- `plugins/frontend/rules/commit-rule.mdc`
+- `plugins/onion-sdd/rules/onion-sdd.mdc`
 
----
+## 技能质量
 
-## Testing Requirements
+Skill 必须让 AI 知道下一步怎么做：
 
-<!-- What level of testing is expected -->
+- 入口条件。
+- 输入。
+- 步骤。
+- 输出格式。
+- 何时停止或升级。
 
-(To be filled by the team)
+避免只写“要认真分析”这类无法执行的建议。
 
----
+## 提交质量
 
-## Code Review Checklist
+提交信息使用中文 Conventional Commits，参考 `plugins/frontend/rules/commit-rule.mdc`：
 
-<!-- What reviewers should check -->
+```text
+feat(onion-sdd): 初始化独立 SDD 插件流程
+docs(trellis): 填充项目开发规范
+chore(task): archive ...
+```
 
-(To be filled by the team)
+不要把不相关初始化文件混入插件功能提交。
+
+## 常见错误
+
+- README、command、skill 之间口径不一致。
+- 文档中还残留模板占位。
+- 未注册试点插件误跑全量 marketplace 校验后忽略失败原因。
+- 同步产物被手工改动，下一次同步被覆盖。

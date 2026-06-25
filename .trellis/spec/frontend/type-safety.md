@@ -1,51 +1,68 @@
-# Type Safety
+# 类型与结构安全
 
-> Type safety patterns in this project.
+## JSON manifest
 
+插件 manifest 和 marketplace 必须是合法 JSON：
+
+```bash
+python3 -m json.tool .cursor-plugin/marketplace.json
+python3 -m json.tool plugins/<plugin>/.cursor-plugin/plugin.json
+```
+
+正式插件需要通过 `scripts/validate-template.mjs`，它会检查：
+
+- plugin name 是否符合模式。
+- marketplace entry 和 plugin.json 的 name 是否一致。
+- `rules`、`skills`、`commands` 等引用路径是否存在且安全。
+- frontmatter 是否包含必需字段。
+
+## Frontmatter
+
+rule、command、skill、agent 的 YAML frontmatter 是本仓库最重要的“类型契约”之一。
+
+必需字段：
+
+- rule：`description`
+- command：`name`、`description`
+- skill：`name`、`description`
+- agent：`name`、`description`
+
+frontmatter 必须从文件第一行开始：
+
+```markdown
 ---
-
-## Overview
-
-<!--
-Document your project's type safety conventions here.
-
-Questions to answer:
-- What type system do you use?
-- How are types organized?
-- What validation library do you use?
-- How do you handle type inference?
--->
-
-(To be filled by the team)
-
+name: onion-plan
+description: 对变更做 Onion SDD Tier 分级。
 ---
+```
 
-## Type Organization
+不要在 frontmatter 前留空行；`scripts/validate-template.mjs` 会按文件开头解析。
 
-<!-- Where types are defined, shared types vs local types -->
+## Markdown 模板字段
 
-(To be filled by the team)
+命令和技能中的模板字段应使用稳定名称。例如 onion-sdd 中：
 
----
+- `## 背景`
+- `## 变更`
+- `## 影响范围`
+- `## 验证`
+- `## 带债项`
 
-## Validation
+后续自动化会依赖这些标题恢复状态；不要随意重命名。
 
-<!-- Runtime validation patterns (Zod, Yup, io-ts, etc.) -->
+## Python 类型习惯
 
-(To be filled by the team)
+Trellis Python 脚本已经使用类型标注和 `Path`：
 
----
+- 新函数补充参数和返回类型。
+- 文件路径使用 `pathlib.Path`，不要混用大量裸字符串。
+- JSON 读取/写入优先复用 `.trellis/scripts/common/io.py`。
 
-## Common Patterns
+参考：`.trellis/scripts/common/task_store.py`。
 
-<!-- Type utilities, generics, type guards -->
+## 常见错误
 
-(To be filled by the team)
-
----
-
-## Forbidden Patterns
-
-<!-- any, type assertions, etc. -->
-
-(To be filled by the team)
+- 在 JSON 示例里写注释。
+- command 文件缺 `name`，导致校验失败。
+- rule 文件只有 `globs` 没有 `description`。
+- 用绝对路径写 manifest 引用，破坏跨机器安装。

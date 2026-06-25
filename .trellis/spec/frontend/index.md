@@ -1,39 +1,49 @@
-# Frontend Development Guidelines
+# 前端与插件资产开发规范
 
-> Best practices for frontend development in this project.
+> 本目录面向本仓库中的前端相关 Cursor 插件、规则、commands、skills 和文档资产。这里的“frontend”不是业务前端应用源码目录。
 
----
+## 适用范围
 
-## Overview
+- `plugins/frontend/**`：前端安全、工程规范、性能优化等规则资产。
+- `plugins/fe-figma-flow/**`、`plugins/fe-onion-stack/**`：前端工作流与内部技术栈插件。
+- `plugins/fe-specflow/**`、`plugins/workspace-specflow/**`、`plugins/onion-sdd/**`：Spec-Driven 工作流插件。
+- `.cursor/commands/**`、`.cursor/skills/**`：Cursor 本地命令/技能。
+- Markdown 文档、`.mdc` 规则、`SKILL.md` 技能文件。
 
-This directory contains guidelines for frontend development. Fill in each file with your project's specific conventions.
+## 指南索引
 
----
+| 指南 | 内容 | 状态 |
+|------|------|------|
+| [目录结构](./directory-structure.md) | 插件、commands、rules、skills 的组织方式 | 已填充 |
+| [组件规范](./component-guidelines.md) | 本仓库无 UI 组件；记录插件文档组件的写法 | 已填充 |
+| [Hook 规范](./hook-guidelines.md) | 本仓库无 React hooks；记录 Cursor/Trellis hook 资产边界 | 已填充 |
+| [状态管理](./state-management.md) | OpenSpec、Trellis、轻量 JSON 状态的使用边界 | 已填充 |
+| [质量规范](./quality-guidelines.md) | frontmatter、插件校验、文档审查 | 已填充 |
+| [类型安全](./type-safety.md) | JSON manifest、YAML frontmatter、Markdown 模板字段 | 已填充 |
 
-## Guidelines Index
+## 开发前检查清单
 
-| Guide | Description | Status |
-|-------|-------------|--------|
-| [Directory Structure](./directory-structure.md) | Module organization and file layout | To fill |
-| [Component Guidelines](./component-guidelines.md) | Component patterns, props, composition | To fill |
-| [Hook Guidelines](./hook-guidelines.md) | Custom hooks, data fetching patterns | To fill |
-| [State Management](./state-management.md) | Local state, global state, server state | To fill |
-| [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | To fill |
-| [Type Safety](./type-safety.md) | Type patterns, validation | To fill |
+- 新增或修改插件前阅读 `docs/add-a-plugin.md`。
+- 改正式插件市场条目前阅读 `.cursor-plugin/marketplace.json` 和 `scripts/validate-template.mjs`。
+- 改同步插件前检查 manifest 描述是否写有“同步自 ai-guardrails，请勿手改”。
+- 改命令/技能/规则时先看同插件内已有文件，保持命名、中文表达和路径口径一致。
 
----
+## 质量检查
 
-## How to Fill These Guidelines
+```bash
+node scripts/validate-template.mjs
+python3 -m json.tool plugins/<plugin>/.cursor-plugin/plugin.json
+```
 
-For each guideline file:
+另外要人工确认 `.trellis/spec/` 中没有模板占位语、空章节或仍在要求英文填写的旧说明。
 
-1. Document your project's **actual conventions** (not ideals)
-2. Include **code examples** from your codebase
-3. List **forbidden patterns** and why
-4. Add **common mistakes** your team has made
+未注册试点插件可局部检查：
 
-The goal is to help AI assistants and new team members understand how YOUR project works.
+```bash
+find plugins/<plugin> -type f | sort
+python3 -m json.tool plugins/<plugin>/.cursor-plugin/plugin.json
+```
 
----
+## 语言
 
-**Language**: All documentation should be written in **English**.
+规则、README、命令说明、skill 文档默认中文；技术名词、文件路径、命令、API 字段保留英文。
