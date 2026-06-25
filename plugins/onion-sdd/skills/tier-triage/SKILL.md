@@ -13,6 +13,7 @@ description: 判断用户请求属于 Onion SDD 的 Tier 0、0+、0++、1、2 �
 - 当前已有的 OpenSpec 产物，如 `openspec/changes/<change-id>/proposal.md`、`tasks.md`、`specs/**/spec.md`。
 - 与请求直接相关的代码、测试、配置、错误信息或运行证据。
 - `.onion-sdd/current.json`（如果存在）。
+- Trellis active task 的 `task.json.meta.onion`（如果存在）。
 
 按需读取上下文即可；优先围绕用户给出的路径、change-id、错误信息、相关模块和验证入口展开。
 
@@ -20,7 +21,7 @@ description: 判断用户请求属于 Onion SDD 的 Tier 0、0+、0++、1、2 �
 
 分级前扫描 `openspec/changes/` 下所有未归档的 change。如果本次变更涉及的文件与任一活跃 change 的 `proposal.md` 中「影响范围」所列文件重叠，在输出中标注警告。
 
-不阻断流程，但要求用户确认知晓冲突。如果有 `.onion-sdd/current.json` 的活跃 change，优先提示先完成该变更。
+不阻断流程，但要求用户确认知晓冲突。如果 Trellis active task 或 `.onion-sdd/current.json` 中已有活跃 change，优先提示先完成该变更。
 
 ## Tier 定义
 
@@ -103,6 +104,6 @@ Q6: 是否属于单模块内的小范围行为/体验调整？特征：1 个页�
 
 - Phase 0 只承诺 slash command 触发。
 - 不使用 `/onion-auto`。
-- 不读写 Trellis workflow-state。
+- 可通过 `trellis-adapter` 读写 Trellis task 的 `meta.onion`，但不修改 Trellis 源码、`.trellis/scripts/**` 或 `.trellis/.runtime/**`。
 - 不修改试点目录外的既有插件。
 - Tier 2+ 进入 onion 完整 SDD 路径；不能把其他插件作为执行依赖。

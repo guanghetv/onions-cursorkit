@@ -31,7 +31,8 @@ plugins/onion-sdd/
     ├── full-change/SKILL.md
     ├── openspec-change/SKILL.md
     ├── external-spec/SKILL.md
-    └── verify-change/SKILL.md
+    ├── verify-change/SKILL.md
+    └── trellis-adapter/SKILL.md
 └── templates/
     └── current.example.json
 ```
@@ -43,7 +44,7 @@ plugins/onion-sdd/
 | `/onion-hotfix` | Tier 0+/0++ : 小修复/低风险配置调整/紧急故障 | `tier-triage` → `mini-change` |
 | `/onion-tweak` | Tier 1 : 单点轻量体验或行为调整 | `tier-triage` → `light-change` |
 | `/onion-plan` | 判断变更层级并进入合适流程（主入口） | `tier-triage`，Tier 2+ 进入 `full-change` |
-| `/onion-continue` | 从已有 `openspec/changes/**` 产物恢复上下文 | `.onion-sdd/current.json` + OpenSpec 产物 + 对应 skill |
+| `/onion-continue` | 从 Trellis active task、`.onion-sdd/current.json` 或 `openspec/changes/**` 恢复上下文 | `trellis-adapter` + OpenSpec 产物 + 对应 skill |
 | `/onion-finish` | 检查验证证据、任务完成度与归档条件 | `mini-change` / `light-change` / `verify-change` |
 
 ## Tier 路由
@@ -74,6 +75,7 @@ Tier 2+ 使用以下 onion 自有能力：
 | `openspec-change` | 将设计结论写入 `proposal.md`、`specs/**/spec.md`、`tasks.md` |
 | `external-spec` | 接入后端/API/QA/外部 spec，写入 `backend-*.md`、`qa-*.md` 并做差异分析 |
 | `verify-change` | 生成验证清单，执行或记录 E2E/等价验收，写入 `e2e-report.md` |
+| `trellis-adapter` | 同步 OpenSpec、`.onion-sdd/current.json` 和 Trellis task metadata |
 
 完整流程仍遵循 OpenSpec 分工：用户在终端执行 OpenSpec CLI，Agent 负责变更目录中的 Markdown 产物。
 
@@ -81,18 +83,37 @@ Tier 2+ 使用以下 onion 自有能力：
 
 Phase 0 采用试点隔离方式：手动指定 `plugins/onion-sdd/` 路径在 Cursor 中试用。暂不注册 `.cursor-plugin/marketplace.json`，暂不更新仓库顶层 README，暂不进入插件市场分发。
 
+## Trellis Adapter
+
+Phase 1 的 adapter 采用 onion 插件内 skill + 文档协议，不改造 Trellis 源码或 `.trellis/scripts/**`。
+
+边界如下：
+
+- OpenSpec 是变更正文唯一真相源。
+- `.onion-sdd/current.json` 保存轻量恢复状态和 Trellis task 引用。
+- Trellis task 只保存 `task.json.meta.onion`、status、parent/children 和 journal 摘要。
+- 不复制 OpenSpec 正文到 `.trellis/tasks/**/prd.md`、`task.json` 或 journal。
+- 如果后续发现必须改 Trellis 才能继续，先停止并向用户确认。
+
+`/onion-continue` 的恢复优先级：
+
+1. Trellis active task 的 `task.json.meta.onion.change_id`。
+2. `.onion-sdd/current.json` 的 `active_change_id`。
+3. `openspec/changes/**` 产物扫描。
+
+Tier 3 使用 Trellis 现有 parent/child task tree 承载运行时关系；child task 的 `meta.onion.parent_change_id` 指向 parent change。
+
 ## 当前不做
 
 - 不做 `/onion-auto`；AI 自审、弱触发和自动推荐后续再补。
-- 不做 Trellis adapter，不读写 Trellis workflow-state；后续由 adapter 把 onion 状态同步到 Trellis task runtime。
 - 不做运行时指标、注册表、marketplace 发布和脚本校验集成。
 - 不自动执行 `openspec archive`，不自动提交 git commit。
 - 不修改试点目录外的既有插件。
-- 不做 Tier 3 parent/child 任务自动化（仅做判定提示；后续接入 Trellis task tree）。
+- 不修改 Trellis 源码、`.trellis/scripts/**` 或 `.trellis/.runtime/**`。
 
 ## 运行时状态
 
-Phase 0 使用 `.onion-sdd/current.json` 维护当前变更的轻量运行时状态：
+`.onion-sdd/current.json` 维护当前变更的轻量运行时状态：
 
 ```jsonc
 {
@@ -103,6 +124,10 @@ Phase 0 使用 `.onion-sdd/current.json` 维护当前变更的轻量运行时状
   "last_action": "tasks.md 第 3 项已勾选完成，定向验证通过",
   "last_action_at": "2025-06-25T15:30:00+08:00",
   "upgrade_risk": false,
+  "trellis_task": {
+    "task_dir": ".trellis/tasks/06-25-fix-payment-button",
+    "status": "in_progress"
+  },
   "metrics": {
     "created_at": "2025-06-25T14:00:00+08:00",
     "triage_completed_at": "2025-06-25T14:05:00+08:00",
@@ -113,7 +138,7 @@ Phase 0 使用 `.onion-sdd/current.json` 维护当前变更的轻量运行时状
 }
 ```
 
-该文件由 onion-sdd 命令自动维护，不要求手动编辑。后续接入 Trellis 后由 adapter 单向同步替换。
+该文件由 onion-sdd 命令自动维护，不要求手动编辑。接入 Trellis 后，它仍作为轻量 fallback；Trellis task metadata 只保存引用、phase、hash 和摘要。
 
 模板见 `templates/current.example.json`。
 
@@ -149,4 +174,5 @@ Phase 0 使用 `.onion-sdd/current.json` 维护当前变更的轻量运行时状
 find plugins/onion-sdd -type f | sort
 python3 -m json.tool plugins/onion-sdd/.cursor-plugin/plugin.json
 rg -n "full-change|openspec-change|external-spec|verify-change" plugins/onion-sdd
+rg -n "trellis-adapter|meta.onion|trellis_task|source_hashes" plugins/onion-sdd
 ```

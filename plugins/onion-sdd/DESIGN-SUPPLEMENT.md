@@ -169,7 +169,7 @@ Tier 0++ 触发条件（全部满足）：
 
 Phase 0 使用 `.onion-sdd/current.json` 维护当前变更的轻量运行时状态。
 该文件由 onion-sdd 命令自动维护，不要求手动编辑。
-Phase 1 接入 Trellis 后，该文件将被 adapter 单向同步替换。
+当前 adapter 接入后，该文件仍作为轻量 fallback；adapter 同步 Trellis task metadata 和 journal 摘要。
 ```
 
 ---
@@ -301,7 +301,7 @@ Phase 0 不实现 Tier 3 完整支持，但需要在设计中预留接口：
 Tier 3 不阻塞 Phase 0：
   - /onion-plan 在判定 Tier 3 时输出提示："建议拆分为 N 个子任务，当前仅支持手动拆分"
   - Phase 0 不做 parent/child task 自动化
-  - Phase 1 接入 Trellis 后利用其 parent/child task 树实现
+  - Phase 1 通过 `trellis-adapter` 利用 Trellis 现有 parent/child task 树承载运行时关系
 ```
 
 ### 后续设计的预留项
@@ -447,17 +447,94 @@ Phase 1 先补齐 Onion SDD 的完整基座能力，再接入 Trellis runtime。
 
 这四个 skill 是 `onion-sdd` 的自有能力，不要求用户调用其它 SDD 插件。Tier 0+/1 仍保持 mini/light 路径，跳过完整 brainstorming 和默认 E2E；Tier 2+ 才进入完整基座流程。
 
-完整流程仍遵循 Single Source of Truth：OpenSpec change 目录保存正文，`.onion-sdd/current.json` 只保存轻量运行态。后续 Trellis adapter 只同步 metadata、phase、hash、path、journal 和 parent/child 关系，不复制 OpenSpec 正文。
+完整流程仍遵循 Single Source of Truth：OpenSpec change 目录保存正文，`.onion-sdd/current.json` 保存轻量运行态。Trellis adapter 只同步 metadata、phase、hash、path、journal 和 parent/child 关系，不复制 OpenSpec 正文。
 
-## 附录：与 Trellis 的衔接点（Phase 1 预留）
+## 十四、Phase 1 Trellis Adapter
 
-以下内容 Phase 0 不实现，但设计文档中标注清楚，避免 Phase 1 返工：
+Phase 1 的 Trellis adapter 采用 **onion 插件内 skill + 文档协议**，不修改 Trellis 源码、`.trellis/scripts/**` 或 `.trellis/.runtime/**`。如果后续发现必须改 Trellis 才能继续，需要先停止实现并与用户确认。
 
-| 资产 | Phase 0 位置 | Phase 1 迁移目标 |
-|------|-------------|-----------------|
-| 变更阶段 | `.onion-sdd/current.json.phase` | `task.json.phase`（adapter 同步） |
-| Tier 等级 | `.onion-sdd/current.json.tier` | `task.json.tier`（adapter 同步） |
-| 恢复摘要 | `.onion-sdd/current.json.last_action` | workspace journal（`add_session.py`） |
-| 跨需求规范 | 无 | `.trellis/spec/frontend/` → `implement.jsonl` 引用 |
-| 来源 hash | 无 | `task.json.source_hashes`（adapter 计算） |
-| Tier 3 parent/child | 手动 | Trellis task create --parent |
+### 数据边界
+
+| 资产 | 角色 | 写入内容 |
+|------|------|----------|
+| `openspec/changes/<change-id>/` | 唯一变更正文 | proposal、specs、tasks、backend/qa/e2e |
+| `.onion-sdd/current.json` | 轻量本地状态 | 当前 change、tier、phase、last_action、metrics、trellis_task |
+| `.trellis/tasks/<task>/task.json` | 运行时 metadata | `meta.onion`、status、parent/children |
+| `.trellis/workspace/<developer>/journal-*.md` | 会话记忆 | last_action 摘要、提交、恢复提示 |
+
+### 字段映射
+
+`task.json.meta.onion`：
+
+```json
+{
+  "version": 1,
+  "change_id": "add-invoice-export",
+  "change_path": "openspec/changes/add-invoice-export",
+  "tier": "2",
+  "phase": "verify",
+  "last_action": "qa spec 已接入，待执行 verify-change",
+  "last_action_at": "2026-06-25T18:30:00+08:00",
+  "upgrade_risk": false,
+  "source_hashes": {
+    "proposal": "sha256:...",
+    "tasks": "sha256:...",
+    "specs": "sha256:...",
+    "backend": "sha256:...",
+    "qa": "sha256:...",
+    "e2e": "sha256:..."
+  }
+}
+```
+
+`.onion-sdd/current.json` 追加 `trellis_task`：
+
+```json
+{
+  "trellis_task": {
+    "task_dir": ".trellis/tasks/06-25-add-invoice-export",
+    "status": "in_progress"
+  }
+}
+```
+
+### 同步时机
+
+| Onion 事件 | OpenSpec | Trellis |
+|------------|----------|---------|
+| Tier 判断完成 | change 策略确定 | 写 `meta.onion.tier` |
+| OpenSpec 落盘 | proposal/specs/tasks | 写 `change_id`、`change_path`、phase |
+| tasks 更新 | `tasks.md` | 更新 phase / last_action |
+| 外部 spec 接入 | `backend-*.md` / `qa-*.md` | 更新 `source_hashes` |
+| 验证完成 | `e2e-report.md` | phase = finish / verified |
+| finish | 归档判断 | `add_session.py` 写 journal 摘要 |
+
+### 恢复优先级
+
+`/onion-continue` 的恢复顺序：
+
+1. Trellis active task：若 `task.json.meta.onion.change_id` 指向存在的 OpenSpec change，则使用它。
+2. `.onion-sdd/current.json`：若 task 不存在或 stale，使用轻量状态。
+3. OpenSpec fallback：扫描 `openspec/changes/**`，按产物推断阶段。
+
+冲突处理：
+
+- Trellis 与 current 指向不同 change：提示冲突，默认以 Trellis active task 为准；用户可指定 change-id 覆盖。
+- Trellis 指向的 change 不存在：标记 stale，fallback 到 current/OpenSpec。
+- current 指向的 task 不存在：忽略 `trellis_task`，但保留 change 恢复。
+- `source_hashes` 与实际文件不一致：提示 stale，不自动覆盖正文。
+
+### Tier 3
+
+Tier 3 使用 Trellis parent/child task tree：
+
+- parent task 对应 parent OpenSpec change 或总览 change。
+- 每个 child task 对应一个独立可归档 OpenSpec child change。
+- child 的 `meta.onion.parent_change_id` 指回 parent。
+- child 的 `CHARTER.md` 或 proposal 中说明依赖关系和独立归档条件。
+
+### 回滚
+
+- Adapter 协议失败时，删除或忽略 `meta.onion`，回到 `.onion-sdd/current.json` + OpenSpec fallback。
+- 不修改 Trellis 核心脚本，因此不会影响普通 Trellis task 流。
+- `source_hashes` 只用于提示 stale，不作为阻塞性真相源。

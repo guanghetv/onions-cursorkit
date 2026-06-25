@@ -11,8 +11,8 @@ globs:
 ## 触发边界
 
 - 当前承诺 slash command 触发：`/onion-hotfix`、`/onion-tweak`、`/onion-plan`、`/onion-continue`、`/onion-finish`。
-- `/onion-auto`、Trellis adapter、metrics 和 marketplace 分发不属于当前基座能力。
-- OpenSpec 是变更正文唯一真相源；Trellis 后续只保存状态、引用、hash 和 journal。
+- `/onion-auto`、metrics 聚合和 marketplace 分发不属于当前基座能力。
+- OpenSpec 是变更正文唯一真相源；Trellis adapter 只保存状态、引用、hash、parent/child 关系和 journal 摘要。
 
 ## 分级写入
 
@@ -20,6 +20,7 @@ globs:
 - Tier 0+：使用 `skills/mini-change/SKILL.md`。
 - Tier 1：使用 `skills/light-change/SKILL.md`。
 - Tier 2+：使用 `skills/full-change/SKILL.md`、`skills/openspec-change/SKILL.md`、`skills/external-spec/SKILL.md`、`skills/verify-change/SKILL.md`。
+- 需要跨会话恢复或同步 Trellis task metadata 时，使用 `skills/trellis-adapter/SKILL.md`。
 
 ## 写入门禁
 
@@ -36,6 +37,8 @@ globs:
 - 按需读取与当前变更相关的需求、OpenSpec、代码、测试和验证材料。
 - 发现升级红线时停止轻量流程，转入 `/onion-plan`。
 - 不修改试点目录外的既有插件，不把其他插件作为执行依赖。
+- 不修改 Trellis 源码、`.trellis/scripts/**` 或 `.trellis/.runtime/**`；如必须改 Trellis 才能继续，先向用户确认。
+- 不复制 OpenSpec 正文到 Trellis task PRD、task metadata 或 journal。
 
 ## 收束纪律
 

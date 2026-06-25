@@ -14,7 +14,7 @@ description: 对变更做 Onion SDD Tier 分级，并路由到 mini、light 或 
 3. Tier 0+：转入 `/onion-hotfix` 与 `mini-change`。
 4. Tier 1：转入 `/onion-tweak` 与 `light-change`。
 5. Tier 2：读取 `skills/full-change/SKILL.md`，按完整流程完成需求接入、澄清、OpenSpec 落盘、任务规划、实现纪律、外部 spec 事件、E2E/验收与归档判断。
-6. Tier 3：先拆分父子任务或多阶段计划，再让每个子任务进入 Tier 2+ 流程；Phase 1 接入 Trellis 后再使用 parent/child task tree 承载运行时。
+6. Tier 3：先拆分父子任务或多阶段计划，再让每个子任务进入 Tier 2+ 流程；使用 `trellis-adapter` 将 parent/child change 映射到 Trellis parent/child task tree。
 
 ## Tier 2+ 衔接
 
@@ -35,3 +35,4 @@ description: 对变更做 Onion SDD Tier 分级，并路由到 mini、light 或 
 - 不把其他插件作为执行依赖。
 - 不要求先遍历整个项目；围绕用户请求、OpenSpec 产物、相关代码和验证路径按需读取。
 - `/onion-auto` 不属于当前基座能力范围。
+- 不修改 Trellis 源码、`.trellis/scripts/**` 或 `.trellis/.runtime/**`；如必须改 Trellis 才能继续，先向用户确认。
