@@ -20,6 +20,9 @@
 - Trellis 只维护 metadata、phase、hash、path、journal、团队规范注入和恢复提示。
 - Phase 0 的 `.onion-sdd/current.json` 字段包括 `active_change_id`、`tier`、`phase`、`last_action`、`last_action_at`、`upgrade_risk`、`metrics`。
 - 当前 Trellis `task.json` 已有可扩展 `meta` 字段和 `children` / `parent` 字段。
+- 当前 Trellis `task.py create/start/archive/list/current`、`add_session.py` 已能覆盖 adapter 第一版所需的任务创建、父子任务、归档和 journal 写入；不需要先修改 `.trellis/scripts/**`。
+- `onion-sdd` 基座能力子任务已完成并归档，已新增 `full-change`、`openspec-change`、`external-spec`、`verify-change` 四个 onion 自有 skill。
+- 用户明确补充：整个 onion-sdd × Trellis 方案都不改造 Trellis 源码或本仓库 `.trellis/scripts/**`；如后续确实涉及 Trellis 改造，必须先与用户确认后再规划。
 
 ## 需求
 
@@ -32,17 +35,20 @@
 - 定义 `last_action` / `last_action_at` 写入 workspace journal 的策略。
 - 定义外部 spec / QA / E2E 产物的 `source_hashes` 计算和存储策略。
 - 定义 Tier 3 parent/child 变更到 Trellis parent/child task tree 的映射。
+- 新增 onion 自有 `trellis-adapter` skill，作为用户和 Agent 的 adapter 协议入口。
+- 更新 `/onion-continue`、README、规则与状态模板，使 Trellis-aware 恢复路径可执行。
 - 不复制 OpenSpec 正文到 Trellis task PRD 或 JSONL。
 - 不破坏现有 Trellis `task.py create/start/archive/list/current` 基础行为。
 
 ## 验收标准
 
-- [ ] Adapter 设计明确 OpenSpec、`.onion-sdd/current.json`、Trellis task metadata 三者边界。
-- [ ] `task.json.meta.onion` 字段结构可标准 JSON 解析，且向后兼容。
-- [ ] `/onion-continue` 文档说明 Trellis-aware 恢复路径和 fallback。
-- [ ] journal 写入策略明确，不要求用户手工双写。
-- [ ] Tier 3 parent/child 映射明确。
-- [ ] 基础 Trellis 命令验证通过。
+- [x] Adapter 设计明确 OpenSpec、`.onion-sdd/current.json`、Trellis task metadata 三者边界。
+- [x] `task.json.meta.onion` 字段结构可标准 JSON 解析，且向后兼容。
+- [x] `/onion-continue` 文档说明 Trellis-aware 恢复路径和 fallback。
+- [x] journal 写入策略明确，不要求用户手工双写。
+- [x] Tier 3 parent/child 映射明确。
+- [x] `plugins/onion-sdd/skills/trellis-adapter/SKILL.md` 存在，并说明字段映射、同步时机、恢复优先级和回滚策略。
+- [x] 基础 Trellis 命令验证通过。
 
 ## 不做范围
 
@@ -50,7 +56,9 @@
 - 不深 fork Trellis。
 - 不把 OpenSpec 正文复制进 `.trellis/tasks/**/prd.md`。
 - 不实现 marketplace 分发、metrics 聚合、`/onion-auto`。
+- 不在本子任务中修改 `.trellis/scripts/**`；如后续发现必须新增脚本辅助命令，另开任务或回到计划阶段。
+- 不在未确认的情况下提出或实施 Trellis 源码/脚本改造。
 
 ## 开放问题
 
-- 等基座能力子任务完成后，再决定 adapter 是纯文档/skill 级协议，还是需要修改 `.trellis/scripts/**` 提供辅助命令。
+- 无阻塞性开放问题。第一版 adapter 采用插件内 skill + 文档协议，不改 Trellis 脚本。
