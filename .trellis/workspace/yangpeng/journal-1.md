@@ -38,3 +38,36 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 2: 填充 Trellis 项目开发规范
+
+**Date**: 2026-06-25
+**Task**: 填充 Trellis 项目开发规范
+**Branch**: `yangpeng-test`
+
+### Summary
+
+用中文重写 backend/frontend Trellis spec，基于当前插件资产仓库结构补充目录、状态、frontmatter、校验、同步产物和 Trellis 脚本规范。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `24ff195` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
