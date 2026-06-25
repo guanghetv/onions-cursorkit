@@ -27,6 +27,20 @@ rg -n "name:|description:" plugins/<plugin>/commands plugins/<plugin>/skills plu
 - 给出具体路径和命令。
 - 不暗示不存在的运行时依赖。
 
+### 迁移/抽象旧插件能力
+
+当从一个既有插件抽象出新插件或通用流程时：
+
+- 可以在设计文档中说明能力来源和历史背景。
+- 用户可见的 README、command、skill、rule 必须给出新插件自有入口和自有 skill 名称。
+- 不要让新插件的运行路径要求用户调用旧命令、安装旧插件或读取旧插件目录。
+- 验证时增加负向搜索，确认没有旧入口运行时依赖措辞，例如：
+  ```bash
+  rg -n "/old-command|调用 old-plugin|依赖 old-plugin" plugins/<new-plugin>
+  ```
+
+这样可以保留成熟流程经验，同时避免新插件成为旧插件的隐式包装层。
+
 参考：
 - `plugins/onion-sdd/README.md`
 - `plugins/onion-sdd/DESIGN-SUPPLEMENT.md`
