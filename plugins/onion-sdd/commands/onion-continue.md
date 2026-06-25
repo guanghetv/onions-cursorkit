@@ -10,7 +10,7 @@ description: 从已有 OpenSpec 变更产物恢复 Onion SDD 上下文并继续�
 ## 执行顺序
 
 1. 读取 `skills/trellis-adapter/SKILL.md`，尝试从 Trellis active task 的 `task.json.meta.onion.change_id` 和 `change_path` 恢复。
-2. 若 Trellis metadata 缺失、stale 或指向不存在的 change，读取 `.onion-sdd/current.json` 中的 `active_change_id`、`tier`、`phase`、`last_action`。
+2. 若 Trellis metadata 缺失、stale 或指向不存在的 change，读取 `.onion-sdd/current.json` 中的 `active_change_id`、`tier`、`phase`、`last_action`。若 `active_change_id` 为 `null` 或 `phase` 为 `idle`，视为当前没有活跃 Onion change，进入 OpenSpec fallback 或请用户指定 change-id。
 3. 若状态文件不存在或不可信，定位用户指定的 change-id；若未指定，只列出候选并请用户选择。
 4. 读取该变更目录下的 `proposal.md`、`tasks.md`、`specs/**/spec.md`、`backend-*.md`、`qa-*.md`、`e2e-report.md` 等存在的产物。
 5. 使用 `skills/tier-triage/SKILL.md` 判断继续路径。
@@ -33,6 +33,7 @@ description: 从已有 OpenSpec 变更产物恢复 Onion SDD 上下文并继续�
 - Trellis active task 与 `.onion-sdd/current.json` 指向不同 change 时，提示冲突，默认以 Trellis active task 为准；用户明确指定 change-id 时用用户指定值。
 - Trellis 指向的 change 不存在时，标记 stale，fallback 到 current/OpenSpec。
 - `.onion-sdd/current.json` 指向的 Trellis task 不存在时，忽略 `trellis_task`，但保留 change 恢复。
+- `.onion-sdd/current.json` 的 `active_change_id` 为 `null` 或 `phase=idle` 时，表示无活跃 change，不应恢复上一轮已完成变更。
 - Tier 2+ 读取 `full-change` 作为阶段编排依据。
 - 缺完整 OpenSpec 产物时，使用 `openspec-change` 补齐。
 - 后端/API/QA 文档到达时，使用 `external-spec` 写入当前 change 并做差异分析。

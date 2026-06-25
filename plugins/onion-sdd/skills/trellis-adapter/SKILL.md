@@ -93,6 +93,21 @@ description: 在不改造 Trellis 源码的前提下，同步 Onion SDD OpenSpec
 
 `trellis_task` 只是恢复提示。若 task 不存在或已归档，忽略该字段，继续使用 `active_change_id` 和 OpenSpec 产物恢复。
 
+没有活跃 change 时，允许使用空闲状态，避免 `/onion-continue` 误恢复上一轮已完成变更：
+
+```json
+{
+  "version": 1,
+  "active_change_id": null,
+  "tier": null,
+  "phase": "idle",
+  "last_action": "当前无活跃 Onion change",
+  "last_action_at": "2026-06-25T18:30:00+08:00",
+  "upgrade_risk": false,
+  "trellis_task": null
+}
+```
+
 ## 同步时机
 
 | 时机 | 写 OpenSpec | 写 current | 写 Trellis metadata / journal |
@@ -109,7 +124,7 @@ description: 在不改造 Trellis 源码的前提下，同步 Onion SDD OpenSpec
 `/onion-continue` 按以下顺序恢复：
 
 1. Trellis active task：读取当前 task 的 `task.json.meta.onion.change_id`。如果 `change_path` 存在，则使用该 change。
-2. `.onion-sdd/current.json`：当 Trellis task 缺失、stale 或没有 onion metadata 时，读取 `active_change_id`。
+2. `.onion-sdd/current.json`：当 Trellis task 缺失、stale 或没有 onion metadata 时，读取 `active_change_id`；若 `active_change_id` 为 `null` 或 `phase=idle`，表示无活跃 change，继续走 OpenSpec fallback。
 3. OpenSpec fallback：扫描 `openspec/changes/**`，根据产物推断阶段；多个候选时列出并请用户选择。
 
 冲突处理：
@@ -117,6 +132,7 @@ description: 在不改造 Trellis 源码的前提下，同步 Onion SDD OpenSpec
 - Trellis 与 current 指向不同 change：提示冲突，默认以 Trellis active task 为准；用户明确指定 change-id 时用用户指定值。
 - Trellis 指向的 OpenSpec change 不存在：标记 stale，fallback 到 current/OpenSpec。
 - current 指向的 Trellis task 不存在：忽略 `trellis_task`，继续按 `active_change_id` 恢复。
+- current 为 idle：不恢复上一轮 change，列出 OpenSpec 候选或请用户指定 change-id。
 - `source_hashes` 与文件现状不一致：提示 stale，不自动覆盖正文。
 
 ## Tier 3 映射

@@ -11,7 +11,7 @@ globs:
 ## 触发边界
 
 - 当前承诺 slash command 触发：`/onion-hotfix`、`/onion-tweak`、`/onion-plan`、`/onion-continue`、`/onion-finish`。
-- `/onion-auto`、metrics 聚合和 marketplace 分发不属于当前基座能力。
+- `/onion-auto` 不属于当前基座能力；metrics、marketplace、Spec Pack 等能力可按后续验收或独立任务推进。
 - OpenSpec 是变更正文唯一真相源；Trellis adapter 只保存状态、引用、hash、parent/child 关系和 journal 摘要。
 
 ## 分级写入

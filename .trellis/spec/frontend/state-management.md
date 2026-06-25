@@ -83,6 +83,21 @@ Trellis 状态由脚本管理，不要手动编辑 runtime 指针：
 }
 ```
 
+没有活跃 change 时，使用 idle 状态，不能继续指向已完成或已归档的变更：
+
+```json
+{
+  "version": 1,
+  "active_change_id": null,
+  "tier": null,
+  "phase": "idle",
+  "last_action": "当前无活跃 Onion change",
+  "last_action_at": "2026-06-25T18:30:00+08:00",
+  "upgrade_risk": false,
+  "trellis_task": null
+}
+```
+
 ### 4. Validation & Error Matrix
 
 | 条件 | 行为 |
@@ -90,6 +105,7 @@ Trellis 状态由脚本管理，不要手动编辑 runtime 指针：
 | Trellis active task 有有效 `meta.onion.change_id` | `/onion-continue` 优先使用该 change |
 | Trellis task 指向的 OpenSpec change 不存在 | 标记 stale，fallback 到 `.onion-sdd/current.json` |
 | `.onion-sdd/current.json` 指向的 task 不存在 | 忽略 `trellis_task`，保留 `active_change_id` 恢复 |
+| `.onion-sdd/current.json` 的 `active_change_id` 为 `null` 或 `phase=idle` | 视为无活跃 change，不恢复上一轮已完成变更，进入 OpenSpec fallback 或请用户指定 change-id |
 | `source_hashes` 与文件现状不一致 | 提示 stale，不覆盖 OpenSpec 正文 |
 | 需要改 Trellis 源码或 `.trellis/scripts/**` | 停止并向用户确认，不直接实施 |
 
@@ -97,6 +113,7 @@ Trellis 状态由脚本管理，不要手动编辑 runtime 指针：
 
 - Good: `OpenSpec proposal/specs/tasks` 保存正文，`meta.onion` 只保存 `change_id`、phase、hash 和摘要。
 - Base: 没有 Trellis task metadata 时，用 `.onion-sdd/current.json` 和 OpenSpec fallback 继续。
+- Base: 当前没有活跃 change 时，`.onion-sdd/current.json` 使用 `active_change_id: null` 与 `phase: "idle"`。
 - Bad: 将 OpenSpec 正文复制到 Trellis task PRD、JSONL、journal 或修改 `.trellis/scripts/**` 来支持 onion-sdd。
 
 ### 6. Tests Required

@@ -1,0 +1,45 @@
+{
+  "id": "onion-sdd-phase-1-flow-validation",
+  "name": "onion-sdd-phase-1-flow-validation",
+  "title": "onion-sdd Phase 1 final flow validation",
+  "description": "",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "yangpeng",
+  "assignee": "yangpeng",
+  "createdAt": "2026-06-25",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "yangpeng-test",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "onion": {
+      "version": 1,
+      "change_id": "onion-sdd-flow-smoke-test",
+      "change_path": "openspec/changes/onion-sdd-flow-smoke-test",
+      "tier": "2",
+      "phase": "finish",
+      "last_action": "Phase 1 flow smoke test 通过，待 /onion-finish 输出归档建议",
+      "last_action_at": "2026-06-25T00:00:00+08:00",
+      "upgrade_risk": false,
+      "source_hashes": {
+        "proposal": "sha256:036d516a1650ef00c43d9f6ce251b85830da01f055189e4748c0d76778728ace",
+        "tasks": "sha256:1ee8d49bcfcb19bf2c321a9652e19a5ea3907bf1c4d9f66e0342a4e917fec520",
+        "specs": "sha256:453a7632574326a238d39d7e6c610f61f96ebc7bf2cf550d6973bbb6647c08fc",
+        "backend": "sha256:d7c30888279974d0947cefce39e4521c34a79707d2c5ef47c4d24a0613715849",
+        "qa": "sha256:09d9fd7e92bc3eeb38c682bf4c4fa08f1a19c7ec65b68572f8d4f568539eeec9",
+        "e2e": "sha256:be3a3713c36741098e718936e57544c9caaadeabcd490340be745b70a731dfef"
+      }
+    }
+  }
+}

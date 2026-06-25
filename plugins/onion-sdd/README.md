@@ -1,6 +1,6 @@
 # onion-sdd
 
-Onion SDD 是一个通用 SDD 试点插件，用 slash command 把变更按复杂度分层：小变更走轻量 OpenSpec 产物，中大型变更进入 onion 自有完整 SDD 基座能力。它保留成熟 SDD 闭环中的需求接入、OpenSpec、任务规划、外部 spec 接入、E2E/验收和归档门禁，同时降低小任务的流程厚度。
+Onion SDD 是一个通用 SDD 插件，用 slash command 把变更按复杂度分层：小变更走轻量 OpenSpec 产物，中大型变更进入 onion 自有完整 SDD 基座能力。它保留成熟 SDD 闭环中的需求接入、OpenSpec、任务规划、外部 spec 接入、E2E/验收和归档门禁，同时降低小任务的流程厚度。
 
 ## 当前能力
 
@@ -79,9 +79,9 @@ Tier 2+ 使用以下 onion 自有能力：
 
 完整流程仍遵循 OpenSpec 分工：用户在终端执行 OpenSpec CLI，Agent 负责变更目录中的 Markdown 产物。
 
-## 试点安装
+## 安装
 
-Phase 0 采用试点隔离方式：手动指定 `plugins/onion-sdd/` 路径在 Cursor 中试用。暂不注册 `.cursor-plugin/marketplace.json`，暂不更新仓库顶层 README，暂不进入插件市场分发。
+`onion-sdd` 已注册到 `.cursor-plugin/marketplace.json`，source 为 `onion-sdd`。本地调试时仍可手动指定 `plugins/onion-sdd/` 路径。
 
 ## Trellis Adapter
 
@@ -105,8 +105,8 @@ Tier 3 使用 Trellis 现有 parent/child task tree 承载运行时关系；chil
 
 ## 当前不做
 
-- 不做 `/onion-auto`；AI 自审、弱触发和自动推荐后续再补。
-- 不做运行时指标、注册表、marketplace 发布和脚本校验集成。
+- 不做 `/onion-auto`；AI 自审、弱触发和自动推荐可按后续验收或独立任务推进。
+- metrics 聚合、Spec Pack registry 和 marketplace 完善可继续迭代；当前 Phase 1 主流程不依赖它们才能运行。
 - 不自动执行 `openspec archive`，不自动提交 git commit。
 - 不修改试点目录外的既有插件。
 - 不修改 Trellis 源码、`.trellis/scripts/**` 或 `.trellis/.runtime/**`。
@@ -139,6 +139,8 @@ Tier 3 使用 Trellis 现有 parent/child task tree 承载运行时关系；chil
 ```
 
 该文件由 onion-sdd 命令自动维护，不要求手动编辑。接入 Trellis 后，它仍作为轻量 fallback；Trellis task metadata 只保存引用、phase、hash 和摘要。
+
+没有活跃变更时，`active_change_id` 可为 `null` 且 `phase` 为 `idle`。`/onion-continue` 遇到 idle 状态时不恢复上一轮已完成变更，而是进入 OpenSpec fallback 或等待用户指定 change-id。
 
 模板见 `templates/current.example.json`。
 
