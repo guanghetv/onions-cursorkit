@@ -2,6 +2,14 @@
 description: Onion SDD guardrails for mini/light/full OpenSpec changes.
 globs:
   - "openspec/**"
+  - "**/*.vue"
+  - "**/*.tsx"
+  - "**/*.jsx"
+  - "**/*.ts"
+  - "**/*.js"
+  - "**/*.css"
+  - "**/*.scss"
+  - "**/*.less"
 ---
 
 # Onion SDD 规则
@@ -31,6 +39,17 @@ globs:
 - Tier 2+ 已完成需求澄清、范围边界、验收口径和用户落盘确认。
 
 修改业务代码前应已存在当前 change 的 `tasks.md`；纯文档、配置或紧急 Tier 0++ 可按对应轻量规则处理并补记录。
+
+## 前端专项纪律
+
+当修改前端业务代码且当前变更属于 Onion SDD Tier 2+ 时，补充以下纪律：
+
+- 有 Figma、设计稿或截图时，只读取并实现本次范围相关规格；局部改版不得擅自扩大到整页。
+- 进入前端实现前，应记录与本次相关的灰区决策：空态、加载态、错误态、防重复、分页、权限、响应式或动效。无关维度可跳过。
+- 外部 spec 到达时优先使用用户提供的工作区文件；具备 `workspace-repos.json` 与 `requirement_ref` 时可走 workspace-native；失败后降级到远程链接或用户粘贴。
+- Browser 验证前必须先给出清单摘要并获得用户确认；默认使用产品内置浏览器能力，不默认改用用户自配 DevTools MCP。
+- 用户要求提交时，提交前必须完成审查；有团队本地审查命令或 skill 时优先使用，否则 Agent 自审待提交 diff。
+- 以上补充不要求新增 brainstorming 硬门禁。
 
 ## 上下文纪律
 

@@ -126,10 +126,16 @@ The flow should only suggest `openspec archive onion-sdd-flow-smoke-test`; it mu
 - Updated `plugins/onion-sdd/rules/onion-sdd.mdc` so only `/onion-auto` remains excluded from the current base flow; metrics/marketplace/Spec Pack can continue through validation or later tasks.
 - Updated `docs/add-a-plugin.md` marketplace source example to match this repository's `metadata.pluginRoot: "plugins"` convention.
 - Reset `.onion-sdd/current.json` to idle after the smoke test and documented the idle contract in `/onion-continue`, `trellis-adapter`, README, and `.trellis/spec/frontend/state-management.md`.
+- Added front-end parity capabilities to onion-owned flow without adding a brainstorming hard gate:
+  - Figma / local redesign scope rules and front-end gray-area decisions in `full-change`, `openspec-change`, README, and rule.
+  - workspace-native external spec strategy, `requirement_ref`, `modules`, fallback behavior, and metadata source in `external-spec`.
+  - Browser automation confirmation, built-in browser preference, login/blocker handling, and evidence rules in `verify-change`.
+  - Commit review discipline for user-requested commits in `full-change`, README, and rule.
 
 ## Follow-Up Gaps
 
 - `/onion-auto` remains explicitly future work.
 - AI self-review, weak natural-language trigger, metrics aggregation, and Spec Pack registry are not blockers for the manual Phase 1 flow. They can be planned as separate optimizations.
+- Front-end parity now covers Figma/gray areas, workspace-native spec intake, Browser automation constraints, and commit review discipline at the documentation/skill level. It does not add a mandatory brainstorming gate by request.
 - `onion-sdd` has no `hooks/hooks.json`, `mcp.json`, or custom logo asset. `validate-template.mjs` treats these as optional warnings only.
 - Historical `ARCHITECTURE-KNOWLEDGE.md` still records Phase 0 non-goals, including marketplace publishing. This is historical context, not current user-facing install guidance.

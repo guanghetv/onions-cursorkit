@@ -29,6 +29,8 @@ description: 对变更做 Onion SDD Tier 分级，并路由到 mini、light 或 
 
 这些能力属于 onion 自有流程；不能要求用户安装或调用其它 SDD 插件。
 
+前端 Tier 2+ 还需要在 `full-change` / `openspec-change` / `external-spec` / `verify-change` 内补齐：Figma 与局部范围、前端灰区决策、workspace-native spec 拉取、Browser 自动化确认和提交前审查纪律。该补齐不等于新增 brainstorming 硬门禁。
+
 ## 约束
 
 - 不修改试点目录外的既有插件。

@@ -71,6 +71,9 @@ openspec new change "<change-id>"
 ## 风险与回滚
 - <主要风险、验证补偿、回滚方案>
 
+## 前端实现决策
+- <仅前端相关变更填写；记录 Figma/局部范围、灰区决策和项目既有模式。无则删除本节>
+
 ## References
 - <需求链接、外部 spec、截图或用户描述来源>
 ```
@@ -103,6 +106,8 @@ openspec new change "<change-id>"
 
 按实际情况使用 `ADDED`、`MODIFIED` 或 `REMOVED`。每个关键验收场景必须能在 `tasks.md` 或 `e2e-report.md` 找到验证路径。
 
+如果前端灰区决策涉及可观察行为，必须转成 Scenario。例如空态、加载态、错误态、防重复提交、权限展示和分页策略不能只停留在 `proposal.md` 说明里。
+
 ## tasks.md 模板
 
 ```markdown
@@ -111,6 +116,7 @@ openspec new change "<change-id>"
 > 执行约束
 > - 每个任务必须有验证点。
 > - 可自动化时遵守 TDD；无法自动化时记录人工或浏览器验证步骤。
+> - 前端任务按需覆盖 L1 契约/mock、L2 行为 Scenario、L3 联调/真实 API、L4 Browser 交叉验证。
 > - 外部 spec 到达后必须做差异分析。
 > - Tier 2+ 默认需要 E2E 或等价验收报告。
 

@@ -39,10 +39,28 @@ find openspec/changes -maxdepth 2 -name proposal.md 2>/dev/null
 | 优先级 | 策略 | 说明 |
 |--------|------|------|
 | 1 | 工作区文件 | 用户已提供或上下文已注入文件正文时直接使用 |
-| 2 | GitLab / 远程链接 | 使用可用 token 或工具读取；失败时明确说明原因 |
-| 3 | 用户粘贴 | 作为兜底输入 |
+| 2 | workspace-native | 无显式链接时，若可解析 `workspace-repos.json` 且当前 proposal 有 `requirement_ref`，从工作区内 specs/API 仓库读取 |
+| 3 | GitLab / 远程链接 | 使用可用 token 或工具读取；失败时明确说明原因 |
+| 4 | 用户粘贴 | 作为兜底输入 |
 
 远程读取失败不能静默跳过；必须说明是权限、认证、网络、路径还是 token 问题。
+
+### Workspace-native 读取
+
+workspace-native 是零手动输入的优先路径，适用于用户只说“后端 spec 到了”或“测试 spec 到了”且工作区已有配套 specs/API 仓库的场景。
+
+前置条件：
+
+- 仓库根或 `scripts/` 下存在可解析的 `workspace-repos.json`。
+- 当前 `openspec/changes/<change-id>/proposal.md` frontmatter 含 `requirement_ref`；如有 `modules`，后续测试 spec 需要按 MODULE 切片。
+- 目标仓库可在当前工作区中定位；读取远程分支时只用 `git fetch` / `git show` 一类非 checkout 操作。
+
+处理规则：
+
+- 测试/QA spec：优先从 specs 仓库读取，按 `modules` 保留相关 MODULE 与公共部分。
+- 后端/API spec：优先从匹配仓库的约定分支或用户指定 ref 读取接口文档。
+- 任一步骤无法定位、认证失败或内容不确定时，降级到 GitLab/远程链接或用户粘贴，并说明降级原因。
+- 不把 workspace-native 失败当成流程失败；只要用户能提供正文，仍可继续落盘和差异分析。
 
 ## 命名
 
@@ -58,7 +76,7 @@ find openspec/changes -maxdepth 2 -name proposal.md 2>/dev/null
 
 ```markdown
 <!-- external-spec metadata -->
-<!-- source: <url / workspace-file:path / user-paste> -->
+<!-- source: <url / workspace-native / workspace-file:path / user-paste> -->
 <!-- ref: <branch/ref/path 或 N/A> -->
 <!-- commit: <hash 或 N/A> -->
 <!-- pulled_at: <YYYY-MM-DD HH:mm> -->

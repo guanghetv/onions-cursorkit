@@ -8,6 +8,7 @@ Onion SDD 是一个通用 SDD 插件，用 slash command 把变更按复杂度�
 - 通过 Tier 分级决定是否写 OpenSpec、写到什么粒度、何时升级到完整工作流。
 - 提供 Tier 0+/Tier 1 的 mini/light OpenSpec 模板与验证纪律。
 - Tier 2+ 使用 onion 自有完整 SDD skills，覆盖需求接入、完整 OpenSpec、任务规划、外部 spec 接入、E2E/验收和 finish 门禁。
+- Tier 2+ 的前端场景补充前端专项纪律：Figma/局部改版边界、前端灰区决策、workspace-native spec 拉取、Browser 自动化约束和提交前审查。
 - 按需读取与当前变更相关的需求、代码、OpenSpec、测试和验证材料，不设置全仓扫描硬约束。
 
 ## 目录
@@ -78,6 +79,16 @@ Tier 2+ 使用以下 onion 自有能力：
 | `trellis-adapter` | 同步 OpenSpec、`.onion-sdd/current.json` 和 Trellis task metadata |
 
 完整流程仍遵循 OpenSpec 分工：用户在终端执行 OpenSpec CLI，Agent 负责变更目录中的 Markdown 产物。
+
+### 前端专项能力
+
+当 Tier 2+ 变更涉及前端页面、组件、交互、样式或端到端验收时，onion 完整流程额外应用以下能力：
+
+- Figma/设计稿：有设计稿时优先读取与本次范围相关的节点和视觉规格；局部改版只改用户指定区域，同页其它区域若稿码不一致，先二次确认。
+- 前端灰区：在 OpenSpec 落盘前补齐与本次相关的空态、加载态、错误态、防重复提交、分页/大数据量、权限条件渲染、响应式和动效等决策；纯文案/样式微调或用户明确跳过时可以不展开。
+- workspace-native spec：外部 spec 到达时，优先使用用户提供的工作区文件；若存在 `workspace-repos.json` 与 `proposal.md` frontmatter，可按 `requirement_ref` / `modules` 定位并切片；再降级到 GitLab/远程链接或用户粘贴。
+- Browser 自动化：`verify-change` 先输出 TDD/静态清单和验证依据摘要，再询问用户是否执行浏览器自动化；自动化优先使用产品内置浏览器能力，不把用户自配 DevTools MCP 作为默认执行通道。
+- Commit review：onion 不自动提交。用户明确要求提交时，先检查/暂存目标改动，再做提交前审查；有团队本地审查命令或 skill 时优先使用，否则由 Agent 对暂存区自审，通过后再提交。
 
 ## 安装
 
