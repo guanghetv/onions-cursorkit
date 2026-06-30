@@ -1,10 +1,8 @@
 ---
 name: design-to-opsx
-description: >-
-  Use when brainstorming design is confirmed and needs to be persisted into
-  OpenSpec change directory. Converts brainstorming conclusions into
-  proposal.md + specs/*/spec.md. Called by dev-workflow after design approval,
-  not directly by user.
+description:
+  当 Brainstorming 的设计被确认后，使用本技能将其固化到 OpenSpec 变更目录中。
+  主要将 Brainstorming 的结论转化为 proposal.md 以及 specs/*/spec.md 文件。该技能由 dev-workflow 在设计审批后调用，用户无需直接使用。
 ---
 
 # Brainstorming → OpenSpec 转场
@@ -23,6 +21,7 @@ description: >-
 从设计结论中提取关键词，生成 kebab-case 动词开头的 change-id。
 
 **如果有需求层上下文**（由 `/dev-start` 传递，对话中包含 `requirement_ref` 路径和 `requirement_repo`）：
+
 - 建议使用 `<requirement-id>-<repo-name>` 格式（如 `req-example-123-frontend-app`）
 - 这样可以在工作区内自动发现跨仓库的对方 spec
 
@@ -35,12 +34,15 @@ description: >-
 **标准模式**（openspec CLI 已安装）：
 
 提示用户在终端执行：
+
 ```bash
 openspec new change "<change-id>"
 ```
+
 等待用户确认执行完毕，通过 `ls openspec/changes/<change-id>/` 验证。
 
 **降级模式**（CLI 未安装）：
+
 ```bash
 mkdir -p openspec/changes/<change-id>/specs/<capability-name>/
 ```
@@ -71,34 +73,49 @@ proposal.md 正文结构：
 # <change-id>
 
 ## Why
+
 <!-- 从 brainstorming 中提取问题背景与动机 -->
 
 ## What Changes
+
 <!-- 从确认的方案中提取变更内容清单 -->
 
 ## API 契约（前端期望）
-<!-- 从设计阶段产出的 API 契约 -->
+
+<!-- 从设计阶段产出的 API 契约；涉及接口改动且已拉 YApi 时写目标态，并注明相对 YApi 现状的变更 -->
+
 ### <接口名>
+
+- YApi: <链接或 interfaceID；来自飞书时注明「飞书 §章节」>
+- 变更类型: 新增 | 修改 | 废弃 | 不变
 - 请求: <字段列表>
 - 响应: <字段列表>
 - 错误码: <错误码列表>
+<!-- 新增且 YApi 尚无条目时: yapi_status: pending-create -->
 
 ## Capabilities
+
 ### New Capabilities
+
 - `<capability-name>`: <简述>
 
 ### Modified Capabilities
+
 - （如有）
 
 ## Impact
+
 - **后端**: <影响描述>
 - **前端**: <影响描述>
 - **依赖**: <依赖说明>
 
 ## References
+
 - 需求文档: <飞书链接>
+- YApi 接口: <链接列表，每行一个；阶段 1 只读拉取过的 interfaceURL 或 interfaceID 对应页面>
 
 ## Decisions
+
 <!-- 记录 brainstorming 中已澄清的关键决策 -->
 
 ## 前端实现决策（灰区）
@@ -106,16 +123,19 @@ proposal.md 正文结构：
 <!-- 来自步骤 1e 灰区讨论的结论，仅包含本次讨论中涉及的维度；若跳过了灰区讨论则删除此 section -->
 
 ### UI 状态
+
 - 空状态：<决策描述>
 - 加载态：<决策描述>
 - 错误态：<决策描述>
 
 ### 交互行为
+
 - 表单验证：<决策描述>
 - 防重复提交：<决策描述>
 - 数据更新策略：<决策描述>
 
 ### 数据展示
+
 - 长文本处理：<决策描述>
 - 分页策略：<决策描述>
 - 数值格式：<决策描述>
@@ -150,6 +170,7 @@ proposal.md 正文结构：
 
 ```markdown
 #### Scenario: 退款列表空状态展示
+
 - **WHEN** 用户进入退款列表页
 - **AND** 该用户无任何退款记录
 - **THEN** 展示空状态占位图与"暂无退款记录"文案
