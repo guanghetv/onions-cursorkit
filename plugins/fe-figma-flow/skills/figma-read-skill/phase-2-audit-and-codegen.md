@@ -318,19 +318,26 @@ pnpm add @guanghe-pub/design-tokens
 
 1. 只筛选 `data-name.startsWith('img-') === true` 的元素进入本章节流程；
 2. 非 `img-` 前缀节点**禁止**执行 CDN 上传、生成 CDN URL；
-3. **`img-` 图层一旦在外层命中，立即停止下钻**（与第一节"外层命中即停"一致）：内部子元素不再单独做图片识别 / 元素清单 / 组件匹配 / 样式提取；
+3. **`img-` 图层一旦在外层命中，立即停止下钻**（与第一节"外层命中即停"一致）：内部子元素不再单独做图片识别 / 元素清单 / 组件匹配 / 样式提取 / 资源下载；
    - 反例：`img-menu` 命中后，又把内部 `circle bg`、`Menu-outline` 容器、三条 `Vector` 各自作为独立图层处理 → ❌ 违反规则；
-   - 正例：`img-menu` 命中后，整个组作为一张切图下载 / 上传 CDN，单一节点处理 → ✅ 正确；
-4. 每个命中的 `img-` 节点，记录完整名称、元素尺寸、位置信息（外层一行即可，不展开内部）。
+   - 反例：从 `get_design_context` 代码常量或 `download_assets.rawImages` 取子图 URL 映射到 `img-*` 图层 → ❌ 违反规则；
+   - 正例：`img-menu` 命中后，对**该外层 node-id** 整层导出一张图，单一节点一个 URL → ✅ 正确；
+4. 每个命中的 `img-` 节点，记录 `data-name`、`node-id`、元素尺寸、位置信息（外层一行即可，不展开内部）。
+
+**一个 `img-` 图层 = 一张整层导出图 = 一个 URL**（单图与蒙版/多图合成图层均适用）。
 
 非 `img-` 图片处理边界：
 
 - `bg-banner`、`banner-image`、`pic-avatar`、`photo`、`IMAGE` 等名称不进入 CDN 上传流程；
 - Figma MCP 返回了 `localhost` 资源地址，但节点名称不是 `img-` 开头时，不上传 CDN；如页面还原必须使用，可临时保存到项目 `assets` 目录并本地引用。
 
-资源上传：对通过准入门禁的 `img-` 节点，Figma MCP 返回的 `localhost` URL 需先下载本地，再通过 `@guanghe-pub/yc-cdn-mcp-server` 的 `cdn_compress_and_upload` / `cdn_batch_compress_and_upload` 上传 CDN；上传成功后删除本地临时文件，失败则降级保存到 `assets` 目录。
+资源获取与上传：对通过准入门禁的 `img-` 节点，**禁止**使用 `get_design_context` 内子图 `localhost` 常量；必须对该 `img-` 图层的 `node-id` **整层导出**后再上传 CDN：
 
-> **再次强调**：上传 CDN 是默认动作，与"原型 / 生产 / 阶段"无关。绕过 CDN 直接 `curl` 下载到 `assets/` 是历史故障路径，本次必须避免。
+- **优先**：`figma-write-mcp` 的 `download_assets` → 仅用 **`export.url`**（忽略 `rawImages`）下载到临时目录；
+- **备选**：`figma-read-mcp` 的 `get_screenshot(nodeId)` 保存整层截图；
+- 再通过 `@guanghe-pub/yc-cdn-mcp-server` 的 `cdn_compress_and_upload` / `cdn_batch_compress_and_upload` 上传；成功后删除临时文件，失败则降级 `assets/`。
+
+> **再次强调**：上传 CDN 是默认动作，与"原型 / 生产 / 阶段"无关。用子图层 localhost / rawImages 替代整层导出是历史故障路径，本次必须避免。
 
 > 完整图片处理流程详见 `figma-img-cdn-skill`。
 

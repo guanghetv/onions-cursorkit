@@ -1,9 +1,9 @@
 {
-  "syncedAt": "2026-06-15T01:51:43.081Z",
-  "source": "/tmp/tmp.jKwALVVbL2/ai-guardrails",
+  "syncedAt": "2026-06-30T10:57:04.644Z",
+  "source": "/tmp/tmp.akyhJNtBt9/ai-guardrails",
   "sourceName": "ai-guardrails",
   "sourceVersion": "0.0.0",
-  "sourceCommit": "06b3609fcce1e89de05aaf8766aad503dab5965f",
+  "sourceCommit": "3801418261b0cb4bc700a6f196a526843ceb4c4e",
   "plugin": "fe-figma-flow",
   "skills": [
     "figma-read-skill",
