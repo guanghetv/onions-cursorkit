@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 7
+- **Total Sessions**: 8
 - **Last Active**: 2026-06-30
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~242 | Active |
+| `journal-1.md` | ~275 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 8 | 2026-06-30 | Integrate YApi into Onion SDD | `409511e` | `yangpeng-test` |
 | 7 | 2026-06-30 | onion-sdd onsf command rename | `9ec3cf5` | `yangpeng-test` |
 | 6 | 2026-06-30 | onion-sdd Trellis integration | `2c83890` | `yangpeng-test` |
 | 5 | 2026-06-30 | onion-sdd Phase 1 flow validation | `a4d9042` | `yangpeng-test` |

@@ -19,7 +19,9 @@
 
 ### Main Changes
 
-(Add details)
+- Added `pull-yapi` and `re-check` skills to the onion-sdd source plugin.
+- Wired YApi contract intake into `full-change`, `/onsf-continue`, rules, verification precedence, and README.
+- Synchronized the project `.cursor` trial copy with the source plugin so local `/onsf-*` usage sees the same behavior.
 
 ### Git Commits
 
@@ -29,7 +31,9 @@
 
 ### Testing
 
-- [OK] (Add test results)
+- [OK] `git diff --check`
+- [OK] `python3 -m json.tool plugins/onion-sdd/.cursor-plugin/plugin.json`
+- [WARN] `node scripts/validate-template.mjs` is still blocked by existing `plugins/fe-specflow/skills/design-to-opsx/SKILL.md` missing `description` frontmatter.
 
 ### Status
 
@@ -228,6 +232,39 @@ Renamed onion-sdd slash commands from onion-* to onsf-* and changed the hotfix c
 | Hash | Message |
 |------|---------|
 | `9ec3cf5` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 8: Integrate YApi into Onion SDD
+
+**Date**: 2026-06-30
+**Task**: Integrate YApi into Onion SDD
+**Branch**: `yangpeng-test`
+
+### Summary
+
+Integrated YApi contract support into onion-sdd with pull-yapi and re-check skills, updated routing, verification precedence, README, and synced the Cursor trial copy.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `409511e` | (see git log) |
 
 ### Testing
 
