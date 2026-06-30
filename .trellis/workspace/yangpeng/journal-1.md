@@ -174,3 +174,36 @@ Completed onion-sdd Phase 1 flow validation follow-up, aligned frontend-specific
 ### Next Steps
 
 - None - task complete
+
+
+## Session 6: onion-sdd Trellis integration
+
+**Date**: 2026-06-30
+**Task**: onion-sdd Trellis integration
+**Branch**: `yangpeng-test`
+
+### Summary
+
+Connected onion-sdd full-change, continue, finish, OpenSpec sync, and adapter docs to Trellis research/check/task/branch/finish responsibilities while preserving OpenSpec as the change source of truth.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2c83890` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

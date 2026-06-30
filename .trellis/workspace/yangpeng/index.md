@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 5
+- **Total Sessions**: 6
 - **Last Active**: 2026-06-30
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~176 | Active |
+| `journal-1.md` | ~209 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 6 | 2026-06-30 | onion-sdd Trellis integration | `2c83890` | `yangpeng-test` |
 | 5 | 2026-06-30 | onion-sdd Phase 1 flow validation | `a4d9042` | `yangpeng-test` |
 | 4 | 2026-06-25 | onion-sdd Phase 1 Trellis adapter | `c3dd419`, `ec25eb9`, `5e6c58f` | `yangpeng-test` |
 | 3 | 2026-06-25 | 补齐 onion-sdd 基座能力 | `5552b08`, `f8d0773`, `89329ff` | `yangpeng-test` |
