@@ -23,11 +23,11 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
 | triage | Tier 判断、升级原因、验证策略 | `tier-triage` |
 | discover | 结构化需求事实、范围边界、冲突点 | `trellis-brainstorm` |
 | research | 外部资料调研，产出写入 `research/` 目录 | `trellis-research` |
-| design | 方案澄清、关键决策、API/数据/交互契约 | 本技能 |
+| design | 方案澄清、关键决策、API/数据/交互契约 | 本技能 / `pull-yapi` |
 | openspec | `proposal.md`、`specs/**/spec.md`、`tasks.md` | `openspec-change` |
 | implement | 按 `tasks.md` 执行，遵守 TDD / 定向验证纪律（Tier 2+ 大范围改动建议派发 `trellis-implement` 子代理执行；不可用时主会话按本技能执行） | 本技能 |
 | check | 独立质量审查（代码规范、回归、spec 对齐） | `trellis-check` |
-| integrate | 后端/QA/外部 spec 接入与差异分析 | `external-spec` |
+| integrate | 后端/QA/YApi/外部 spec 接入与差异分析 | `external-spec` / `pull-yapi` / `re-check` |
 | verify | E2E 或等价验收报告 | `verify-change` |
 | finish | 归档判断、带债检查、下一步提示 | `/onsf-finish` |
 
@@ -45,13 +45,30 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
 | 来源 | 处理 |
 |------|------|
 | 飞书项目卡片 | 提取卡片信息、工作项 ID、需求文档链接和验收口径；卡片链接只作为需求与分支准备的输入，不替代需求正文 |
-| 飞书文档 | 使用可用的飞书文档能力读取；失败时说明权限、认证或工具问题，并要求用户粘贴正文或导出文件 |
+| 飞书文档 | 使用可用的飞书文档能力读取；失败时说明权限、认证或工具问题，并要求用户粘贴正文或导出文件；若文档涉及接口变更，提取其中 YApi 链接/ID |
+| YApi 接口 | 使用 `pull-yapi` 读取接口契约；设计期只读参考，T1 后可落盘为 `backend-yapi-*.md` |
 | GitLab / 远程 spec | 使用可用 API、工作区文件或用户粘贴内容读取；失败时明确提示 |
 | 截图 | 提取页面、控件、状态、标注文案和范围边界 |
 | 纯文字 | 提取目标、行为变化、验收口径和不做范围 |
 | 本地文件 | 读取用户指定文件；只取与本次范围相关的章节 |
 
 多源内容冲突时，不自行裁决；列出冲突并向用户确认。
+
+## 接口改动与 YApi
+
+当前端需求出现以下任一情况，视为接口变更：
+
+- 新增、修改或废弃后端 HTTP API。
+- 前端新增 endpoint、修改 method/path、请求字段、响应字段、错误码或权限语义。
+- mock、L1 契约测试或 L2 行为测试依赖后端返回范围。
+
+处理纪律：
+
+- 飞书卡片或需求文档包含 YApi 链接/ID 时，加载 `pull-yapi`。在 discover/design 阶段只读拉取契约摘要，不直接写入 OpenSpec；在 T1 后或用户说“只落盘接口契约”时，写入当前 change 的 `backend-yapi-*.md` 并做差异分析。
+- 需求涉及接口变更但没有 YApi 链接/ID 时，向用户确认；在确认前可把接口契约标记为 `contract_source: inferred`，不得伪造 YApi 依据。
+- 不默认搜索 YApi。只有用户明确要求搜索接口，或文档只有接口名称且用户同意搜索时，才使用 `pull-yapi` 的搜索流程，并让用户确认候选。
+- `user-yapi-common-mcp`、`YAPI_BASE_URL` 或 `YAPI_GLOBAL_TOKEN` 不可用时，要求用户粘贴接口文档；主会话按 `pull-yapi` 模板整理摘要或落盘，并在输出中说明降级。
+- 请求/响应字段、类型、必填、method/path 以 `backend-yapi-*.md` 为最高依据；E2E 验收口径以 `qa-*.md` 为最高依据。冲突必须写入差异分析或 `e2e-report.md`。
 
 ## 调研
 
@@ -163,6 +180,8 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
 | 用户表达 | 动作 |
 |----------|------|
 | 后端 spec 到了 / API 文档到了 | 使用 `external-spec` 写入 `backend-*.md` 并做差异分析 |
+| YApi 接口到了 / re-check / 对齐 YApi | 使用 `re-check` 先落盘 `backend-yapi-*.md`，再按范围对齐 mock、类型、API 层和测试 |
+| 只拉 YApi / 只落盘接口契约 | 使用 `pull-yapi` 写入 `backend-yapi-*.md` 并做差异分析，不修改业务代码 |
 | 测试 spec 到了 / QA 文档到了 | 使用 `external-spec` 写入 `qa-*.md` 并做差异分析 |
 | 跑 E2E / 浏览器验证 / 验证一下 | 使用 `verify-change` 生成或更新 `e2e-report.md` |
 | 可以收尾 / 能归档吗 | 使用 `/onsf-finish` 检查归档条件 |
@@ -183,7 +202,7 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
 
 - 完整 OpenSpec 产物存在且能解释目标、变更、验收和不做范围。
 - `tasks.md` 已更新，未完成项有明确状态。
-- 外部 spec 差异已处理或记录。
+- 外部 spec / YApi 差异已处理或记录。
 - Tier 2+ 有 `e2e-report.md` 或用户认可的等价验收证据。
 - `/onsf-finish` 能判断是否可归档。
 

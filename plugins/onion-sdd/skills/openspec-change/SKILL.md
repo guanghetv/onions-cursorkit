@@ -75,7 +75,7 @@ openspec new change "<change-id>"
 - <仅前端相关变更填写；记录 Figma/局部范围、灰区决策和项目既有模式。无则删除本节>
 
 ## References
-- <需求链接、外部 spec、截图或用户描述来源>
+- <需求链接、YApi 接口链接、外部 spec、截图或用户描述来源>
 ```
 
 ## spec.md 模板
@@ -150,6 +150,7 @@ OpenSpec 落盘后，如果当前项目存在 Trellis 且当前需求已经绑�
 2. `spec.md` 是否至少覆盖主要场景和边界场景？
 3. `tasks.md` 是否能指导实现，不只是功能清单？
 4. 验收步骤是否可复现？
-5. 是否避免把完整需求正文复制到 Trellis task 里？
+5. 接口变更是否记录了契约来源（YApi / 后端 spec / inferred）和未决差异？
+6. 是否避免把完整需求正文复制到 Trellis task 里？
 
 任一答案为否，先补齐产物再继续。

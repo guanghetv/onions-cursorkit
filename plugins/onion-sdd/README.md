@@ -8,7 +8,7 @@ Onion SDD 是一个通用 SDD 插件，用 slash command 把变更按复杂度�
 - 通过 Tier 分级决定是否写 OpenSpec、写到什么粒度、何时升级到完整工作流。
 - 提供 Tier 0+/Tier 1 的 mini/light OpenSpec 模板与验证纪律。
 - Tier 2+ 使用 onion 自有完整 SDD skills，覆盖需求接入、完整 OpenSpec、任务规划、外部 spec 接入、E2E/验收和 finish 门禁。
-- Tier 2+ 的前端场景补充前端专项纪律：Figma/局部改版边界、前端灰区决策、workspace-native spec 拉取、Browser 自动化约束和提交前审查。
+- Tier 2+ 的前端场景补充前端专项纪律：Figma/局部改版边界、前端灰区决策、workspace-native spec 拉取、YApi 契约对齐、Browser 自动化约束和提交前审查。
 - 按需读取与当前变更相关的需求、代码、OpenSpec、测试和验证材料，不设置全仓扫描硬约束。
 
 ## 目录
@@ -32,6 +32,8 @@ plugins/onion-sdd/
     ├── full-change/SKILL.md
     ├── openspec-change/SKILL.md
     ├── external-spec/SKILL.md
+    ├── pull-yapi/SKILL.md
+    ├── re-check/SKILL.md
     ├── verify-change/SKILL.md
     └── trellis-adapter/SKILL.md
 └── templates/
@@ -75,6 +77,8 @@ Tier 2+ 使用以下 onion 自有能力：
 | `full-change` | 完整流程编排：需求接入、澄清、阶段推断、任务规划和事件路由 |
 | `openspec-change` | 将设计结论写入 `proposal.md`、`specs/**/spec.md`、`tasks.md` |
 | `external-spec` | 接入后端/API/QA/外部 spec，写入 `backend-*.md`、`qa-*.md` 并做差异分析 |
+| `pull-yapi` | 通过 YApi MCP 读取接口契约，设计期只读参考或 T1 后写入 `backend-yapi-*.md` |
+| `re-check` | YApi 契约到达后，对齐当前范围内的 mock、类型、API 层和测试 |
 | `verify-change` | 生成验证清单，执行或记录 E2E/等价验收，写入 `e2e-report.md` |
 | `trellis-adapter` | 同步 OpenSpec、`.onion-sdd/current.json` 和 Trellis task metadata |
 
@@ -87,6 +91,7 @@ Tier 2+ 使用以下 onion 自有能力：
 - Figma/设计稿：有设计稿时优先读取与本次范围相关的节点和视觉规格；局部改版只改用户指定区域，同页其它区域若稿码不一致，先二次确认。
 - 前端灰区：在 OpenSpec 落盘前补齐与本次相关的空态、加载态、错误态、防重复提交、分页/大数据量、权限条件渲染、响应式和动效等决策；纯文案/样式微调或用户明确跳过时可以不展开。
 - workspace-native spec：外部 spec 到达时，优先使用用户提供的工作区文件；若存在 `workspace-repos.json` 与 `proposal.md` frontmatter，可按 `requirement_ref` / `modules` 定位并切片；再降级到 GitLab/远程链接或用户粘贴。
+- YApi 契约：飞书卡片/需求文档中出现 YApi 链接或 interfaceID 且需求涉及接口变更时，设计期使用 `pull-yapi` 只读提取字段、类型、必填、错误码和示例；T1 后 YApi 到达或用户说 re-check 时，使用 `re-check` 对齐 mock、类型、API 层和测试。
 - 飞书卡片开发分支：飞书项目卡片和需求文档可以作为需求来源；进入实现前如需要创建开发分支，可调用 Common 插件的 `create-feature-branch` 扩展能力。onion-sdd 只记录卡片 ID、需求文档来源和分支名，不复制分支创建逻辑。
 - Browser 自动化：`verify-change` 先输出 TDD/静态清单和验证依据摘要，再询问用户是否执行浏览器自动化；自动化优先使用产品内置浏览器能力，不把用户自配 DevTools MCP 作为默认执行通道。
 - Commit review：onion 不自动提交。用户明确要求提交时，先检查/暂存目标改动，再做提交前审查；有团队本地审查命令或 skill 时优先使用，否则由 Agent 对暂存区自审，通过后再提交。
@@ -104,6 +109,8 @@ Tier 2+ 使用以下 onion 自有能力：
 ## 安装
 
 `onion-sdd` 已注册到 `.cursor-plugin/marketplace.json`，source 为 `onion-sdd`。本地调试时仍可手动指定 `plugins/onion-sdd/` 路径。
+
+YApi 能力是可选增强。需要本地可用 `user-yapi-common-mcp`，并配置 `YAPI_BASE_URL`、`YAPI_GLOBAL_TOKEN`；不可用时 onion-sdd 会要求用户粘贴接口文档，并按 `pull-yapi` 模板降级整理。
 
 ## Trellis Adapter
 
@@ -208,6 +215,6 @@ OpenSpec 与 Trellis 的推荐分工：
 ```bash
 find plugins/onion-sdd -type f | sort
 python3 -m json.tool plugins/onion-sdd/.cursor-plugin/plugin.json
-rg -n "full-change|openspec-change|external-spec|verify-change" plugins/onion-sdd
+rg -n "full-change|openspec-change|external-spec|pull-yapi|re-check|verify-change" plugins/onion-sdd
 rg -n "trellis-adapter|meta.onion|trellis_task|source_hashes" plugins/onion-sdd
 ```

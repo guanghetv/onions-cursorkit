@@ -27,7 +27,7 @@ globs:
 - Tier 0：不创建 OpenSpec。
 - Tier 0+：使用 `skills/mini-change/SKILL.md`。
 - Tier 1：使用 `skills/light-change/SKILL.md`。
-- Tier 2+：使用 `skills/full-change/SKILL.md`、`skills/openspec-change/SKILL.md`、`skills/external-spec/SKILL.md`、`skills/verify-change/SKILL.md`。
+- Tier 2+：使用 `skills/full-change/SKILL.md`、`skills/openspec-change/SKILL.md`、`skills/external-spec/SKILL.md`、`skills/pull-yapi/SKILL.md`、`skills/re-check/SKILL.md`、`skills/verify-change/SKILL.md`。
 - 需要跨会话恢复或同步 Trellis task metadata 时，使用 `skills/trellis-adapter/SKILL.md`。
 - 飞书项目卡片进入实现前如需创建开发分支，可调用 Common 插件的 `create-feature-branch` 扩展能力；该能力不是 onion-sdd 硬依赖，缺失时提示用户同步 Common skill 或手动建分支。
 - 创建 feature branch 成功且存在 Trellis task 时，用 Trellis 标准 `branch` 字段记录分支；不要把分支名重复写入 `meta.onion`。
@@ -49,6 +49,9 @@ globs:
 - 有 Figma、设计稿或截图时，只读取并实现本次范围相关规格；局部改版不得擅自扩大到整页。
 - 进入前端实现前，应记录与本次相关的灰区决策：空态、加载态、错误态、防重复、分页、权限、响应式或动效。无关维度可跳过。
 - 外部 spec 到达时优先使用用户提供的工作区文件；具备 `workspace-repos.json` 与 `requirement_ref` 时可走 workspace-native；失败后降级到远程链接或用户粘贴。
+- 涉及接口变更且飞书卡片/需求文档中有 YApi 链接或 interfaceID 时，使用 `pull-yapi` 只读提取契约；T1 后 YApi 到达或用户说 re-check 时，使用 `re-check` 对齐 mock、类型、API 层和测试。
+- 不默认搜索 YApi；只有用户明确要求搜索接口，或文档仅给接口名称且用户同意搜索时，才走 YApi 搜索并让用户确认候选。
+- YApi 请求/响应字段、类型、必填、method/path 是接口契约最高依据；QA spec 是 E2E 验收最高依据；冲突必须记录并请用户或协作者裁决。
 - 飞书卡片和需求文档可以作为需求来源；创建 feature 分支前必须先确认需求范围和当前 change 产物，且遵守 `create-feature-branch` 的工作区干净、基线分支、MCP 和 git 权限门禁。
 - Browser 验证前必须先给出清单摘要并获得用户确认；默认使用产品内置浏览器能力，不默认改用用户自配 DevTools MCP。
 - 用户要求提交时，提交前必须完成审查；有团队本地审查命令或 skill 时优先使用，否则 Agent 自审待提交 diff。

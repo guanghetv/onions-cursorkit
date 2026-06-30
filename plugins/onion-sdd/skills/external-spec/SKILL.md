@@ -7,6 +7,8 @@ description: 将后端、QA、GitLab、workspace 文件或用户粘贴的外部 
 
 本技能用于完整流程中的外部 spec 接入。它把外部材料写入当前 `openspec/changes/<change-id>/`，并与 `proposal.md` / `specs/**/spec.md` 做差异分析。
 
+YApi 结构化接口详情优先使用 `pull-yapi`，写入 `backend-yapi-*.md`；本技能仍负责 GitLab/后端叙事 spec、QA spec、workspace 文件和用户粘贴的外部材料。
+
 ## 触发
 
 - “后端 spec 到了”
@@ -67,6 +69,7 @@ workspace-native 是零手动输入的优先路径，适用于用户只说“后
 | 类型 | 文件名 |
 |------|--------|
 | 后端/API spec | `backend-<name>.md` |
+| YApi 接口契约 | 交给 `pull-yapi` 写入 `backend-yapi-<name>.md` |
 | 测试/QA spec | `qa-<name>.md` |
 | 其它外部验收材料 | `external-<name>.md` |
 
