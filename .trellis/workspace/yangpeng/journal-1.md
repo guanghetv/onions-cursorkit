@@ -207,3 +207,36 @@ Connected onion-sdd full-change, continue, finish, OpenSpec sync, and adapter do
 ### Next Steps
 
 - None - task complete
+
+
+## Session 7: onion-sdd onsf command rename
+
+**Date**: 2026-06-30
+**Task**: onion-sdd onsf command rename
+**Branch**: `yangpeng-test`
+
+### Summary
+
+Renamed onion-sdd slash commands from onion-* to onsf-* and changed the hotfix command to fix, updating README, command files, rules, skills, design supplement, and local Cursor trial copies.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9ec3cf5` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
