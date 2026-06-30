@@ -29,7 +29,7 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
 | check | 独立质量审查（代码规范、回归、spec 对齐） | `trellis-check` |
 | integrate | 后端/QA/外部 spec 接入与差异分析 | `external-spec` |
 | verify | E2E 或等价验收报告 | `verify-change` |
-| finish | 归档判断、带债检查、下一步提示 | `/onion-finish` |
+| finish | 归档判断、带债检查、下一步提示 | `/onsf-finish` |
 
 ## 需求接入
 
@@ -136,7 +136,7 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
 
 `tasks.md` 必须按可验证交付物拆分，并包含执行约束。若当前 change 绑定 Trellis task，分工如下：
 
-- OpenSpec `tasks.md`：产品/验收维度的可验证交付物，是 `/onion-finish` 的检查对象。
+- OpenSpec `tasks.md`：产品/验收维度的可验证交付物，是 `/onsf-finish` 的检查对象。
 - Trellis `implement.md`：工程执行计划、验证命令、review gates 和 rollback points。
 - 两者可以互相引用，但不要复制整段正文；保持 OpenSpec 为变更正文真相源，Trellis 为任务运行时和工程计划。
 
@@ -165,7 +165,7 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
 | 后端 spec 到了 / API 文档到了 | 使用 `external-spec` 写入 `backend-*.md` 并做差异分析 |
 | 测试 spec 到了 / QA 文档到了 | 使用 `external-spec` 写入 `qa-*.md` 并做差异分析 |
 | 跑 E2E / 浏览器验证 / 验证一下 | 使用 `verify-change` 生成或更新 `e2e-report.md` |
-| 可以收尾 / 能归档吗 | 使用 `/onion-finish` 检查归档条件 |
+| 可以收尾 / 能归档吗 | 使用 `/onsf-finish` 检查归档条件 |
 
 ## 质量审查
 
@@ -185,7 +185,7 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
 - `tasks.md` 已更新，未完成项有明确状态。
 - 外部 spec 差异已处理或记录。
 - Tier 2+ 有 `e2e-report.md` 或用户认可的等价验收证据。
-- `/onion-finish` 能判断是否可归档。
+- `/onsf-finish` 能判断是否可归档。
 
 ## 停止条件
 

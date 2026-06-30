@@ -9,8 +9,8 @@ description: 在不改造 Trellis 源码的前提下，同步 Onion SDD OpenSpec
 
 ## 适用场景
 
-- `/onion-continue` 需要跨会话恢复当前 change。
-- `/onion-plan` 或 Tier 2+ 流程已创建 Trellis task，需要记录对应 OpenSpec change。
+- `/onsf-continue` 需要跨会话恢复当前 change。
+- `/onsf-plan` 或 Tier 2+ 流程已创建 Trellis task，需要记录对应 OpenSpec change。
 - 外部 spec、QA spec、E2E 报告到达后，需要标记 source hash 和 last action。
 - Tier 3 需要将 parent/child change 映射到 Trellis parent/child task tree。
 
@@ -103,7 +103,7 @@ Trellis task 的标准字段可承载通用运行态：
 
 `trellis_task` 只是恢复提示。若 task 不存在或已归档，忽略该字段，继续使用 `active_change_id` 和 OpenSpec 产物恢复。
 
-没有活跃 change 时，允许使用空闲状态，避免 `/onion-continue` 误恢复上一轮已完成变更：
+没有活跃 change 时，允许使用空闲状态，避免 `/onsf-continue` 误恢复上一轮已完成变更：
 
 ```json
 {
@@ -131,7 +131,7 @@ Trellis task 的标准字段可承载通用运行态：
 
 ## 恢复优先级
 
-`/onion-continue` 按以下顺序恢复：
+`/onsf-continue` 按以下顺序恢复：
 
 1. Trellis active task：读取当前 task 的 `task.json.meta.onion.change_id`。如果 `change_path` 存在，则使用该 change。
 2. `.onion-sdd/current.json`：当 Trellis task 缺失、stale 或没有 onion metadata 时，读取 `active_change_id`；若 `active_change_id` 为 `null` 或 `phase=idle`，表示无活跃 change，继续走 OpenSpec fallback。

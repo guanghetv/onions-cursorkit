@@ -65,7 +65,7 @@ openspec/changes/<change-id>/specs/<capability>/spec.md
 
 1. 写产物前先确认仍符合 Tier 0+。
 2. 只读取直接相关上下文。
-3. 若实现中发现红线，停止 mini change 并升级到 `/onion-plan`。
+3. 若实现中发现红线，停止 mini change 并升级到 `/onsf-plan`。
 4. 完成后在最终回复中给出变更文件、验证命令和残余风险。
 
 ## 质量自检（写完后必须过一遍）

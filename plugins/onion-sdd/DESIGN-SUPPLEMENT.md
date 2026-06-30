@@ -48,7 +48,7 @@ Q3: 变更是否涉及任一升级红线？
 
 Q4: 变更是否属于明确且低风险的修复？
   特征：问题已定位、修复方案唯一且确定、验证路径清晰、预计改动 ≤3 个文件
-    是 → Tier 0+（hotfix / mini change）
+    是 → Tier 0+（fix / mini change）
     否 → 继续 Q5
 
 Q5: 变更是否属于单模块内的小范围行为/体验调整？
@@ -98,11 +98,11 @@ Q5: 变更是否属于单模块内的小范围行为/体验调整？
 
 ---
 
-## 二、Tier 0++ 紧急 Hotfix：先修后补
+## 二、Tier 0++ 紧急 Fix：先修后补
 
 ### 问题
 
-普通 hotfix (Tier 0+) 仍要求先写 `proposal.md` + `tasks.md` 再修。对于需要 15 分钟内上线的 P0 级别修复，这是不现实的。
+普通 fix (Tier 0+) 仍要求先写 `proposal.md` + `tasks.md` 再修。对于需要 15 分钟内上线的 P0 级别修复，这是不现实的。
 
 ### 设计
 
@@ -129,11 +129,11 @@ Tier 0++ 触发条件（全部满足）：
 ### tier-triage 输出中增加
 
 ```markdown
-- 紧急 hotfix 候选: <是/否>
+- 紧急 fix 候选: <是/否>
 - 原因: <如果候选 Tier 0++，说明为什么>
 ```
 
-**Phase 0 实现建议**：tier-triage 中增加一个"紧急 hotfix 候选"判断逻辑。如果用户描述中包含 "P0" "线上挂了" "紧急" 等信号，且修复符合 Tier 0+ 条件，则标记为 Tier 0++ 候选并提示用户可以走先修后补路径。
+**Phase 0 实现建议**：tier-triage 中增加一个"紧急 fix 候选"判断逻辑。如果用户描述中包含 "P0" "线上挂了" "紧急" 等信号，且修复符合 Tier 0+ 条件，则标记为 Tier 0++ 候选并提示用户可以走先修后补路径。
 
 ---
 
@@ -141,7 +141,7 @@ Tier 0++ 触发条件（全部满足）：
 
 ### 问题
 
-如果 Phase 0 的 /onion-continue 只扫描 `openspec/changes/` 推算状态，恢复体验会不稳定。不做 Trellis 不代表不能有轻量状态。
+如果 Phase 0 的 /onsf-continue 只扫描 `openspec/changes/` 推算状态，恢复体验会不稳定。不做 Trellis 不代表不能有轻量状态。
 
 ### 设计：`.onion-sdd/current.json`
 
@@ -158,8 +158,8 @@ Tier 0++ 触发条件（全部满足）：
 }
 ```
 
-**写入时机**：每次 /onion-* 命令执行完成后自动更新。
-**读取时机**：/onion-continue 优先读取 `current.json`，再 fallback 扫描 OpenSpec。
+**写入时机**：每次 /onsf-* 命令执行完成后自动更新。
+**读取时机**：/onsf-continue 优先读取 `current.json`，再 fallback 扫描 OpenSpec。
 **Phase 0 成本**：读写一个 JSON 文件，无需任何依赖。
 
 ### README 中增加
@@ -217,7 +217,7 @@ Phase 0 使用 `.onion-sdd/current.json` 维护当前变更的轻量运行时状
 
 ### 问题
 
-两个开发者同时改同一文件，或一个 hotfix 和一个 Tier 2 需求重叠时，需要最小协调机制。
+两个开发者同时改同一文件，或一个 fix 和一个 Tier 2 需求重叠时，需要最小协调机制。
 
 ### 设计
 
@@ -265,7 +265,7 @@ Phase 0 使用 `.onion-sdd/current.json` 维护当前变更的轻量运行时状
 
 1. 在 proposal.md 增加 `## 带债项` 章节，逐条列明
 2. 为每条债创建 follow-up issue 或 Trello/Linear card
-3. /onion-finish 输出中标注"带债归档，债项 N 条，见 proposal.md"
+3. /onsf-finish 输出中标注"带债归档，债项 N 条，见 proposal.md"
 
 ---
 
@@ -299,7 +299,7 @@ Phase 0 不实现 Tier 3 完整支持，但需要在设计中预留接口：
 
 ```
 Tier 3 不阻塞 Phase 0：
-  - /onion-plan 在判定 Tier 3 时输出提示："建议拆分为 N 个子任务，当前仅支持手动拆分"
+  - /onsf-plan 在判定 Tier 3 时输出提示："建议拆分为 N 个子任务，当前仅支持手动拆分"
   - Phase 0 不做 parent/child task 自动化
   - Phase 1 通过 `trellis-adapter` 利用 Trellis 现有 parent/child task 树承载运行时关系
 ```
@@ -324,11 +324,11 @@ openspec/changes/<child-id-2>/
 
 ---
 
-## 九、向前兼容 /onion-auto
+## 九、向前兼容 /onsf-auto
 
 ### 问题
 
-/onion-auto 被推迟了至少 6 次但完全没设计。Phase 0 的命令和模板完全以人工交互为前提，后续加 auto 可能返工。
+/onsf-auto 被推迟了至少 6 次但完全没设计。Phase 0 的命令和模板完全以人工交互为前提，后续加 auto 可能返工。
 
 ### 最小向前兼容
 
@@ -351,7 +351,7 @@ openspec/changes/<child-id-2>/
 - auto 阻断原因: N/A                        # 后续阶段：如不能全自动，为什么不
 ```
 
-此字段 Phase 0 固定输出 `人工`，不影响现有逻辑。后续实现 /onion-auto 时可以直接读取并替换。
+此字段 Phase 0 固定输出 `人工`，不影响现有逻辑。后续实现 /onsf-auto 时可以直接读取并替换。
 
 ---
 
@@ -396,7 +396,7 @@ Phase 2 承诺 ROI 度量但没有 Phase 0 基线。
 用户表达路径 → Tier 判定辅助信号：
 
 "修/改/bug/报错/挂了/线上/紧急/P0/P1"
-  → 倾向于 Tier 0+（hotfix），检查是否命中紧急标志 → Tier 0++
+  → 倾向于 Tier 0+（fix），检查是否命中紧急标志 → Tier 0++
 
 "加/新增/优化/调整/改一下" + "这个小/这个简单/这个快的"
   → 倾向于 Tier 1（tweak），但先穿过 Tier 0+ 判定排除 bug 修复
@@ -405,10 +405,10 @@ Phase 2 承诺 ROI 度量但没有 Phase 0 基线。
   → 倾向于 Tier 2+（plan）
 
 "继续/接着/刚才/上次的"
-  → /onion-continue
+  → /onsf-continue
 
 "好了/做完了/归档/可以上线/收尾"
-  → /onion-finish
+  → /onsf-finish
 ```
 
 **Phase 0 不强依赖此规则**。自然语言路由放到 Phase 1 与 Trellis workflow-state 结合后再正式实现。
@@ -420,14 +420,14 @@ Phase 2 承诺 ROI 度量但没有 Phase 0 基线。
 | 编号 | 补丁项 | 影响文件 | Phase 0 是否必做 |
 |------|--------|----------|:---:|
 | S1 | Tier 判定决策树 + 示例 | tier-triage/SKILL.md | ✅ |
-| S2 | Tier 0++ 紧急 hotfix（先修后补） | tier-triage/SKILL.md | ✅ |
+| S2 | Tier 0++ 紧急 fix（先修后补） | tier-triage/SKILL.md | ✅ |
 | S3 | `.onion-sdd/current.json` 最小状态 | README.md + 新文件 | ✅ |
 | S4 | Mini/Light OpenSpec 质量门禁 | mini-change/SKILL.md, light-change/SKILL.md | ✅ |
 | S5 | 活跃变更冲突检测 | tier-triage/SKILL.md | ✅ |
-| S6 | "带债归档"定义 | onion-finish.md + README | ✅ |
+| S6 | "带债归档"定义 | onsf-finish.md + README | ✅ |
 | S7 | Rollback/Revert 路径 | README（文档） | 可选 |
 | S8 | Tier 3 设计占位 | README（文档） | 可选 |
-| S9 | /onion-auto 向前兼容字段 | tier-triage/SKILL.md | 推荐 |
+| S9 | /onsf-auto 向前兼容字段 | tier-triage/SKILL.md | 推荐 |
 | S10 | 基线度量时间戳 | current.json 设计 | 推荐 |
 
 **Phase 0 最小必做**：S1～S6。这 6 项补丁的成本全部在修改 markdown 文档和技能文件，不涉及任何运行时代码。
@@ -511,7 +511,7 @@ Phase 1 的 Trellis adapter 采用 **onion 插件内 skill + 文档协议**，�
 
 ### 恢复优先级
 
-`/onion-continue` 的恢复顺序：
+`/onsf-continue` 的恢复顺序：
 
 1. Trellis active task：若 `task.json.meta.onion.change_id` 指向存在的 OpenSpec change，则使用它。
 2. `.onion-sdd/current.json`：若 task 不存在或 stale，使用轻量状态。

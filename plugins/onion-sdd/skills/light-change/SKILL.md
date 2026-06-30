@@ -91,7 +91,7 @@ openspec/changes/<change-id>/
 
 ## 升级条件
 
-开发中出现以下任一情况，停止 light change 并升级到 `/onion-plan`：
+开发中出现以下任一情况，停止 light change 并升级到 `/onsf-plan`：
 
 - 需要重新讨论产品方案。
 - 需要后端、QA 或设计稿交叉确认。

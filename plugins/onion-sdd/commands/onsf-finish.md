@@ -1,9 +1,9 @@
 ---
-name: onion-finish
+name: onsf-finish
 description: 检查 Onion SDD 变更的验证证据、任务状态与归档条件。
 ---
 
-# /onion-finish
+# /onsf-finish
 
 用于收束当前 Onion SDD 变更。它不替用户执行归档或提交，而是检查产物是否足够、验证是否可信、是否可以提示用户进入下一步。
 
@@ -26,7 +26,7 @@ description: 检查 Onion SDD 变更的验证证据、任务状态与归档条�
 
 ## Trellis 收尾分工
 
-`/onion-finish` 只判断 Onion/OpenSpec 变更是否满足归档条件，不替代 Trellis 任务收尾。
+`/onsf-finish` 只判断 Onion/OpenSpec 变更是否满足归档条件，不替代 Trellis 任务收尾。
 
 当当前 change 绑定 Trellis task 时，输出中同时给出两段建议：
 
@@ -36,7 +36,7 @@ description: 检查 Onion SDD 变更的验证证据、任务状态与归档条�
 边界：
 
 - 不把 OpenSpec 正文复制到 Trellis journal；journal 只写摘要、验证结果和下一步。
-- 若 Trellis 不可用，仍可完成 `/onion-finish` 判断，并提示用户手动记录任务收尾。
+- 若 Trellis 不可用，仍可完成 `/onsf-finish` 判断，并提示用户手动记录任务收尾。
 - 若 OpenSpec 未通过验收，不提示 `/trellis:finish-work`，先补验证或修复问题。
 
 ## 带债归档规则

@@ -18,8 +18,8 @@ globs:
 
 ## 触发边界
 
-- 当前承诺 slash command 触发：`/onion-hotfix`、`/onion-tweak`、`/onion-plan`、`/onion-continue`、`/onion-finish`。
-- `/onion-auto` 不属于当前基座能力；metrics、marketplace、Spec Pack 等能力可按后续验收或独立任务推进。
+- 当前承诺 slash command 触发：`/onsf-fix`、`/onsf-tweak`、`/onsf-plan`、`/onsf-continue`、`/onsf-finish`。
+- `/onsf-auto` 不属于当前基座能力；metrics、marketplace、Spec Pack 等能力可按后续验收或独立任务推进。
 - OpenSpec 是变更正文唯一真相源；Trellis adapter 只保存状态、引用、hash、parent/child 关系和 journal 摘要。
 
 ## 分级写入
@@ -57,7 +57,7 @@ globs:
 ## 上下文纪律
 
 - 按需读取与当前变更相关的需求、OpenSpec、代码、测试和验证材料。
-- 发现升级红线时停止轻量流程，转入 `/onion-plan`。
+- 发现升级红线时停止轻量流程，转入 `/onsf-plan`。
 - 不修改试点目录外的既有插件，不把其他插件作为执行依赖。
 - 不修改 Trellis 源码、`.trellis/scripts/**` 或 `.trellis/.runtime/**`；如必须改 Trellis 才能继续，先向用户确认。
 - 不复制 OpenSpec 正文到 Trellis task PRD、task metadata 或 journal。

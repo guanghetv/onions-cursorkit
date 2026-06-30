@@ -76,7 +76,7 @@ Q6: 是否属于单模块内的小范围行为/体验调整？特征：1 个页�
 
 ## 升级红线
 
-出现任一情况时，不要继续 mini/light 流程，应升级到 `/onion-plan` 的 Tier 2+ 路由：
+出现任一情况时，不要继续 mini/light 流程，应升级到 `/onsf-plan` 的 Tier 2+ 路由：
 
 - 需求或验收标准不清，且不能通过一次简短确认解决。
 - 涉及接口字段、错误码、数据模型、状态机、权限、安全、支付、资金或审计。
@@ -91,11 +91,11 @@ Q6: 是否属于单模块内的小范围行为/体验调整？特征：1 个页�
 
 - Tier: <0 | 0+ | 0++ | 1 | 2 | 3>
 - 依据: <为什么这样分级>
-- 建议命令: </onion-hotfix | /onion-tweak | /onion-plan | /onion-continue | /onion-finish>
+- 建议命令: </onsf-fix | /onsf-tweak | /onsf-plan | /onsf-continue | /onsf-finish>
 - 建议产物: <无 | mini change | light change | onion 完整 OpenSpec>
 - 验证方式: <定向验证 / 小范围回归 / E2E / 待确认>
 - 升级条件: <继续过程中一旦出现什么情况就升级>
-- 紧急 hotfix 候选: <是/否>  # Tier 0++，先修后补
+- 紧急 fix 候选: <是/否>  # Tier 0++，先修后补
 - 活跃冲突: <无 / change-id-A（共享文件: xxx）>
 - auto 模式判定: 人工  # Phase 0 固定为人工，后续阶段扩展
 ```
@@ -103,7 +103,7 @@ Q6: 是否属于单模块内的小范围行为/体验调整？特征：1 个页�
 ## 纪律
 
 - Phase 0 只承诺 slash command 触发。
-- 不使用 `/onion-auto`。
+- 不使用 `/onsf-auto`。
 - 可通过 `trellis-adapter` 读写 Trellis task 的 `meta.onion`，但不修改 Trellis 源码、`.trellis/scripts/**` 或 `.trellis/.runtime/**`。
 - 不修改试点目录外的既有插件。
 - Tier 2+ 进入 onion 完整 SDD 路径；不能把其他插件作为执行依赖。

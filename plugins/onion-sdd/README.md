@@ -18,11 +18,11 @@ plugins/onion-sdd/
 ├── .cursor-plugin/plugin.json
 ├── DESIGN-SUPPLEMENT.md
 ├── commands/
-│   ├── onion-hotfix.md
-│   ├── onion-tweak.md
-│   ├── onion-plan.md
-│   ├── onion-continue.md
-│   └── onion-finish.md
+│   ├── onsf-fix.md
+│   ├── onsf-tweak.md
+│   ├── onsf-plan.md
+│   ├── onsf-continue.md
+│   └── onsf-finish.md
 ├── rules/
 │   └── onion-sdd.mdc
 ├── skills/
@@ -42,11 +42,11 @@ plugins/onion-sdd/
 
 | 命令 | 用途 | 主要技能 |
 |------|------|----------|
-| `/onion-hotfix` | Tier 0+/0++ : 小修复/低风险配置调整/紧急故障 | `tier-triage` → `mini-change` |
-| `/onion-tweak` | Tier 1 : 单点轻量体验或行为调整 | `tier-triage` → `light-change` |
-| `/onion-plan` | 判断变更层级并进入合适流程（主入口） | `tier-triage`，Tier 2+ 进入 `full-change` |
-| `/onion-continue` | 从 Trellis active task、`.onion-sdd/current.json` 或 `openspec/changes/**` 恢复上下文 | `trellis-adapter` + OpenSpec 产物 + 对应 skill |
-| `/onion-finish` | 检查验证证据、任务完成度与归档条件 | `mini-change` / `light-change` / `verify-change` |
+| `/onsf-fix` | Tier 0+/0++ : 小修复/低风险配置调整/紧急故障 | `tier-triage` → `mini-change` |
+| `/onsf-tweak` | Tier 1 : 单点轻量体验或行为调整 | `tier-triage` → `light-change` |
+| `/onsf-plan` | 判断变更层级并进入合适流程（主入口） | `tier-triage`，Tier 2+ 进入 `full-change` |
+| `/onsf-continue` | 从 Trellis active task、`.onion-sdd/current.json` 或 `openspec/changes/**` 恢复上下文 | `trellis-adapter` + OpenSpec 产物 + 对应 skill |
+| `/onsf-finish` | 检查验证证据、任务完成度与归档条件 | `mini-change` / `light-change` / `verify-change` |
 
 ## Tier 路由
 
@@ -118,7 +118,7 @@ Phase 1 的 adapter 采用 onion 插件内 skill + 文档协议，不改造 Trel
 - 不复制 OpenSpec 正文到 `.trellis/tasks/**/prd.md`、`task.json` 或 journal。
 - 如果后续发现必须改 Trellis 才能继续，先停止并向用户确认。
 
-`/onion-continue` 的恢复优先级：
+`/onsf-continue` 的恢复优先级：
 
 1. Trellis active task 的 `task.json.meta.onion.change_id`。
 2. `.onion-sdd/current.json` 的 `active_change_id`。
@@ -138,7 +138,7 @@ OpenSpec 与 Trellis 的推荐分工：
 
 ## 当前不做
 
-- 不做 `/onion-auto`；AI 自审、弱触发和自动推荐可按后续验收或独立任务推进。
+- 不做 `/onsf-auto`；AI 自审、弱触发和自动推荐可按后续验收或独立任务推进。
 - metrics 聚合、Spec Pack registry 和 marketplace 完善可继续迭代；当前 Phase 1 主流程不依赖它们才能运行。
 - 不自动执行 `openspec archive`，不自动提交 git commit。
 - 不修改试点目录外的既有插件。
@@ -173,7 +173,7 @@ OpenSpec 与 Trellis 的推荐分工：
 
 该文件由 onion-sdd 命令自动维护，不要求手动编辑。接入 Trellis 后，它仍作为轻量 fallback；Trellis task metadata 只保存引用、phase、hash 和摘要。
 
-没有活跃变更时，`active_change_id` 可为 `null` 且 `phase` 为 `idle`。`/onion-continue` 遇到 idle 状态时不恢复上一轮已完成变更，而是进入 OpenSpec fallback 或等待用户指定 change-id。
+没有活跃变更时，`active_change_id` 可为 `null` 且 `phase` 为 `idle`。`/onsf-continue` 遇到 idle 状态时不恢复上一轮已完成变更，而是进入 OpenSpec fallback 或等待用户指定 change-id。
 
 模板见 `templates/current.example.json`。
 
@@ -189,7 +189,7 @@ OpenSpec 与 Trellis 的推荐分工：
 - 涉及升级红线的未同步接口契约
 - 涉及支付/资金/权限的未验证变更
 
-带债归档要求在 `proposal.md` 增加 `## 带债项` 章节逐条列明，并为每条债创建 follow-up issue。`/onion-finish` 输出中标注债项数。
+带债归档要求在 `proposal.md` 增加 `## 带债项` 章节逐条列明，并为每条债创建 follow-up issue。`/onsf-finish` 输出中标注债项数。
 
 ## Rollback/Revert
 

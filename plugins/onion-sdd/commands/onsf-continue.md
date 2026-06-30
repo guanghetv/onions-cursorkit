@@ -1,9 +1,9 @@
 ---
-name: onion-continue
+name: onsf-continue
 description: 从已有 OpenSpec 变更产物恢复 Onion SDD 上下文并继续执行。
 ---
 
-# /onion-continue
+# /onsf-continue
 
 用于继续已有 `openspec/changes/<change-id>/`。当前先尝试使用 Trellis active task 的 `task.json.meta.onion` 恢复上下文；Trellis metadata 缺失或不可信时回退到 `.onion-sdd/current.json`，最后再从 OpenSpec 产物和用户意图推断。
 
@@ -21,14 +21,14 @@ description: 从已有 OpenSpec 变更产物恢复 Onion SDD 上下文并继续�
 
 | 产物 | 推断阶段 | 下一步 |
 |------|----------|--------|
-| 无变更目录 | triage / plan | 使用 `tier-triage`，必要时 `/onion-plan` |
+| 无变更目录 | triage / plan | 使用 `tier-triage`，必要时 `/onsf-plan` |
 | 有 `proposal.md` + `specs/`，无 `tasks.md` | tasks | 使用 `openspec-change` 补 `tasks.md` |
 | 存在 `research/**`，且未形成最终设计决策 | design | 读取调研结论，回到 `full-change` 的 design 阶段 |
 | `tasks.md` 有未完成项 | implement | 继续当前任务并记录验证点 |
 | `tasks.md` 全部完成，未见外部 spec 或报告 | check | 使用 `trellis-check` 做独立质量审查；Trellis 不可用时 Agent 自审 diff |
 | check 已通过，未见外部 spec 或报告 | integrate / verify | 等待外部 spec，或使用 `verify-change` |
 | 存在 `backend-*.md` / `qa-*.md` | integrate / verify | 使用 `external-spec` 做差异分析，必要时更新任务 |
-| 存在 `e2e-report.md` | finish | 以 `## 验收结论` 判断是否进入 `/onion-finish` |
+| 存在 `e2e-report.md` | finish | 以 `## 验收结论` 判断是否进入 `/onsf-finish` |
 
 ## 完整流程恢复
 

@@ -30,7 +30,7 @@ find openspec/changes -maxdepth 2 -name proposal.md 2>/dev/null
 | 用户指定 change-id | 使用指定目录 |
 | 只有一个候选 | 自动选定 |
 | 多个候选 | 列出并请用户选择 |
-| 无候选 | 停止，提示先用 `/onion-plan` 创建完整 OpenSpec |
+| 无候选 | 停止，提示先用 `/onsf-plan` 创建完整 OpenSpec |
 
 禁止写到变更目录以外的位置。
 
