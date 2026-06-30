@@ -1,0 +1,29 @@
+{
+  "id": "onion-sdd-phase-1",
+  "name": "onion-sdd-phase-1",
+  "title": "onion-sdd Phase 1 改造",
+  "description": "",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "yangpeng",
+  "assignee": "yangpeng",
+  "createdAt": "2026-06-25",
+  "completedAt": "2026-06-25",
+  "branch": null,
+  "base_branch": "yangpeng-test",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "06-25-onion-sdd-base-capabilities",
+    "06-25-onion-sdd-trellis-adapter"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}

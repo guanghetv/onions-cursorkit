@@ -9,7 +9,7 @@ description: Spec-Driven 门禁：先澄清再落盘。新需求/飞书链接时
 
 ## 必须做的事
 
-1. **读取并遵循** `dev-workflow` 技能中**阶段 1**（设计探索）：仓库扫描 → 采集需求（**多源可组合**：飞书用 feishu-mcp、GitLab Spec 文档用 pull-spec 机制、截图/文字/本地文件统一承接；MCP 或 token 不可用时须明确提示）→ 有设计稿则 Figma MCP。
+1. **读取并遵循** `dev-workflow` 技能中**阶段 1**（设计探索）：仓库扫描 → 采集需求（**多源可组合**：飞书用 feishu-mcp，且若需求**涉及接口改动**须从飞书正文**提取 YApi 链接**并 **pull-yapi 只读**；用户直给 YApi 链接/ID 同样 pull-yapi；GitLab Spec 用 pull-spec 机制；截图/文字/本地文件统一承接；MCP 或 token 不可用时须明确提示）→ 有设计稿则 Figma MCP。
 2. 需求事实整理完毕后，**必须**调用 **`superpowers:brainstorming`**，完成澄清、方案对齐与用户确认；不得用「先出一版」代替澄清。
 3. Brainstorming 确认后，按 `dev-workflow` 执行 **步骤 1e 前端灰区讨论**（可跳过条件见该技能）；再调用 **`design-to-opsx`** 落盘 OpenSpec。
 

@@ -1,0 +1,4 @@
+{"file": "docs/add-a-plugin.md", "reason": "验收 frontmatter 与插件结构是否符合仓库规范"}
+{"file": "plugins/fe-specflow/commands/fe-sdd.md", "reason": "核对 onion 命令是否正确定义相对 fe-sdd 的改造点（去全仓扫描、Tier 分级）"}
+{"file": "plugins/fe-specflow/skills/dev-workflow/SKILL.md", "reason": "核对 Tier 2+ 引用路径是否与 fe-specflow 阶段表一致"}
+{"file": "plugins/fe-specflow/rules/dev-workflow.mdc", "reason": "核对 onion-sdd.mdc 是否与 fe-specflow rule 冲突或重复门禁"}

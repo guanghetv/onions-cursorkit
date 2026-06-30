@@ -54,6 +54,11 @@
       "name": "go-cutover-suite",
       "source": "go-cutover-suite",
       "description": "Go 路由切换工作流套件：批次调度、单路由 cutover 编排、服务端调用切换、网关追踪、前端入口定位与 APISIX 路由发现"
+    },
+    {
+      "name": "onion-sdd",
+      "source": "onion-sdd",
+      "description": "通用 Onion SDD 工作流：slash command 触发、Tier 分级、OpenSpec 正文、Trellis adapter 恢复、E2E/验收门禁"
     }
   ]
 }

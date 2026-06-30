@@ -13,7 +13,11 @@ description: >-
 
 # 拉取外部 Spec（workspace-aware）
 
-从工作区本地仓库或 GitLab 仓库拉取 spec 文件。本技能有**两种使用时机**：
+从工作区本地仓库或 GitLab 仓库拉取 spec 文件。
+
+> **结构化接口契约（YApi）**：字段级 path/method/请求/响应 schema 请走 **`pull-yapi`**（user-yapi-common-mcp），落盘 `backend-yapi-<slug>.md`。本技能负责 **GitLab / workspace / 粘贴** 的产品需求、叙事型 `backend-*.md` 与 `qa-*.md`。
+
+本技能有**两种使用时机**：
 
 | 时机 | 场景 | 行为差异 |
 |------|------|----------|
@@ -185,4 +189,4 @@ digraph pull {
 
 ## 归档注意
 
-归档时须随变更目录保留所有 `backend-*.md` 和 `qa-*.md` 文件。
+归档时须随变更目录保留所有 `backend-*.md`、`backend-yapi-*.md` 和 `qa-*.md` 文件。
