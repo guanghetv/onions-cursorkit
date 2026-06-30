@@ -21,20 +21,30 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
 | 阶段 | 产物 | 入口 |
 |------|------|------|
 | triage | Tier 判断、升级原因、验证策略 | `tier-triage` |
-| discover | 结构化需求事实、范围边界、冲突点 | 本技能 |
+| discover | 结构化需求事实、范围边界、冲突点 | `trellis-brainstorm` |
+| research | 外部资料调研，产出写入 `research/` 目录 | `trellis-research` |
 | design | 方案澄清、关键决策、API/数据/交互契约 | 本技能 |
 | openspec | `proposal.md`、`specs/**/spec.md`、`tasks.md` | `openspec-change` |
-| implement | 按 `tasks.md` 执行，遵守 TDD / 定向验证纪律 | 本技能 |
+| implement | 按 `tasks.md` 执行，遵守 TDD / 定向验证纪律（Tier 2+ 大范围改动建议派发 `trellis-implement` 子代理执行；不可用时主会话按本技能执行） | 本技能 |
+| check | 独立质量审查（代码规范、回归、spec 对齐） | `trellis-check` |
 | integrate | 后端/QA/外部 spec 接入与差异分析 | `external-spec` |
 | verify | E2E 或等价验收报告 | `verify-change` |
 | finish | 归档判断、带债检查、下一步提示 | `/onion-finish` |
 
 ## 需求接入
 
+加载 `trellis-brainstorm` 技能并按以下协议探索需求：
+- 一次只问用户一个问题，优先给选项而非让用户填空。
+- 优先通过代码、文档、API 自己查，尽量不打断用户。
+- 用户每回答一个问题，立刻回写到 `proposal.md` 对应章节。
+- 探索过程中保持需求聚焦，不提前进入技术设计。
+- 如果 Trellis 环境不可用（`trellis-brainstorm` 无法加载），回退到本技能的「澄清纪律」收敛问答模式。
+
 需求来源可以组合使用：
 
 | 来源 | 处理 |
 |------|------|
+| 飞书项目卡片 | 提取卡片信息、工作项 ID、需求文档链接和验收口径；卡片链接只作为需求与分支准备的输入，不替代需求正文 |
 | 飞书文档 | 使用可用的飞书文档能力读取；失败时说明权限、认证或工具问题，并要求用户粘贴正文或导出文件 |
 | GitLab / 远程 spec | 使用可用 API、工作区文件或用户粘贴内容读取；失败时明确提示 |
 | 截图 | 提取页面、控件、状态、标注文案和范围边界 |
@@ -42,6 +52,39 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
 | 本地文件 | 读取用户指定文件；只取与本次范围相关的章节 |
 
 多源内容冲突时，不自行裁决；列出冲突并向用户确认。
+
+## 调研
+
+当需求涉及以下情况时，调用或派发 `trellis-research`：
+
+- 使用不熟悉的第三方库、API 或框架特性。
+- 需要对比多个技术方案（如选型、性能评估）。
+- 涉及团队未使用过的模式或架构决策。
+
+调研纪律：
+
+- 产出必须写入当前 change 对应的 `research/` 目录（每个主题一个 `.md` 文件）。
+- 调研与需求探索可以交叉进行：遇到技术问题立刻调研，然后回到 discover。
+- 如果 Trellis 不可用，在主会话内自行完成调研并写入文件。
+
+## 开发分支准备
+
+`create-feature-branch` 是 Common 插件提供的通用扩展能力，不属于 onion-sdd 自有基座。正常需求进入开发实现前，如果用户提供飞书项目卡片并需要创建开发分支，可以调用该 skill；不要把分支创建逻辑复制到 onion-sdd 内。
+
+触发条件：
+
+- 用户粘贴飞书项目卡片链接或卡片信息，且包含可解析的工作项链接，例如 `/detail/<id>`。
+- 用户表达“开始开发”“创建分支”“切开发分支”或团队约定当前需求开发前必须建 feature 分支。
+- 当前工作区准备进入 `implement` 阶段。
+
+执行纪律：
+
+1. 先完成需求事实、范围和 OpenSpec/`tasks.md` 的最小落盘，避免在需求不清时提前建分支。
+2. 调用 `create-feature-branch` 前，遵守该 skill 自身门禁：工作区必须干净、默认从 `master` 更新后创建分支、需要飞书项目 MCP 和 git/network 权限。
+3. 如果 Common 插件或 `create-feature-branch` 不可用，不阻塞 onion-sdd 需求分析；明确提示用户安装 Common 插件、同步该 skill，或手动创建分支。
+4. 分支创建成功后，在当前 change 的 `proposal.md` 或最终摘要中记录飞书卡片 ID/URL、需求文档来源和 feature branch 名称。
+5. 如果当前 change 绑定 Trellis task，优先用 `task.py set-branch <task> <branch>` 写入 Trellis 标准 `branch` 字段，不把分支名重复写入 `meta.onion`。
+6. 分支创建失败时，不继续修改业务代码；说明失败原因和下一步处理方式。
 
 ## 前端设计稿与灰区
 
@@ -91,7 +134,11 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
 
 ## 任务规划纪律
 
-`tasks.md` 必须按可验证交付物拆分，并包含执行约束：
+`tasks.md` 必须按可验证交付物拆分，并包含执行约束。若当前 change 绑定 Trellis task，分工如下：
+
+- OpenSpec `tasks.md`：产品/验收维度的可验证交付物，是 `/onion-finish` 的检查对象。
+- Trellis `implement.md`：工程执行计划、验证命令、review gates 和 rollback points。
+- 两者可以互相引用，但不要复制整段正文；保持 OpenSpec 为变更正文真相源，Trellis 为任务运行时和工程计划。
 
 ```markdown
 # Tasks: <change-id>
@@ -120,12 +167,17 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
 | 跑 E2E / 浏览器验证 / 验证一下 | 使用 `verify-change` 生成或更新 `e2e-report.md` |
 | 可以收尾 / 能归档吗 | 使用 `/onion-finish` 检查归档条件 |
 
-## Commit Review 纪律
+## 质量审查
 
-- onion-sdd 不自动提交，不自动执行 `git commit`。
-- 用户明确要求提交时，先确认提交范围；如需暂存，优先暂存与本变更相关的文件，避免混入无关改动。
-- 提交前必须做一次审查：若工作区存在团队本地审查命令或 skill，优先使用；否则由 Agent 对暂存区或待提交 diff 做自审，覆盖 spec 对齐、验证结果、明显回归和无关文件。
-- 审查发现问题时，先修复并重新验证，再提交。
+实现完成后、进入 integrate 之前，调用或加载 `trellis-check` 进行独立质量审查：
+
+- 检查代码是否符合项目规范（lint、类型、约定）。
+- 检查实现是否与 `proposal.md` 和 `specs/` 对齐。
+- 检查是否存在明显回归或遗漏的边界情况。
+- 检查是否有本次变更范围外的无关改动。
+
+审查发现问题时，先修复并重新验证，再继续 integrate。
+如果 Trellis 不可用，由 Agent 对 diff 做自审，覆盖上述四个维度。
 
 ## 完成标准
 

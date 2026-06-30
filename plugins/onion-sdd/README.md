@@ -87,8 +87,19 @@ Tier 2+ 使用以下 onion 自有能力：
 - Figma/设计稿：有设计稿时优先读取与本次范围相关的节点和视觉规格；局部改版只改用户指定区域，同页其它区域若稿码不一致，先二次确认。
 - 前端灰区：在 OpenSpec 落盘前补齐与本次相关的空态、加载态、错误态、防重复提交、分页/大数据量、权限条件渲染、响应式和动效等决策；纯文案/样式微调或用户明确跳过时可以不展开。
 - workspace-native spec：外部 spec 到达时，优先使用用户提供的工作区文件；若存在 `workspace-repos.json` 与 `proposal.md` frontmatter，可按 `requirement_ref` / `modules` 定位并切片；再降级到 GitLab/远程链接或用户粘贴。
+- 飞书卡片开发分支：飞书项目卡片和需求文档可以作为需求来源；进入实现前如需要创建开发分支，可调用 Common 插件的 `create-feature-branch` 扩展能力。onion-sdd 只记录卡片 ID、需求文档来源和分支名，不复制分支创建逻辑。
 - Browser 自动化：`verify-change` 先输出 TDD/静态清单和验证依据摘要，再询问用户是否执行浏览器自动化；自动化优先使用产品内置浏览器能力，不把用户自配 DevTools MCP 作为默认执行通道。
 - Commit review：onion 不自动提交。用户明确要求提交时，先检查/暂存目标改动，再做提交前审查；有团队本地审查命令或 skill 时优先使用，否则由 Agent 对暂存区自审，通过后再提交。
+
+### 可选扩展能力
+
+`onion-sdd` 不把 Common 插件作为运行时硬依赖，但可以在团队常见开发场景中调用 Common 能力：
+
+| 扩展能力 | 来源 | 使用时机 |
+|----------|------|----------|
+| `create-feature-branch` | `plugins/common/skills/create-feature-branch` | 飞书项目卡片需求进入实现前，需要按卡片 ID、任务名称和规划迭代创建并推送 feature 分支 |
+
+若该扩展 skill 未安装或未同步，onion-sdd 应继续完成需求分析和 OpenSpec 产物，并提示用户安装 Common 插件、同步该 skill，或手动创建分支。
 
 ## 安装
 
@@ -102,7 +113,8 @@ Phase 1 的 adapter 采用 onion 插件内 skill + 文档协议，不改造 Trel
 
 - OpenSpec 是变更正文唯一真相源。
 - `.onion-sdd/current.json` 保存轻量恢复状态和 Trellis task 引用。
-- Trellis task 只保存 `task.json.meta.onion`、status、parent/children 和 journal 摘要。
+- Trellis task 保存 task runtime：status、`branch`、`base_branch`、parent/children、`task.json.meta.onion` 和 journal 摘要。
+- `task.json.meta.onion` 只保存 onion/OpenSpec 专有引用，例如 `change_id`、`change_path`、tier、phase 和 source hashes；不要重复保存 Trellis 标准字段。
 - 不复制 OpenSpec 正文到 `.trellis/tasks/**/prd.md`、`task.json` 或 journal。
 - 如果后续发现必须改 Trellis 才能继续，先停止并向用户确认。
 
@@ -113,6 +125,16 @@ Phase 1 的 adapter 采用 onion 插件内 skill + 文档协议，不改造 Trel
 3. `openspec/changes/**` 产物扫描。
 
 Tier 3 使用 Trellis 现有 parent/child task tree 承载运行时关系；child task 的 `meta.onion.parent_change_id` 指向 parent change。
+
+OpenSpec 与 Trellis 的推荐分工：
+
+| 内容 | 归属 |
+|------|------|
+| 需求正文、行为要求、验收证据 | OpenSpec `proposal.md`、`specs/**/spec.md`、`e2e-report.md` |
+| 产品/验收维度任务 | OpenSpec `tasks.md` |
+| 工程执行计划、验证命令、回滚点 | Trellis `implement.md` |
+| 分支名、PR 目标分支、parent/child task | Trellis 标准字段 |
+| change-id、change path、source hashes | `task.json.meta.onion` |
 
 ## 当前不做
 

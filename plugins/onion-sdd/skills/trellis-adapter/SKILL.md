@@ -31,6 +31,14 @@ description: 在不改造 Trellis 源码的前提下，同步 Onion SDD OpenSpec
 | `.trellis/tasks/<task>/task.json` | Trellis runtime metadata | `meta.onion`、status、parent/children |
 | `.trellis/workspace/<developer>/journal-*.md` | 会话记忆 | last action 摘要、恢复提示、验证结果摘要 |
 
+Trellis task 的标准字段可承载通用运行态：
+
+| 字段 | 使用方式 |
+|------|----------|
+| `branch` | feature 分支名；分支创建成功后优先通过 `task.py set-branch <task> <branch>` 写入 |
+| `base_branch` | PR 目标分支；如团队有固定目标分支，使用 `task.py set-base-branch` |
+| `parent` / `children` | Tier 3 parent/child 关系；使用 Trellis task tree，不在 onion-sdd 里另建依赖系统 |
+
 ## `task.json.meta.onion`
 
 建议结构：
@@ -70,6 +78,8 @@ description: 在不改造 Trellis 源码的前提下，同步 Onion SDD OpenSpec
 | `upgrade_risk` | Onion triage | 是否发现升级红线 |
 | `source_hashes` | OpenSpec files | 产物 hash，用于提示 stale，不作为正文真相源 |
 | `parent_change_id` | Tier 3 child | 可选，指向 parent change |
+
+`meta.onion` 只放 onion/OpenSpec 专有引用。不要把 `branch`、`base_branch`、任务状态或 parent/child 重复写进 `meta.onion`；这些使用 Trellis 标准字段。
 
 ## `.onion-sdd/current.json`
 

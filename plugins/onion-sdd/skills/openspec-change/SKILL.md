@@ -126,6 +126,22 @@ openspec new change "<change-id>"
       验证点: <测试命令、静态检查、手动步骤或 E2E 场景>
 ```
 
+## Trellis 同步
+
+OpenSpec 落盘后，如果当前项目存在 Trellis 且当前需求已经绑定 Trellis task，使用 `trellis-adapter` 同步轻量 metadata：
+
+- `task.json.meta.onion.change_id`
+- `task.json.meta.onion.change_path`
+- `task.json.meta.onion.tier`
+- `task.json.meta.onion.phase = "openspec"`
+- `task.json.meta.onion.last_action`
+
+同步边界：
+
+- OpenSpec 仍是正文唯一真相源；不要把 `proposal.md`、`specs/**/spec.md` 或 `tasks.md` 正文复制进 Trellis task。
+- Trellis task 的 `prd.md` / `design.md` / `implement.md` 只保存任务级摘要、工程计划和验证/回滚点。
+- 若 Trellis 不可用或当前没有 Trellis task，不阻塞 OpenSpec 落盘；继续使用 `.onion-sdd/current.json` 和 OpenSpec 产物恢复。
+
 ## 质量自检
 
 落盘后逐项检查：
