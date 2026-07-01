@@ -2,6 +2,8 @@
 
 Onion SDD 是一套**通用 Spec-Driven 工作流**，通过 Cursor slash command 把变更按复杂度分层：小改动走轻量流程，标准需求走完整 SDD 闭环。本文档说明**前置安装**与**日常使用**；技术细节见 [README.md](./README.md) 与 [DESIGN-SUPPLEMENT.md](./DESIGN-SUPPLEMENT.md)。
 
+**团队飞书知识库**：[onion-sdd 安装使用流程](https://guanghe.feishu.cn/wiki/XpetwuJJjitqYukZiPYc1atPn3c)（与本文同步，面向全员分发）
+
 ---
 
 ## 1. 它解决什么问题
