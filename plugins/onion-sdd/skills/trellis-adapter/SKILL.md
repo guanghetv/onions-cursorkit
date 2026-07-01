@@ -103,6 +103,21 @@ Trellis task 的标准字段可承载通用运行态：
 
 `trellis_task` 只是恢复提示。若 task 不存在或已归档，忽略该字段，继续使用 `active_change_id` 和 OpenSpec 产物恢复。
 
+## 实现现状（current.json / meta.onion）
+
+| 能力 | current.json | task.json.meta.onion |
+| --- | --- | --- |
+| 协议定义 | ✅ `templates/current.example.json` | ✅ 本技能字段表 |
+| `/onsf-continue` 读取 | ✅ 第二优先级 | ✅ 第一优先级（有 Trellis task 时） |
+| 自动写入运行时 | ❌ 无 CLI / Hook / 强制门禁 | ⚠️ 依赖 Agent 按本技能更新 `task.json` |
+| 缺失时 | OpenSpec 产物扫描 / 用户指定 change-id | fallback 到 current.json 或 OpenSpec |
+
+OpenSpec `openspec/changes/<change-id>/` 始终是变更正文唯一真相源。`current.json` 与 `meta.onion` 只保存引用与阶段 hint，**不得**复制 proposal/spec 正文。
+
+## 同步时机（协议目标）
+
+以下「写 current / 写 meta.onion」为**建议的同步点**；执行时由 Agent 按本技能手动更新文件，**不保证**每次 `/onsf-*` 自动落盘。
+
 没有活跃 change 时，允许使用空闲状态，避免 `/onsf-continue` 误恢复上一轮已完成变更：
 
 ```json
@@ -117,8 +132,6 @@ Trellis task 的标准字段可承载通用运行态：
   "trellis_task": null
 }
 ```
-
-## 同步时机
 
 | 时机 | 写 OpenSpec | 写 current | 写 Trellis metadata / journal |
 |------|-------------|------------|-------------------------------|

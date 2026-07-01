@@ -158,18 +158,18 @@ Tier 0++ 触发条件（全部满足）：
 }
 ```
 
-**写入时机**：每次 /onsf-* 命令执行完成后自动更新。
-**读取时机**：/onsf-continue 优先读取 `current.json`，再 fallback 扫描 OpenSpec。
-**Phase 0 成本**：读写一个 JSON 文件，无需任何依赖。
+**写入时机（协议目标）**：阶段切换时**建议**更新；当前由 Agent 按 `trellis-adapter` 手动写入，**尚无专用 CLI / Hook 保证每次 `/onsf-*` 后自动落盘**。
+**读取时机**：`/onsf-continue` 在 Trellis `meta.onion` 之后读取 `current.json`；缺失或 `idle` 时 fallback 扫描 OpenSpec。
+**Phase 0 成本**：读写一个 JSON 文件，无需任何依赖；自动写入能力待后续补齐。
 
 ### README 中增加
 
 ```markdown
 ## 运行时状态
 
-Phase 0 使用 `.onion-sdd/current.json` 维护当前变更的轻量运行时状态。
-该文件由 onion-sdd 命令自动维护，不要求手动编辑。
-当前 adapter 接入后，该文件仍作为轻量 fallback；adapter 同步 Trellis task metadata 和 journal 摘要。
+Phase 0 使用 `.onion-sdd/current.json` 作为可选轻量恢复 hint。
+该文件**当前不保证自动维护**；无该文件时 `/onsf-continue` 仍可通过 OpenSpec fallback 恢复。
+接入 Trellis 后，优先用 `meta.onion`；`current.json` 作为无 Trellis 时的 fallback hint。
 ```
 
 ---

@@ -5,7 +5,7 @@ description: 从已有 OpenSpec 变更产物恢复 Onion SDD 上下文并继续�
 
 # /onsf-continue
 
-用于继续已有 `openspec/changes/<change-id>/`。当前先尝试使用 Trellis active task 的 `task.json.meta.onion` 恢复上下文；Trellis metadata 缺失或不可信时回退到 `.onion-sdd/current.json`，最后再从 OpenSpec 产物和用户意图推断。
+用于继续已有 `openspec/changes/<change-id>/`。当前先尝试使用 Trellis active task 的 `task.json.meta.onion` 恢复上下文；Trellis metadata 缺失或不可信时回退到 `.onion-sdd/current.json`（**可选文件，当前无自动写入运行时**），最后再从 OpenSpec 产物和用户意图推断。
 
 ## 执行顺序
 

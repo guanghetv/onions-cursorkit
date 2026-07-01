@@ -155,7 +155,7 @@ OpenSpec 与 Trellis 的推荐分工：
 
 ## 运行时状态
 
-`.onion-sdd/current.json` 维护当前变更的轻量运行时状态：
+`.onion-sdd/current.json` 是**可选的**轻量恢复 hint，用于记录当前 change、tier、phase 等（协议见 `skills/trellis-adapter/SKILL.md`）：
 
 ```jsonc
 {
@@ -180,7 +180,13 @@ OpenSpec 与 Trellis 的推荐分工：
 }
 ```
 
-该文件由 onion-sdd 命令自动维护，不要求手动编辑。接入 Trellis 后，它仍作为轻量 fallback；Trellis task metadata 只保存引用、phase、hash 和摘要。
+**实现现状**：
+
+- **读取**：`/onsf-continue` 在 Trellis `meta.onion` 之后尝试读取该文件。
+- **写入**：**当前无自动运行时**（无专用 CLI / Hook / 强制门禁）。协议上 Agent 可在阶段切换时更新，但不保证每次 `/onsf-*` 都会写。
+- **无文件时**：仍可通过 OpenSpec 产物扫描或用户指定 change-id 恢复；OpenSpec 仍是变更正文唯一真相源。
+
+接入 Trellis 后，优先用 `task.json.meta.onion` 做跨会话引用；`current.json` 作为无 Trellis 或 metadata 缺失时的 fallback hint。Trellis task metadata 只保存引用、phase、hash 和摘要，不复制 OpenSpec 正文。
 
 没有活跃变更时，`active_change_id` 可为 `null` 且 `phase` 为 `idle`。`/onsf-continue` 遇到 idle 状态时不恢复上一轮已完成变更，而是进入 OpenSpec fallback 或等待用户指定 change-id。
 

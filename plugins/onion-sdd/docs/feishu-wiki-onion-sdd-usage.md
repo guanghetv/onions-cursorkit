@@ -1,10 +1,11 @@
-# Onion SDD 使用说明
+# onion-sdd 安装使用流程
 
-Onion SDD 是一套**通用 Spec-Driven 工作流**，通过 Cursor slash command 把变更按复杂度分层：小改动走轻量流程，标准需求走完整 SDD 闭环。本文档说明**前置安装**与**日常使用**；技术细节见 [README.md](./README.md) 与 [DESIGN-SUPPLEMENT.md](./DESIGN-SUPPLEMENT.md)。
+> 与 cursorkit 仓库 `plugins/onion-sdd/USAGE.md` 同步。OpenSpec 为变更正文唯一真相源。
 
-**团队飞书知识库**：[onion-sdd 安装使用流程](https://guanghe.feishu.cn/wiki/XpetwuJJjitqYukZiPYc1atPn3c)（与本文同步，面向全员分发）
 
----
+Onion SDD 是一套**通用 Spec-Driven 工作流**，通过 Cursor slash command 把变更按复杂度分层：小改动走轻量流程，标准需求走完整 SDD 闭环。本文档说明**前置安装**与**日常使用**；技术细节见 README.md（见 cursorkit 仓库 onion-sdd 插件） 与 DESIGN-SUPPLEMENT.md（见 cursorkit 仓库 onion-sdd 插件）。
+
+
 
 ## 1. 它解决什么问题
 
@@ -60,7 +61,7 @@ openspec/changes/            # 活跃变更目录
 
 | 依赖                                                             | 用途                                           | 缺失时的降级                                                                         |
 | ---------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------ |
-| **Trellis**                                                      | task 生命周期、parent/child、journal、工程计划 | 仅用 `.onion-sdd/current.json` + OpenSpec 恢复（见 [§8](#8-trellis-集成可选但推荐)） |
+| **Trellis**                                                      | task 生命周期、parent/child、journal、工程计划 | 仅用 `.onion-sdd/current.json` + OpenSpec 恢复（见 §8） |
 | **user-yapi-common-mcp** + `YAPI_BASE_URL` / `YAPI_GLOBAL_TOKEN` | 拉取 YApi 接口契约                             | 用户粘贴接口文档，Agent 按模板整理                                                   |
 | **飞书 MCP**                                                     | 读取飞书需求文档                               | 用户粘贴正文或导出文件                                                               |
 | **Figma MCP**                                                    | 读取设计稿（前端 Tier 2+）                     | 用户描述或截图                                                                       |
@@ -100,7 +101,7 @@ plugins/onion-sdd/
 
 ### 3.3 安装 OpenSpec CLI
 
-按团队或 [OpenSpec 官方文档](https://github.com/Fission-AI/OpenSpec) 安装 CLI，确保业务仓库根目录可执行：
+按团队或 OpenSpec 官方文档 安装 CLI，确保业务仓库根目录可执行：
 
 ```bash
 which openspec
@@ -341,7 +342,7 @@ python3 ./.trellis/scripts/init_developer.py <你的名字>
 
 #### 第四步：安装 onion-sdd 插件
 
-见本文 [§3 安装插件](#3-安装插件)。Trellis **不会**自动安装 onion-sdd；需在 Cursor Team Marketplace 或本地路径单独安装。
+见本文 §3 安装插件。Trellis **不会**自动安装 onion-sdd；需在 Cursor Team Marketplace 或本地路径单独安装。
 
 #### 第五步：确认 OpenSpec 就绪
 
@@ -573,8 +574,8 @@ A：粘贴接口文档即可；Agent 按 `pull-yapi` 模板整理，并在输出
 
 | 文档                                           | 内容                                       |
 | ---------------------------------------------- | ------------------------------------------ |
-| [README.md](./README.md)                       | 能力清单、目录结构、Trellis adapter 协议   |
-| [DESIGN-SUPPLEMENT.md](./DESIGN-SUPPLEMENT.md) | Tier 决策树、带债归档、Revert、Tier 3 占位 |
+| README.md（见 cursorkit 仓库 onion-sdd 插件）                       | 能力清单、目录结构、Trellis adapter 协议   |
+| DESIGN-SUPPLEMENT.md（见 cursorkit 仓库 onion-sdd 插件） | Tier 决策树、带债归档、Revert、Tier 3 占位 |
 | `skills/tier-triage/SKILL.md`                  | Tier 判定完整规则                          |
 | `skills/full-change/SKILL.md`                  | Tier 2+ 阶段编排                           |
 | `templates/current.example.json`               | 运行时状态文件示例                         |
