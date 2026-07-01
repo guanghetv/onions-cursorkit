@@ -28,6 +28,7 @@ globs:
 | `/pm-spec` | 产品 | **9稿定稿**（交互评审后；严格 AI Review；`prd.status=confirmed`） |
 | `/qa-spec` | 测试 | prd.md → 测试 spec + 可选 XMind 导出（禁止读取开发产出） |
 | `/qa-sync-xmind` | 测试 | test-spec.md ↔ XMind |
+| `/qa-execute` | 测试 | test/*.md → Case Flow 快速模式上传 |
 | `/dev-start` | 开发 | 读取需求层 → 确定目标仓库和 MODULE → 启动开发流程 |
 | `/req-status` | 任何人 | 查看 PRD 5稿/9稿 与测试 spec 状态 |
 
@@ -68,8 +69,9 @@ globs:
 4. **交互评审**：产品可手工改 `prd.md`
 5. **9稿**：`/pm-spec` → 定稿；`prd.status=confirmed`
 6. **测试 spec**：`/qa-spec`（与开发并行）
-7. **开发启动**：`/dev-start`
-8. **进度追踪**：`/req-status`
+7. **Case Flow 执行（可选）**：`/qa-execute` — 将 `test/test-spec.md` 上传 Case Flow 快速模式
+8. **开发启动**：`/dev-start`
+9. **进度追踪**：`/req-status`
 
 ## 需求定位
 
