@@ -57,7 +57,7 @@ Makefile
 
 | 技术栈 | 版本 |
 |--------|------|
-| Go | `1.19或1.23` |
+| Go | `1.25.11` |
 | gRPC | `v1.63.2` |
 | Nacos | `v1.1.4` |
 | PostgreSQL | `12` |
@@ -81,3 +81,6 @@ go install github.com/go-kratos/kratos/cmd/protoc-gen-go-http/v2@a7bae93
 go install github.com/go-kratos/kratos/cmd/protoc-gen-go-errors/v2@a7bae93
 go install github.com/envoyproxy/protoc-gen-validate@v0.9.0
 ```
+
+## 请求超时时间设定
+无论是请求内部服务还是外部服务都必须设置超时时间，无特殊需求建议设定超时时间为3s以内；
