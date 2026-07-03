@@ -203,6 +203,14 @@ openspec/changes/<change-id>/
 └── e2e-report.md                      # Tier 2+ 验收门禁
 ```
 
+实现纪律（Tier 2+，详见 `rules/onion-sdd.mdc` 与 `skills/full-change/SKILL.md`）：
+
+- **TDD 红绿循环**：能写自动化测试的任务走 失败用例 → 最小实现 → 通过；不得先实现再补测试。
+- **前端分层验证**：L1 契约/mock → L2 行为 Scenario → L3 联调/真实 API → L4 Browser 交叉验证。
+- **任务粒度**：`tasks.md` 按**可验证交付物**拆分（不是按代码行数），Tier 2 通常 3-8 个 task，每个 task 有独立可执行验证点。
+- **verify 前置门禁**：`verify-change` 先给 TDD/静态验证清单结论，再进入浏览器自动化。
+- **需求调整同步**：实现中用户**明确表达**需求/验收口径调整时，暂停实现，按 `openspec-change` 的「已落盘产物的更新协议」回写 `proposal.md` / `specs/**/spec.md` / `tasks.md` 并追加 `## 需求调整记录`，再继续；触发升级红线则回到 `tier-triage`。澄清/补充不触发。
+
 ### 6.3.1 自动化执行
 
 ```text
@@ -263,6 +271,8 @@ recover → infer → triage → materialize → spec-review
 2. `.onion-sdd/current.json` 的 `active_change_id`
 3. 扫描 `openspec/changes/**` 或请你指定 change-id
 
+需求调整恢复路径：如果中断原因是用户表达了需求或验收口径调整（新增、修改、废弃目标/范围/验收场景），`/onsf-continue` 会按 `openspec-change` 的「已落盘产物的更新协议」先同步 `proposal.md`、`specs/**/spec.md`、`tasks.md` 并追加 `## 需求调整记录`，再继续实现；触发升级红线则回到 `tier-triage` 重新分级。用户澄清已有需求、补充细节或回答提问不视为调整。
+
 ### 6.6 收尾与归档
 
 ```text
@@ -284,6 +294,7 @@ openspec archive <change-id>
 | 操作                                                       | 谁来做                                        |
 | ---------------------------------------------------------- | --------------------------------------------- |
 | 写 `proposal.md`、`specs/`、`tasks.md`、`e2e-report.md` 等 | **Agent**（按 onion skills 模板）             |
+| 需求调整时同步 OpenSpec 产物（proposal/specs/tasks + `## 需求调整记录`） | **Agent**（按 `openspec-change` 的「已落盘产物的更新协议」） |
 | `openspec new change` / `validate` / `archive`             | **你**在终端执行                              |
 | 维护 `.onion-sdd/current.json`                             | **可选**：协议上由 Agent 按 `trellis-adapter` 更新；**当前无自动写入运行时** |
 | git commit / push                                          | **你**明确要求时 Agent 可协助，且须提交前审查 |

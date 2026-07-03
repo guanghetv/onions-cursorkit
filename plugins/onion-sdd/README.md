@@ -85,7 +85,7 @@ Tier 2+ 使用以下 onion 自有能力：
 | `auto-flow` | `/onsf-auto` 的自动化编排：状态推断、风险门禁、spec 自审、diff 自审和验证收束 |
 | `pull-yapi` | 通过 YApi MCP 读取接口契约，设计期只读参考或 T1 后写入 `backend-yapi-*.md` |
 | `re-check` | YApi 契约到达后，对齐当前范围内的 mock、类型、API 层和测试 |
-| `verify-change` | 生成验证清单，执行或记录 E2E/等价验收，写入 `e2e-report.md` |
+| `verify-change` | 生成验证清单，先做 TDD/静态验证前置门禁，再执行或记录 E2E/等价验收，写入 `e2e-report.md` |
 | `trellis-adapter` | 同步 OpenSpec、`.onion-sdd/current.json` 和 Trellis task metadata |
 
 完整流程仍遵循 OpenSpec 分工：用户在终端执行 OpenSpec CLI，Agent 负责变更目录中的 Markdown 产物。
@@ -101,6 +101,17 @@ Tier 2+ 使用以下 onion 自有能力：
 - 飞书卡片开发分支：飞书项目卡片和需求文档可以作为需求来源；进入实现前如需要创建开发分支，可调用 Common 插件的 `create-feature-branch` 扩展能力。onion-sdd 只记录卡片 ID、需求文档来源和分支名，不复制分支创建逻辑。
 - Browser 自动化：`verify-change` 先输出 TDD/静态清单和验证依据摘要，再询问用户是否执行浏览器自动化；自动化优先使用产品内置浏览器能力，不把用户自配 DevTools MCP 作为默认执行通道。
 - Commit review：onion 不自动提交。用户明确要求提交时，先检查/暂存目标改动，再做提交前审查；有团队本地审查命令或 skill 时优先使用，否则由 Agent 对暂存区自审，通过后再提交。
+
+### 实现纪律与需求调整同步
+
+Tier 2+ 实现阶段补充以下纪律（权威定义见 `rules/onion-sdd.mdc` 的「实现纪律」、`skills/full-change/SKILL.md` 与 `skills/openspec-change/SKILL.md`）：
+
+- **TDD 红绿循环**：能写自动化测试的任务走 失败用例 → 最小实现 → 通过；不得先实现再补测试。
+- **前端分层验证**：L1 契约/mock → L2 行为 Scenario → L3 联调/真实 API → L4 Browser 交叉验证；逐 task 在 `tasks.md` 勾选时附对应层级验证证据。
+- **无测试工具降级**：纯配置/文档/紧急 Tier 0++ 等不适用 TDD 的场景，在 `tasks.md` 或验证报告中记录静态检查/手动验证/浏览器验证步骤，不得虚构已跑测试。
+- **任务粒度约束**：`tasks.md` 按**可验证交付物**（组件、hook、store、页面、API 模块、能力）拆分，不按代码行数拆分；Tier 2 通常 3-8 个 task，每个 task 必须有独立可执行的验证点；优先按 OpenSpec `specs/**/spec.md` 的 Requirement / Scenario 边界对齐。
+- **verify 前置门禁**：`verify-change` 先给出 TDD/静态验证清单结论（L1/L2 等逐项标注通过/失败/跳过），再进入浏览器自动化步骤；未给出前置结论前不进入浏览器步骤。
+- **需求调整同步协议**：实现过程中用户**明确表达**需求或验收口径调整（新增、修改、废弃目标/范围/验收场景）时，暂停实现，按 `openspec-change` 的「已落盘产物的更新协议」回写 `proposal.md` / `specs/**/spec.md` / `tasks.md` 并追加 `## 需求调整记录`，再继续；触发升级红线则回到 `tier-triage` 重新分级。用户澄清已有需求、补充细节或回答 Agent 提问**不触发**本协议。`full-change`、`auto-flow`、`/onsf-continue` 均引用此协议。
 
 ### 可选扩展能力
 
