@@ -13,7 +13,7 @@ Onion SDD 是一套**通用 Spec-Driven 工作流**，通过 Cursor slash comman
 | 修一个按钮也要走完整设计流程 | Tier 0+/1 只写 mini/light OpenSpec，快速实现                                     |
 | 大需求缺少统一门禁           | Tier 2+ 走完整 SDD：需求澄清 → OpenSpec → 外部 spec → E2E → 归档                 |
 | 中断后难以恢复               | `/onsf-continue` 从 Trellis task、`.onion-sdd/current.json` 或 OpenSpec 产物恢复 |
-| 流程入口不清晰               | 必须用 slash command 触发，不靠自然语言弱触发                                    |
+| 流程入口不清晰               | 手动命令显式触发；`/onsf-auto` 可无交互自动推断并执行 SDD 流程                  |
 
 **核心原则**：OpenSpec 变更目录是变更正文的唯一真相源；Agent 写 Markdown 产物，OpenSpec CLI 由用户在终端执行。
 
@@ -83,6 +83,7 @@ openspec/changes/            # 活跃变更目录
 安装成功后，在 Agent 输入框输入 `/` 应能看到：
 
 - `/onsf-plan`
+- `/onsf-auto`
 - `/onsf-fix`
 - `/onsf-tweak`
 - `/onsf-continue`
@@ -109,11 +110,12 @@ openspec validate   # 可选：确认与项目配置兼容
 
 ---
 
-## 4. 五个命令怎么用
+## 4. 六个命令怎么用
 
 | 命令                 | 什么时候用                               | 典型 Tier     |
 | -------------------- | ---------------------------------------- | ------------- |
 | **`/onsf-plan`**     | **主入口**：不确定改多大、该走哪条流程   | 自动判断 0～3 |
+| **`/onsf-auto`**     | 无交互自动执行 SDD 流程，直到实现、验证、自审完成 | 自动判断 0～3 |
 | **`/onsf-fix`**      | 已确认的小修复、低风险配置、紧急线上故障 | 0+ / 0++      |
 | **`/onsf-tweak`**    | 单页面/单组件的轻量体验或行为调整        | 1             |
 | **`/onsf-continue`** | 接着上次的 change 做                     | 任意          |
@@ -122,6 +124,7 @@ openspec validate   # 可选：确认与项目配置兼容
 **纪律**：
 
 - 用 slash command 触发，不要指望 Agent 自动猜流程。
+- 希望 Agent 自动跑完整 SDD 流程时，用 `/onsf-auto`；它会在高风险或不可逆节点停止。
 - Agent **不会**自动 `openspec archive`，也**不会**自动 git commit。
 - 归档前用 `/onsf-finish` 检查；通过后你在终端执行 `openspec archive <change-id>`。
 
@@ -198,6 +201,36 @@ openspec/changes/<change-id>/
 ├── backend-*.md / backend-yapi-*.md   # 外部接口 spec
 ├── qa-*.md                            # 测试 spec
 └── e2e-report.md                      # Tier 2+ 验收门禁
+```
+
+### 6.3.1 自动化执行
+
+```text
+/onsf-auto 用户角色从两种扩展到三种，涉及权限判断
+```
+
+Agent 会自动推断是新建、继续、验证还是收尾检查，并按 `auto-flow` 执行：
+
+```text
+recover → infer → triage → materialize → spec-review
+  → implement → diff-review → verify → close
+```
+
+自动化策略：
+
+- 低/中风险缺口：写明假设后继续。
+- 高风险缺口：停止并输出 blocker。
+- 可以自动实现和验证。
+- 不自动 commit、push、创建 PR/MR、`openspec archive` 或 Trellis archive。
+- 没有 active Trellis task 时不自动创建；已有 active task 时只同步 `meta.onion`。
+
+可显式指定子模式：
+
+```text
+/onsf-auto new
+/onsf-auto continue
+/onsf-auto verify
+/onsf-auto finish-check
 ```
 
 事件驱动（在 `/onsf-continue` 或对话中说）：
@@ -517,7 +550,7 @@ A：忽略 `meta.onion`，用 `.onion-sdd/current.json` + OpenSpec 目录恢复�
 A：不必。onion-sdd 是独立流程，不依赖其他 SDD 插件。
 
 **Q：可以用自然语言说「继续」「归档」吗？**  
-A：Phase 1 以 slash command 为准；自然语言弱触发尚未作为默认能力。
+A：手动流程仍建议使用明确 slash command。需要 Agent 自动推断 new/continue/verify/finish-check 时，使用 `/onsf-auto`；它不会自动归档或提交。
 
 **Q：mini change 的 proposal 写多细？**  
 A：至少包含：可复现的背景、根因（不只现象）、影响文件路径、别人能照着做的验证步骤。见 `skills/mini-change/SKILL.md` 质量自检。

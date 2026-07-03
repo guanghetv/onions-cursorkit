@@ -6,7 +6,7 @@ Onion SDD 是一个通用 SDD 插件，用 slash command 把变更按复杂度�
 
 ## 当前能力
 
-- 承诺 slash command 触发，不依赖自然语言弱触发。
+- 承诺 slash command 触发；手动命令保持显式入口，`/onsf-auto` 提供无交互自动化入口。
 - 通过 Tier 分级决定是否写 OpenSpec、写到什么粒度、何时升级到完整工作流。
 - 提供 Tier 0+/Tier 1 的 mini/light OpenSpec 模板与验证纪律。
 - Tier 2+ 使用 onion 自有完整 SDD skills，覆盖需求接入、完整 OpenSpec、任务规划、外部 spec 接入、E2E/验收和 finish 门禁。
@@ -23,6 +23,7 @@ plugins/onion-sdd/
 │   ├── onsf-fix.md
 │   ├── onsf-tweak.md
 │   ├── onsf-plan.md
+│   ├── onsf-auto.md
 │   ├── onsf-continue.md
 │   └── onsf-finish.md
 ├── rules/
@@ -34,6 +35,7 @@ plugins/onion-sdd/
     ├── full-change/SKILL.md
     ├── openspec-change/SKILL.md
     ├── external-spec/SKILL.md
+    ├── auto-flow/SKILL.md
     ├── pull-yapi/SKILL.md
     ├── re-check/SKILL.md
     ├── verify-change/SKILL.md
@@ -49,6 +51,7 @@ plugins/onion-sdd/
 | `/onsf-fix` | Tier 0+/0++ : 小修复/低风险配置调整/紧急故障 | `tier-triage` → `mini-change` |
 | `/onsf-tweak` | Tier 1 : 单点轻量体验或行为调整 | `tier-triage` → `light-change` |
 | `/onsf-plan` | 判断变更层级并进入合适流程（主入口） | `tier-triage`，Tier 2+ 进入 `full-change` |
+| `/onsf-auto` | 无交互自动化执行 Onion SDD 流程，到实现、验证和自审完成为止 | `auto-flow` + 对应 Tier skill |
 | `/onsf-continue` | 从 Trellis active task、`.onion-sdd/current.json` 或 `openspec/changes/**` 恢复上下文 | `trellis-adapter` + OpenSpec 产物 + 对应 skill |
 | `/onsf-finish` | 检查验证证据、任务完成度与归档条件 | `mini-change` / `light-change` / `verify-change` |
 
@@ -79,6 +82,7 @@ Tier 2+ 使用以下 onion 自有能力：
 | `full-change` | 完整流程编排：需求接入、澄清、阶段推断、任务规划和事件路由 |
 | `openspec-change` | 将设计结论写入 `proposal.md`、`specs/**/spec.md`、`tasks.md` |
 | `external-spec` | 接入后端/API/QA/外部 spec，写入 `backend-*.md`、`qa-*.md` 并做差异分析 |
+| `auto-flow` | `/onsf-auto` 的自动化编排：状态推断、风险门禁、spec 自审、diff 自审和验证收束 |
 | `pull-yapi` | 通过 YApi MCP 读取接口契约，设计期只读参考或 T1 后写入 `backend-yapi-*.md` |
 | `re-check` | YApi 契约到达后，对齐当前范围内的 mock、类型、API 层和测试 |
 | `verify-change` | 生成验证清单，执行或记录 E2E/等价验收，写入 `e2e-report.md` |
@@ -145,9 +149,19 @@ OpenSpec 与 Trellis 的推荐分工：
 | 分支名、PR 目标分支、parent/child task | Trellis 标准字段 |
 | change-id、change path、source hashes | `task.json.meta.onion` |
 
+## 自动化边界
+
+`/onsf-auto` 支持无交互执行 Onion SDD 流程：自动判断 new/continue/verify/finish-check，按 Tier 生成或更新 OpenSpec，执行实现、验证、spec 自审和 diff 自审。它采用“高风险停止，低/中风险记录假设后继续”的策略。
+
+`/onsf-auto` 不自动执行不可逆或跨系统生命周期动作：
+
+- 不自动 `git commit`、push 或创建 PR/MR。
+- 不自动 `openspec archive`。
+- 不自动创建、启动或归档 Trellis task；已有 active task 时只同步 `meta.onion`。
+- 不绕过权限、登录、关键路径不可验证、QA/YApi 冲突、接口删除/重命名等高风险 blocker。
+
 ## 当前不做
 
-- 不做 `/onsf-auto`；AI 自审、弱触发和自动推荐可按后续验收或独立任务推进。
 - metrics 聚合、Spec Pack registry 和 marketplace 完善可继续迭代；当前 Phase 1 主流程不依赖它们才能运行。
 - 不自动执行 `openspec archive`，不自动提交 git commit。
 - 不修改试点目录外的既有插件。
@@ -223,6 +237,6 @@ OpenSpec 与 Trellis 的推荐分工：
 ```bash
 find plugins/onion-sdd -type f | sort
 python3 -m json.tool plugins/onion-sdd/.cursor-plugin/plugin.json
-rg -n "full-change|openspec-change|external-spec|pull-yapi|re-check|verify-change" plugins/onion-sdd
+rg -n "auto-flow|full-change|openspec-change|external-spec|pull-yapi|re-check|verify-change" plugins/onion-sdd
 rg -n "trellis-adapter|meta.onion|trellis_task|source_hashes" plugins/onion-sdd
 ```

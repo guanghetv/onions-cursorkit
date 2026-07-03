@@ -11,7 +11,7 @@ description: 将 Onion SDD 完整流程的需求与设计结论写入 OpenSpec c
 
 - Tier 已确认为 2 或 3，或 Tier 0+/1 在实现中升级。
 - 已有需求事实、范围边界、关键决策和验收口径。
-- 用户已同意进入 OpenSpec 落盘阶段。
+- 用户已同意进入 OpenSpec 落盘阶段；若由 `/onsf-auto` 触发，则以 `auto-flow` 的 auto 判断、风险门禁和 spec 自审作为无交互落盘依据。
 
 ## 目录
 

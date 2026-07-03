@@ -36,5 +36,5 @@ description: 对变更做 Onion SDD Tier 分级，并路由到 mini、light 或 
 - 不修改试点目录外的既有插件。
 - 不把其他插件作为执行依赖。
 - 不要求先遍历整个项目；围绕用户请求、OpenSpec 产物、相关代码和验证路径按需读取。
-- `/onsf-auto` 不属于当前基座能力范围。
+- 需要无交互自动执行 SDD 流程时，使用 `/onsf-auto`；手动规划仍以本命令为主入口。
 - 不修改 Trellis 源码、`.trellis/scripts/**` 或 `.trellis/.runtime/**`；如必须改 Trellis 才能继续，先向用户确认。

@@ -324,13 +324,22 @@ openspec/changes/<child-id-2>/
 
 ---
 
-## 九、向前兼容 /onsf-auto
+## 九、/onsf-auto 自动化入口
 
 ### 问题
 
-/onsf-auto 被推迟了至少 6 次但完全没设计。Phase 0 的命令和模板完全以人工交互为前提，后续加 auto 可能返工。
+Phase 0 只做了向前兼容字段。当前第一版 `/onsf-auto` 已落到命令 + `auto-flow` skill：它不是单纯推荐器，而是无交互执行 Onion SDD 流程的自动化入口。
 
-### 最小向前兼容
+### 已落地的第一版边界
+
+- `/onsf-auto` 自动推断 `new`、`continue`、`verify`、`finish-check`，也支持显式子模式。
+- `auto-flow` 负责状态恢复、Tier/auto 判定、风险门禁、spec 自审、实现纪律、diff 自审和验证收束。
+- 策略是高风险停止，低/中风险写明假设后继续。
+- 可以自动执行到实现、验证和自审完成。
+- 不自动 `git commit`、`openspec archive`、Trellis archive、push 或 PR/MR。
+- 不自动创建、启动或归档 Trellis task；已有 active task 时只同步 `meta.onion`。
+
+### 历史向前兼容
 
 在现有模板中为 `auto_mode` 预留语义，不要求 Phase 0 实现：
 
@@ -351,7 +360,7 @@ openspec/changes/<child-id-2>/
 - auto 阻断原因: N/A                        # 后续阶段：如不能全自动，为什么不
 ```
 
-此字段 Phase 0 固定输出 `人工`，不影响现有逻辑。后续实现 /onsf-auto 时可以直接读取并替换。
+此字段 Phase 0 曾固定输出 `人工`，不影响手动流程。当前 `/onsf-auto` 使用 `全自动`、`半自动`、`停止` 语义替换该预留。
 
 ---
 
