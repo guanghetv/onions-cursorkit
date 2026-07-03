@@ -108,6 +108,7 @@ description: 编排 /onsf-auto 的无交互 Onion SDD 自动化流程，覆盖�
 - method/path/错误码变化与实现、YApi、后端 spec 或测试冲突。
 - QA spec 与 YApi/backend spec 冲突，且无法按既有优先级裁决。
 - 跨模块状态机、数据流、角色权限语义不清。
+- 用户在实现过程中**明确表达**需求或验收口径调整（新增、修改、废弃目标、范围或验收场景）时，必须停止实现并按 `openspec-change` 的「已落盘产物的更新协议」同步产物后再继续。用户澄清已有需求、补充细节或回答 Agent 提问**不触发**本条。
 - 关键路径无法验证，也没有等价证据。
 - 需要创建/启动/归档 Trellis task。
 - 需要 `git commit`、`openspec archive`、推送、创建 PR/MR 或其它不可逆操作。

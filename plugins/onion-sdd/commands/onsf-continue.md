@@ -28,6 +28,7 @@ description: 从已有 OpenSpec 变更产物恢复 Onion SDD 上下文并继续�
 | `tasks.md` 全部完成，未见外部 spec 或报告 | check | 使用 `trellis-check` 做独立质量审查；Trellis 不可用时 Agent 自审 diff |
 | check 已通过，未见外部 spec 或报告 | integrate / verify | 等待外部 spec，或使用 `verify-change` |
 | 用户表达 YApi 到了 / re-check / 对齐 YApi | integrate | 使用 `re-check` 先落盘 YApi 契约，再对齐当前范围内的 mock、类型、API 层和测试 |
+| 用户表达需求或验收口径调整 / 需求变了 / spec 改了 | design / implement | 暂停实现，按 `openspec-change` 的「已落盘产物的更新协议」同步 `proposal.md`、`specs/**/spec.md`、`tasks.md`，再继续 |
 | 用户表达只拉 YApi / 只落盘接口契约 | integrate | 使用 `pull-yapi` 写入 `backend-yapi-*.md` 并做差异分析，不修改业务代码 |
 | 存在 `backend-yapi-*.md` 且当前实现仍有 YApi placeholder | integrate | 使用 `re-check` 对齐接口契约 |
 | 存在 `backend-*.md` / `qa-*.md` | integrate / verify | 使用 `external-spec` 做差异分析，必要时更新任务 |
