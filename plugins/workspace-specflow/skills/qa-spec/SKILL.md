@@ -103,10 +103,21 @@ AI 对照 prd.md 每条验收标准：✅ 已覆盖（标注场景标题）/ ❌
 
 **注意**：项目目录中不保存 `.xmind` 文件，`test-spec.md` 是唯一真相源。
 
+### Step 10: Case Flow 上传（可选）
+
+询问是否将用例上传至 Case Flow 快速模式执行。如果确认，提示用户执行 **`/qa-execute`**（或在本步直接调用 qa-execute 技能流程）：
+
+1. 读取 `test/test-spec.md`（或当前打开的 `test/*.md`）
+2. 自动识别格式：`test-spec` 转换为 6 级嵌套列表，或 Case Flow 嵌套列表直传
+3. 上传成功后输出 Session 接力 ID，引导用户在 `https://ai-case-flow.yc345.tv/quick` 底部粘贴进入
+
+**典型顺序**：`/qa-spec` → （可选 `/qa-sync-xmind`）→ **`/qa-execute`**
+
 ## 依赖
 
 - `superpowers:brainstorming`（Step 4）
 - `mcp-xmind`（Step 9，可选）— MCP Server: `@41px/mcp-xmind`
+- Python 3.9+、`curl`（Step 10，可选）— 用于 `/qa-execute` 上传 Case Flow
 
 ## 约束
 

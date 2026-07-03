@@ -55,15 +55,16 @@
 |------|------|------|
 | 生成并确认测试 spec | `/qa-spec` | 读取 `prd.md`，brainstorming 测试策略，生成与 MODULE 对齐的 `test/test-spec.md`，做覆盖率校验后可将 `test_spec.status` 置为 `confirmed`。 |
 | Markdown ↔ XMind | `/qa-sync-xmind` | `export`：从 `test-spec.md` 生成 XMind（经 MCP 工作目录）；`import`：从 XMind 回写 `test-spec.md`（需 diff 确认）。 |
+| 上传 Case Flow 执行 | `/qa-execute` | 将 `test/*.md` 上传至 [Case Flow 快速模式](https://ai-case-flow.yc345.tv/quick)；自动识别 test-spec 格式或嵌套列表直传。 |
 | 看进度 | `/req-status` | 同上。 |
 
 **输入隔离（重要）**：`/qa-spec` **不得**读取 `openspec/changes/` 等开发产出，避免测试用例被实现细节「污染」；唯一主输入是产品 spec（`prd.md`）及原型等。
 
-**典型顺序**：确认 specs 仓库已 `git pull` → `/qa-spec` → 需要时 `/qa-sync-xmind export` → 飞书导入或 XMind 编辑 → `/qa-sync-xmind import`。
+**典型顺序**：确认 specs 仓库已 `git pull` → `/qa-spec` → 需要时 `/qa-sync-xmind export` → 飞书导入或 XMind 编辑 → `/qa-sync-xmind import` → **`/qa-execute`** 导入 Case Flow 执行。
 
 **权限与边界**：可写 **`test/test-spec.md`**（测试 spec 唯一长期落盘处）、**`metadata.yaml`** 中与测试相关的状态字段；**`.xmind` 仅作中间产物**（由 `/qa-sync-xmind` 在 **MCP 工作目录**生成或编辑），**不纳入 Git、不保留在 specs 仓库**。对代码仓库只读扫描（识别可测行为与入口，不写代码）。
 
-**依赖提示**：brainstorming；可选 **mcp-xmind**（`@41px/mcp-xmind`）用于 XMind 双向转换。
+**依赖提示**：brainstorming；可选 **mcp-xmind**（`@41px/mcp-xmind`）用于 XMind 双向转换；**`/qa-execute`** 需 Python 3.9+ 与 `curl`。
 
 ---
 
@@ -154,6 +155,7 @@
 | `/pm-spec` | 产品 | 9稿定稿 |
 | `/qa-spec` | 测试 | PRD → 测试 spec |
 | `/qa-sync-xmind` | 测试 | test-spec.md ↔ XMind |
+| `/qa-execute` | 测试 | test/*.md → Case Flow 快速模式 |
 | `/dev-start` | 开发 | 需求层资料导入当前仓库开发流程 |
 | `/req-status` | 全员 | 进度总览 |
 
@@ -200,4 +202,7 @@
 - **lark-cli**（飞书文档读取首选；建议团队统一安装）
 - **feishu-mcp**（飞书读取兜底方案；当 `lark-cli` 不可用时使用）
 - **mcp-xmind**（`@41px/mcp-xmind`，可选，用于 `/qa-sync-xmind`）
+- **Python 3.9+**、**curl**（用于 `/qa-execute` 上传 Case Flow）
 - 多根工作区中的代码仓库开发流程能力（按团队实际配置）
+
+> 若此前单独安装过 `cursor-plugin-qa-execute`，合并后请卸载该独立插件，避免 Cursor 中出现重复的 `/qa-execute` 命令。
