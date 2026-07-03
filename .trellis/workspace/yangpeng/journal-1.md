@@ -277,3 +277,36 @@ Integrated YApi contract support into onion-sdd with pull-yapi and re-check skil
 ### Next Steps
 
 - None - task complete
+
+
+## Session 9: onsf-auto 自动化 SDD 流程
+
+**Date**: 2026-07-03
+**Task**: onsf-auto 自动化 SDD 流程
+**Branch**: `yangpeng-test`
+
+### Summary
+
+新增 /onsf-auto 命令与 auto-flow skill，支持无交互 SDD 编排；高风险停止，不自动 commit/archive。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3ad5ea1` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
