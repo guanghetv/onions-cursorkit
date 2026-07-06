@@ -310,3 +310,36 @@ Integrated YApi contract support into onion-sdd with pull-yapi and re-check skil
 ### Next Steps
 
 - None - task complete
+
+
+## Session 10: 改造 onsf-finish 实现自动归档
+
+**Date**: 2026-07-06
+**Task**: 改造 onsf-finish 实现自动归档
+**Branch**: `yangpeng-test`
+
+### Summary
+
+完成 onion-sdd /onsf-finish 自动归档改造：更新 onsf-finish 命令文档、rules、skills、commands、README、USAGE 和飞书使用文档，统一由 /onsf-finish 门禁通过后自动执行 openspec archive，CLI 不可用时使用等效手工归档。任务已归档。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d90cf52` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
