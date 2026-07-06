@@ -75,7 +75,7 @@ description: 自动化执行 Onion SDD 流程，按当前状态推断 new/contin
 - 跨模块状态机、数据流或角色权限语义不清。
 - 关键路径无法验证，也没有等价证据。
 - 需要创建/启动/归档 Trellis task。
-- 需要 `git commit`、`openspec archive` 或其它不可逆历史/归档操作。
+- 需要 `git commit`、Trellis task archive 或其它不可逆历史/归档操作。`/onsf-finish` 门禁通过后自动执行 `openspec archive <change-id>`，失败时停止。
 
 ## Trellis 边界
 
@@ -86,12 +86,13 @@ description: 自动化执行 Onion SDD 流程，按当前状态推断 new/contin
 
 ## 收束边界
 
-`/onsf-auto` 可以自动执行到“实现、验证和自审完成”，但不自动：
+`/onsf-auto` 可以自动执行到“实现、验证和归档完成”，但不自动：
 
 - `git commit`
-- `openspec archive`
 - Trellis task archive
 - 推送远程分支
 - 创建 PR/MR
 
-完成时只输出可执行建议，例如继续运行 `/onsf-finish`、请求用户确认提交，或补充 blocker 所需信息。
+`/onsf-finish` 门禁通过后自动执行 `openspec archive <change-id>`；CLI 不可用时使用等效手工归档；失败时停止并报告。
+
+完成时只输出可执行建议，例如请求用户确认提交、继续 `/trellis:finish-work`，或补充 blocker 所需信息。

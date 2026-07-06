@@ -111,7 +111,7 @@ description: 编排 /onsf-auto 的无交互 Onion SDD 自动化流程，覆盖�
 - 用户在实现过程中**明确表达**需求或验收口径调整（新增、修改、废弃目标、范围或验收场景）时，必须停止实现并按 `openspec-change` 的「已落盘产物的更新协议」同步产物后再继续。用户澄清已有需求、补充细节或回答 Agent 提问**不触发**本条。
 - 关键路径无法验证，也没有等价证据。
 - 需要创建/启动/归档 Trellis task。
-- 需要 `git commit`、`openspec archive`、推送、创建 PR/MR 或其它不可逆操作。
+- 需要 `git commit`、推送、创建 PR/MR 或其它不可逆操作。`/onsf-finish` 门禁通过后自动执行 `openspec archive <change-id>`，失败时停止。
 
 ## 产物生成
 
@@ -196,11 +196,11 @@ description: 编排 /onsf-auto 的无交互 Onion SDD 自动化流程，覆盖�
 
 ## 收束边界
 
-`auto-flow` 的终点是“可供用户审阅/提交/归档判断”，不是替用户完成历史写入：
+`auto-flow` 的终点是“完成实现、验证和归档，但不替用户完成代码提交或远程同步”：
 
 - 不自动 `git commit`。
-- 不自动 `openspec archive`。
 - 不自动 Trellis archive。
 - 不自动 push / PR / MR。
+- `/onsf-finish` 门禁通过后自动执行 `openspec archive <change-id>`；CLI 不可用时使用等效手工归档；失败时停止并报告。
 
-如需提交或归档，最终输出只提示下一步命令或建议用户明确授权。
+如需提交或远程同步，最终输出只提示下一步命令或建议用户明确授权。

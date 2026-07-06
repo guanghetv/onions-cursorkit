@@ -335,8 +335,9 @@ Phase 0 只做了向前兼容字段。当前第一版 `/onsf-auto` 已落到命�
 - `/onsf-auto` 自动推断 `new`、`continue`、`verify`、`finish-check`，也支持显式子模式。
 - `auto-flow` 负责状态恢复、Tier/auto 判定、风险门禁、spec 自审、实现纪律、diff 自审和验证收束。
 - 策略是高风险停止，低/中风险写明假设后继续。
-- 可以自动执行到实现、验证和自审完成。
-- 不自动 `git commit`、`openspec archive`、Trellis archive、push 或 PR/MR。
+- 可以自动执行到实现、验证、归档和自审完成。
+- 不自动 `git commit`、Trellis archive、push 或 PR/MR。
+- `/onsf-finish` 门禁通过后自动执行 `openspec archive <change-id>`；CLI 不可用时使用等效手工归档；失败时停止。
 - 不自动创建、启动或归档 Trellis task；已有 active task 时只同步 `meta.onion`。
 
 ### 历史向前兼容

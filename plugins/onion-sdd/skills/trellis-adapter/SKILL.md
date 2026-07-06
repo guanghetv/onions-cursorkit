@@ -140,7 +140,7 @@ OpenSpec `openspec/changes/<change-id>/` 始终是变更正文唯一真相源。
 | tasks 更新 | `tasks.md` | `last_action`、`phase` | `last_action`、`last_action_at` |
 | 外部 spec 接入 | `backend-*.md` / `qa-*.md` | `phase=integrate` | `source_hashes.backend` / `source_hashes.qa` |
 | 验证完成 | `e2e-report.md` | `phase=finish` | `source_hashes.e2e`、journal 摘要 |
-| finish | 归档判断 | `metrics.finished_at` | journal 写恢复/归档摘要 |
+| finish | 自动归档：`openspec archive <change-id>` 或等效手工移动 | `active_change_id=null`、`phase=idle`、`last_action` | `last_action`、`last_action_at`、journal 写恢复/归档摘要 |
 
 ## 恢复优先级
 

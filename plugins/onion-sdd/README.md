@@ -162,19 +162,19 @@ OpenSpec 与 Trellis 的推荐分工：
 
 ## 自动化边界
 
-`/onsf-auto` 支持无交互执行 Onion SDD 流程：自动判断 new/continue/verify/finish-check，按 Tier 生成或更新 OpenSpec，执行实现、验证、spec 自审和 diff 自审。它采用“高风险停止，低/中风险记录假设后继续”的策略。
+`/onsf-auto` 支持无交互执行 Onion SDD 流程：自动判断 new/continue/verify/finish-check，按 Tier 生成或更新 OpenSpec，执行实现、验证、归档、spec 自审和 diff 自审。它采用“高风险停止，低/中风险记录假设后继续”的策略。
 
 `/onsf-auto` 不自动执行不可逆或跨系统生命周期动作：
 
 - 不自动 `git commit`、push 或创建 PR/MR。
-- 不自动 `openspec archive`。
+- `/onsf-finish` 门禁通过后自动 `openspec archive <change-id>`；CLI 不可用时使用等效手工归档；失败时停止。
 - 不自动创建、启动或归档 Trellis task；已有 active task 时只同步 `meta.onion`。
 - 不绕过权限、登录、关键路径不可验证、QA/YApi 冲突、接口删除/重命名等高风险 blocker。
 
 ## 当前不做
 
 - metrics 聚合、Spec Pack registry 和 marketplace 完善可继续迭代；当前 Phase 1 主流程不依赖它们才能运行。
-- 不自动执行 `openspec archive`，不自动提交 git commit。
+- 不自动提交 git commit。
 - 不修改试点目录外的既有插件。
 - 不修改 Trellis 源码、`.trellis/scripts/**` 或 `.trellis/.runtime/**`。
 

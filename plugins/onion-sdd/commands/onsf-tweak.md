@@ -20,4 +20,4 @@ description: 针对单点轻量体验或行为调整启动 Onion SDD light chang
 - Phase 0 只承诺 slash command 触发。
 - 不照搬其他插件的完整流程；如需升级，进入 onion 自有完整 SDD 路径。
 - 不设置全仓扫描硬约束，优先读取直接相关的规格、代码、测试和运行证据。
-- 不自动执行 `openspec archive`，不自动提交 git commit。
+- 完成并验证通过后调用 `/onsf-finish` 自动归档 OpenSpec change；不自动提交 git commit。

@@ -32,7 +32,7 @@ description: 从已有 OpenSpec 变更产物恢复 Onion SDD 上下文并继续�
 | 用户表达只拉 YApi / 只落盘接口契约 | integrate | 使用 `pull-yapi` 写入 `backend-yapi-*.md` 并做差异分析，不修改业务代码 |
 | 存在 `backend-yapi-*.md` 且当前实现仍有 YApi placeholder | integrate | 使用 `re-check` 对齐接口契约 |
 | 存在 `backend-*.md` / `qa-*.md` | integrate / verify | 使用 `external-spec` 做差异分析，必要时更新任务 |
-| 存在 `e2e-report.md` | finish | 以 `## 验收结论` 判断是否进入 `/onsf-finish` |
+| 存在 `e2e-report.md` | finish | 以 `## 验收结论` 判断是否进入 `/onsf-finish` 自动归档 |
 
 ## 完整流程恢复
 
@@ -53,4 +53,4 @@ description: 从已有 OpenSpec 变更产物恢复 Onion SDD 上下文并继续�
 - 只读取当前变更相关产物和必要代码。
 - 使用 Trellis task metadata 时只读写 `meta.onion` 和 journal 摘要，不复制 OpenSpec 正文。
 - 不修改 Trellis 源码、`.trellis/scripts/**` 或 `.trellis/.runtime/**`；如必须改 Trellis 才能继续，先向用户确认。
-- 不自动归档，不自动提交。
+- `/onsf-continue` 本身不自动归档；恢复后进入 `/onsf-finish` 时由 `/onsf-finish` 自动归档。不自动提交 git commit。

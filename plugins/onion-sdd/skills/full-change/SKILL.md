@@ -29,7 +29,7 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
 | check | 独立质量审查（代码规范、回归、spec 对齐） | `trellis-check` |
 | integrate | 后端/QA/YApi/外部 spec 接入与差异分析 | `external-spec` / `pull-yapi` / `re-check` |
 | verify | E2E 或等价验收报告 | `verify-change` |
-| finish | 归档判断、带债检查、下一步提示 | `/onsf-finish` |
+| finish | 归档判断、自动归档、带债检查 | `/onsf-finish` |
 
 ## 需求接入
 
@@ -206,7 +206,7 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
 | 测试 spec 到了 / QA 文档到了 | 使用 `external-spec` 写入 `qa-*.md` 并做差异分析 |
 | 跑 E2E / 浏览器验证 / 验证一下 | 使用 `verify-change` 生成或更新 `e2e-report.md` |
 | 需求变了 / spec 改了 / 验收口径调整 | 暂停实现，按 `openspec-change` 的「已落盘产物的更新协议」同步 proposal/specs/tasks，再继续；触发升级红线则回到 `tier-triage` |
-| 可以收尾 / 能归档吗 | 使用 `/onsf-finish` 检查归档条件 |
+| 可以收尾 / 能归档吗 | 使用 `/onsf-finish` 检查归档条件并自动归档 |
 
 ## 质量审查
 
@@ -226,7 +226,7 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
 - `tasks.md` 已更新，未完成项有明确状态。
 - 外部 spec / YApi 差异已处理或记录。
 - Tier 2+ 有 `e2e-report.md` 或用户认可的等价验收证据。
-- `/onsf-finish` 能判断是否可归档。
+- `/onsf-finish` 检查归档条件，门禁通过后自动执行 `openspec archive <change-id>`；CLI 不可用时使用等效手工归档。
 
 ## 停止条件
 

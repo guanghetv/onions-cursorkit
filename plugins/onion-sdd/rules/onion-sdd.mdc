@@ -45,7 +45,7 @@ globs:
 
 修改业务代码前应已存在当前 change 的 `tasks.md`；纯文档、配置或紧急 Tier 0++ 可按对应轻量规则处理并补记录。
 
-`/onsf-auto` 可在低/中风险缺口下记录假设并继续；遇到权限、安全、支付、资金、审计、破坏性数据行为、接口删除/重命名、QA/YApi 冲突、关键路径不可验证、需要创建/启动/归档 Trellis task、需要 commit/archive/push/PR 等高风险或不可逆动作时必须停止。
+`/onsf-auto` 可在低/中风险缺口下记录假设并继续；遇到权限、安全、支付、资金、审计、破坏性数据行为、接口删除/重命名、QA/YApi 冲突、关键路径不可验证、需要创建/启动/归档 Trellis task、需要 commit/push/PR 等高风险或不可逆动作时必须停止。`/onsf-finish` 门禁通过后自动执行 `openspec archive <change-id>`，失败时停止。
 
 ## 实现纪律
 
@@ -83,7 +83,7 @@ globs:
 
 ## 收束纪律
 
-- 不自动执行 `openspec archive`。
+- `/onsf-finish` 门禁通过或用户明确同意带债归档时，自动执行 `openspec archive <change-id>`；CLI 不可用时使用等效手工归档；失败时停止并报告。
 - 不自动提交 git commit。
 - 输出完成结论时必须说明验证结果、未覆盖风险和是否建议归档。
 - Tier 2+ 以 `e2e-report.md` 的 `## 验收结论` 或用户确认的等价验收证据作为归档判断入口。

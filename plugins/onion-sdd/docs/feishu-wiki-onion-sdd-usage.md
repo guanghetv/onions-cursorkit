@@ -30,7 +30,7 @@ Onion SDD 是一套**通用 Spec-Driven 工作流**，通过 Cursor slash comman
 | **onion-sdd 插件** | 提供 `/onsf-*` 命令与 skills | 见下方「安装插件」        |
 | **OpenSpec CLI**   | 创建/校验/归档 change        | 终端执行 `which openspec` |
 
-OpenSpec 未安装时，Agent 会按降级模式手工维护 `openspec/changes/<change-id>/` 目录结构，但**归档仍需你在终端执行** `openspec archive <change-id>`。
+OpenSpec 未安装时，Agent 会按降级模式手工维护 `openspec/changes/<change-id>/` 目录结构；归档时由 `/onsf-finish` 自动调用 `openspec archive <change-id>`，CLI 不可用时 Agent 会使用等效手工归档（将目录移动到 `openspec/changes/archive/<YYYY-MM-DD>-<change-id>/`，命名方式与 OpenSpec CLI 归档一致）。
 
 ### 2.2 项目内约定
 
@@ -126,8 +126,8 @@ openspec validate   # 可选：确认与项目配置兼容
 
 - 用 slash command 触发，不要指望 Agent 自动猜流程。
 - 希望 Agent 自动跑完整 SDD 流程时，用 `/onsf-auto`；它会在高风险或不可逆节点停止。
-- Agent **不会**自动 `openspec archive`，也**不会**自动 git commit。
-- 归档前用 `/onsf-finish` 检查；通过后你在终端执行 `openspec archive <change-id>`。
+- Agent 在 `/onsf-finish` 门禁通过后会**自动** `openspec archive <change-id>`；CLI 不可用时使用等效手工归档。
+- Agent **不会**自动 git commit。
 
 ---
 
@@ -169,7 +169,7 @@ Agent 会：
 3. 实现改动并做定向验证
 4. 把验证命令和结果写回产物
 
-你收尾：`/onsf-finish` → 终端 `openspec archive <change-id>`
+你收尾：`/onsf-finish`（自动归档 OpenSpec change）
 
 ### 6.2 轻量调整（Tier 1）
 
@@ -230,7 +230,8 @@ recover → infer → triage → materialize → spec-review
 - 低/中风险缺口：写明假设后继续。
 - 高风险缺口：停止并输出 blocker。
 - 可以自动实现和验证。
-- 不自动 commit、push、创建 PR/MR、`openspec archive` 或 Trellis archive。
+- 不自动 commit、push、创建 PR/MR 或 Trellis archive。
+- `/onsf-finish` 门禁通过后自动 `openspec archive <change-id>`；CLI 不可用时使用等效手工归档。
 - 没有 active Trellis task 时不自动创建；已有 active task 时只同步 `meta.onion`。
 
 可显式指定子模式：
@@ -280,11 +281,7 @@ recover → infer → triage → materialize → spec-review
 /onsf-finish
 ```
 
-检查任务闭合、验证证据、带债项；通过后：
-
-```bash
-openspec archive <change-id>
-```
+检查任务闭合、验证证据、带债项；通过后自动执行 `openspec archive <change-id>`（CLI 不可用时使用等效手工归档）。
 
 若绑定了 Trellis task 且工作区已提交干净，再执行 `/trellis:finish-work` 做 task 归档。
 
@@ -296,7 +293,8 @@ openspec archive <change-id>
 | ---------------------------------------------------------- | --------------------------------------------- |
 | 写 `proposal.md`、`specs/`、`tasks.md`、`e2e-report.md` 等 | **Agent**（按 onion skills 模板）             |
 | 需求调整时同步 OpenSpec 产物（proposal/specs/tasks + `## 需求调整记录`） | **Agent**（按 `openspec-change` 的「已落盘产物的更新协议」） |
-| `openspec new change` / `validate` / `archive`             | **你**在终端执行                              |
+| `openspec new change` / `validate`                       | **你**在终端执行（Agent 可手工创建目录作为降级） |
+| `openspec archive`                                       | **Agent** 在 `/onsf-finish` 门禁通过后自动执行；CLI 不可用时等效手工归档 |
 | 维护 `.onion-sdd/current.json`                             | **可选**：协议上由 Agent 按 `trellis-adapter` 更新；**当前无自动写入运行时** |
 | git commit / push                                          | **你**明确要求时 Agent 可协助，且须提交前审查 |
 
@@ -320,7 +318,7 @@ Trellis 负责**任务生命周期、工程计划、分支、journal 和跨会�
 | 跨会话恢复 change-id              | ✅ `.onion-sdd/current.json`                | ✅ `task.json.meta.onion`                   |
 | 开发者 journal、会话摘要          | —                                           | ✅ `.trellis/workspace/<name>/journal-*.md` |
 | parent/child 大任务拆分（Tier 3） | OpenSpec parent/child change                | ✅ Trellis parent/child task tree           |
-| OpenSpec 归档                     | 你执行 `openspec archive`                   | —                                           |
+| OpenSpec 归档                     | ✅ Agent 在 `/onsf-finish` 中自动执行          | —                                           |
 | Task 归档                         | —                                           | `/trellis:finish-work` 或 `task.py archive` |
 
 **硬边界**：OpenSpec 是变更正文唯一真相源。Agent **不会**把 `proposal.md` 全文复制到 Trellis `prd.md` 或 journal；`meta.onion` 只存引用（change-id、path、tier、phase、hash）。
@@ -470,7 +468,7 @@ Onion 侧同步写入 `task.json.meta.onion`（由 Agent 通过 `trellis-adapter
 | **恢复 OpenSpec change 上下文**                | **`/onsf-continue`**        | —                          |
 | 恢复 Trellis task 阶段（plan/implement/check） | —                           | **`/trellis:continue`**    |
 | 新会话加载项目上下文                           | —                           | `/trellis:start`           |
-| 检查 OpenSpec 能否归档                         | `/onsf-finish`              | —                          |
+| 检查并自动归档 OpenSpec change                 | `/onsf-finish`              | —                          |
 | 归档 Trellis task + 写 journal                 | —                           | **`/trellis:finish-work`** |
 | 实现前读规范                                   | —                           | `trellis-before-dev`       |
 | 实现后质量审查                                 | —                           | `trellis-check`            |
@@ -506,15 +504,15 @@ Onion 侧同步写入 `task.json.meta.onion`（由 Agent 通过 `trellis-adapter
 
 4. 验收
    └─ verify-change → e2e-report.md
-   └─ /onsf-finish                   # 检查 OpenSpec 归档条件
+   └─ /onsf-finish                   # 检查 OpenSpec 归档条件并自动归档
 
 5. 收尾（顺序重要）
+   └─ /onsf-finish                     # 自动归档 OpenSpec change
    └─ git commit（Phase 3.4，工作区须干净）
-   └─ openspec archive <change-id>  # 你在终端执行
-   └─ /trellis:finish-work          # Trellis task 归档 + journal
+   └─ /trellis:finish-work             # Trellis task 归档 + journal
 ```
 
-**双归档顺序**：先 OpenSpec 验收通过 → 代码 commit → `openspec archive` → `/trellis:finish-work`。OpenSpec 未通过时，**不要**执行 `/trellis:finish-work`。
+**双归档顺序**：先 OpenSpec 验收通过 → `/onsf-finish` 自动归档 → 代码 commit → `/trellis:finish-work`。OpenSpec 未通过时，**不要**执行 `/trellis:finish-work`。
 
 ### 8.7 Tier 3：父子任务
 
@@ -562,7 +560,7 @@ A：忽略 `meta.onion`，用 `.onion-sdd/current.json` + OpenSpec 目录恢复�
 A：不必。onion-sdd 是独立流程，不依赖其他 SDD 插件。
 
 **Q：可以用自然语言说「继续」「归档」吗？**  
-A：手动流程仍建议使用明确 slash command。需要 Agent 自动推断 new/continue/verify/finish-check 时，使用 `/onsf-auto`；它不会自动归档或提交。
+A：手动流程仍建议使用明确 slash command。需要 Agent 自动推断 new/continue/verify/finish-check 时，使用 `/onsf-auto`；`/onsf-finish` 门禁通过后会自动归档，但不会自动提交。
 
 **Q：mini change 的 proposal 写多细？**  
 A：至少包含：可复现的背景、根因（不只现象）、影响文件路径、别人能照着做的验证步骤。见 `skills/mini-change/SKILL.md` 质量自检。
@@ -598,10 +596,10 @@ A：粘贴接口文档即可；Agent 按 `pull-yapi` 模板整理，并在输出
                     └────────┬────────┘
                              │
                     ┌────────▼────────┐
-                    │  /onsf-finish   │  ← 验收与归档判断
+                    │  /onsf-finish   │  ← 验收与自动归档
                     └────────┬────────┘
                              │
-              你执行: openspec archive <change-id>
+              自动执行: openspec archive <change-id>
               (有 Trellis task 时) /trellis:finish-work
 ```
 
@@ -609,7 +607,7 @@ A：粘贴接口文档即可；Agent 按 `pull-yapi` 模板整理，并在输出
 
 ```text
 /onsf-plan → Trellis task 创建 → OpenSpec 落盘 → 实现 → trellis-check
-  → 外部 spec → verify-change → /onsf-finish → commit → openspec archive → /trellis:finish-work
+  → 外部 spec → verify-change → /onsf-finish（自动归档）→ commit → /trellis:finish-work
 ```
 
 ---
