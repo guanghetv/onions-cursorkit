@@ -88,7 +88,7 @@ Tier 2+ 使用以下 onion 自有能力：
 | `verify-change` | 生成验证清单，先做 TDD/静态验证前置门禁，再执行或记录 E2E/等价验收，写入 `e2e-report.md` |
 | `trellis-adapter` | 同步 OpenSpec、`.onion-sdd/current.json` 和 Trellis task metadata |
 
-完整流程仍遵循 OpenSpec 分工：用户在终端执行 OpenSpec CLI，Agent 负责变更目录中的 Markdown 产物。
+完整流程仍遵循 OpenSpec 分工：Agent 负责变更目录中的 Markdown 产物；OpenSpec CLI 的创建、校验按当前环境与用户授权处理；归档由 `/onsf-finish` 在门禁通过后自动执行。
 
 ### 前端专项能力
 

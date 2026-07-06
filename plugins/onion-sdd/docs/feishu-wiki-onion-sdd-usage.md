@@ -16,7 +16,7 @@ Onion SDD 是一套**通用 Spec-Driven 工作流**，通过 Cursor slash comman
 | 中断后难以恢复               | `/onsf-continue` 从 Trellis task、`.onion-sdd/current.json` 或 OpenSpec 产物恢复 |
 | 流程入口不清晰               | 手动命令显式触发；`/onsf-auto` 可无交互自动推断并执行 SDD 流程                  |
 
-**核心原则**：OpenSpec 变更目录是变更正文的唯一真相源；Agent 写 Markdown 产物，OpenSpec CLI 由用户在终端执行。
+**核心原则**：OpenSpec 变更目录是变更正文的唯一真相源；Agent 写 Markdown 产物；OpenSpec CLI 的创建、校验按当前环境与用户授权处理；归档由 `/onsf-finish` 在门禁通过后自动执行。
 
 ---
 
@@ -53,7 +53,7 @@ openspec/changes/            # 活跃变更目录
 | **自动写入** | **当前未实现**：无专用 CLI、Hook 或强制写入门禁；不保证每次 `/onsf-*` 后都会更新 |
 | **实际恢复** | 无该文件或内容为 `idle` 时，仍可通过 **OpenSpec 产物扫描** 或 **你指定 change-id** 继续 |
 
-**真相源始终是 OpenSpec** `openspec/changes/<change-id>/`。`current.json` 只是可选的本地 hint，有则读，无则 fallback。Agent 按 `trellis-adapter` 协议**可以**在阶段切换时手动更新该文件，但这不是当前基座的硬性保证。后续可补脚本或写入门禁。
+**真相源始终是 OpenSpec** `openspec/changes/<change-id>/`。`current.json` 只是可选的本地 hint，有则读，无则 fallback。Agent 按 `trellis-adapter` 协议**可以**在阶段切换时手动更新该文件，但这不是当前基座的硬性保证；例外是 `/onsf-finish` 成功归档后必须将 `active_change_id` 置为 `null`、`phase` 置为 `idle`。
 
 ### 2.3 可选增强
 
@@ -547,7 +547,7 @@ A：复杂任务会先**询问你**是否创建（Trellis workflow-state 约定�
 A：要接着 OpenSpec change（spec、tasks、E2E）→ `/onsf-continue`；要接着 Trellis 工程阶段（plan/implement/check/commit）→ `/trellis:continue`。Tier 2+ 常两者交替使用。
 
 **Q：`.onion-sdd/current.json` 会自动更新吗？**  
-A：**当前不会可靠自动更新**。插件内无专用脚本或 Hook 维护该文件；`/onsf-continue` 优先读 Trellis `meta.onion`，其次读 `current.json`（若存在），最后扫描 OpenSpec。没有 `current.json` 也能继续，请指定 change-id 或从活跃 change 列表选择。
+A：**除 `/onsf-finish` 成功归档必须切回 `idle` 外，当前不会可靠自动更新**。插件内无专用脚本或 Hook 维护该文件；`/onsf-continue` 优先读 Trellis `meta.onion`，其次读 `current.json`（若存在），最后扫描 OpenSpec。没有 `current.json` 也能继续，请指定 change-id 或从活跃 change 列表选择。
 
 **Q：Trellis metadata 写坏了怎么办？**  
 A：忽略 `meta.onion`，用 `.onion-sdd/current.json` + OpenSpec 目录恢复；OpenSpec 正文不会被删。

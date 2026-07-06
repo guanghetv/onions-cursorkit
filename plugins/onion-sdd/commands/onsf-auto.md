@@ -17,7 +17,7 @@ description: 自动化执行 Onion SDD 流程，按当前状态推断 new/contin
 | `/onsf-auto new` | 从当前需求输入开始新 change 或更新刚创建的 change |
 | `/onsf-auto continue` | 恢复当前 change 并继续未完成任务 |
 | `/onsf-auto verify` | 执行 spec/diff 自审、验证命令和验收报告更新 |
-| `/onsf-auto finish-check` | 检查是否 ready for `/onsf-finish`，不归档 |
+| `/onsf-auto finish-check` | 显式检查是否 ready for `/onsf-finish`，本模式只检查不归档 |
 
 显式子模式优先于自动推断。未提供子模式时，`auto-flow` 按状态机推断下一步。
 
@@ -86,7 +86,7 @@ description: 自动化执行 Onion SDD 流程，按当前状态推断 new/contin
 
 ## 收束边界
 
-`/onsf-auto` 可以自动执行到“实现、验证和归档完成”，但不自动：
+`/onsf-auto` 在未显式指定 `finish-check` 且状态已满足 `/onsf-finish` 门禁时，可以自动执行到“实现、验证和归档完成”；显式 `/onsf-auto finish-check` 只输出检查结论，不归档。它不自动：
 
 - `git commit`
 - Trellis task archive

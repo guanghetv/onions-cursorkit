@@ -5,7 +5,7 @@ description: 将 Onion SDD 完整流程的需求与设计结论写入 OpenSpec c
 
 # OpenSpec Change
 
-本技能负责把 Tier 2+ 完整流程的结论写入 `openspec/changes/<change-id>/`。Agent 写 Markdown 内容；OpenSpec CLI 的创建、校验、归档由用户在终端执行。
+本技能负责把 Tier 2+ 完整流程的结论写入 `openspec/changes/<change-id>/`。Agent 写 Markdown 内容；OpenSpec CLI 的创建、校验按当前环境与用户授权处理；归档统一由 `/onsf-finish` 在门禁通过后自动执行，CLI 不可用时使用等效手工归档。
 
 ## 前置条件
 
@@ -24,13 +24,7 @@ openspec/changes/<change-id>/
         └── spec.md
 ```
 
-如 OpenSpec CLI 可用，提示用户执行：
-
-```bash
-openspec new change "<change-id>"
-```
-
-如 CLI 不可用，可手工创建上述目录和文件，但最终仍建议用户在终端校验。
+OpenSpec change 目录由 Agent 根据当前环境创建：如 CLI 可用，执行 `openspec new change "<change-id>"`；如 CLI 不可用，手工创建上述目录和文件。校验与归档统一由 `/onsf-finish` 在门禁通过后自动执行。
 
 ## change-id
 
