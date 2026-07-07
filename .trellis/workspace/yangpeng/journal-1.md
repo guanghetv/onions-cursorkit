@@ -409,3 +409,38 @@ Integrated YApi contract support into onion-sdd with pull-yapi and re-check skil
 ### Next Steps
 
 - None - task complete
+
+
+## Session 13: onion-sdd 复盘跟进：task 绑定询问、归档产物同步、编辑范围规范
+
+**Date**: 2026-07-07
+**Task**: onion-sdd 复盘跟进：task 绑定询问、归档产物同步、编辑范围规范
+**Branch**: `yangpeng-test`
+
+### Summary
+
+复盘 07-07-onion-trellis-auto-install 后补三项：同步归档 implement/check 为整目录忽略最终方案；full-change 补齐 Trellis task 绑定询问执行指令；新增 incidental-formatting 编辑前范围规范。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `927532f` | (see git log) |
+| `cc702eb` | (see git log) |
+| `a0db35a` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
