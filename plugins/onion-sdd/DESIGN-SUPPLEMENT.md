@@ -513,6 +513,7 @@ Phase 1 的 Trellis adapter 采用 **onion 插件内 skill + 文档协议**，�
 | Onion 事件 | OpenSpec | Trellis |
 |------------|----------|---------|
 | Tier 判断完成，进入 `full-change`（Tier 2+/3）且 Trellis 不可用 | 无 | 询问用户是否安装并初始化 Trellis；同意则先探测 `trellis --version`（已装跳过 npm install），再 `trellis init` + 追加该平台的整目录 gitignore 规则，完成后转入下一行正常流程；拒绝或失败则维持不可用状态继续 |
+| Tier 判断完成，进入 `full-change`（Tier 2+/3）且 Trellis 可用但未绑定 task | 无 | 询问用户是否创建 Trellis task；同意则 `task.py create` 并通过 `trellis-adapter` 写入新 task 的 `meta.onion.change_id`；拒绝则维持未绑定状态，本次 change 生命周期内不再重复询问 |
 | Tier 判断完成 | change 策略确定 | 写 `meta.onion.tier` |
 | OpenSpec 落盘 | proposal/specs/tasks | 写 `change_id`、`change_path`、phase |
 | tasks 更新 | `tasks.md` | 更新 phase / last_action |

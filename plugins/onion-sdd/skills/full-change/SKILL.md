@@ -36,7 +36,7 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
 进入需求接入前，先做一次性检测（仅本技能被触发，即 Tier 2+/3 时执行；`/onsf-auto` 无交互场景不触发，见 `onsf-auto.md` 的「Trellis 边界」）：
 
 1. 检测 `.trellis/scripts/add_session.py` 是否存在。
-   - 存在 → Trellis 可用，跳过下述安装流程，直接进入需求接入。
+   - 存在 → Trellis 可用，跳过下述安装流程；按下方「task 绑定询问」处理后再进入需求接入。
    - 不存在 → 进入第 2 步。
 2. 向用户说明"当前项目未安装 Trellis，其 journal/spec 积累/task 能力可以增强 onion-sdd 的记忆能力"，询问是否现在安装并初始化。每次触发 Tier 2+/3 且 Trellis 仍不可用时都重新询问，不记忆此前的拒绝。
 3. 用户同意时：
@@ -64,6 +64,18 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
 - 只在文件末尾追加，追加前加注释 `# Trellis / AI 平台生成文件（本地初始化产物，无需同步到仓库）`。
 - 不删除或重写用户已有内容；不处理 `.agents/skills/`（Trellis 跨平台真相源，始终追踪）。
 - 整目录忽略不会影响已经被 git 追踪的文件（gitignore 只对未追踪文件生效）。如果该平台目录下已有被追踪的文件（例如其它插件手写并直接提交在同一目录下的文件），忽略规则加入后这些文件不会被自动取消追踪，但后续该目录下的新文件默认不会被暂存，需要时手动 `git add -f`；发现已有追踪文件时在输出中提示用户知晓这一点。
+
+### task 绑定询问
+
+Trellis 可用时，进入「需求接入」前检查本次 Tier 2+/3 变更是否已绑定 Trellis task：
+
+1. 已绑定 → 跳过本步骤，不重复询问。判断依据（任一命中即视为已绑定）：
+   - `.onion-sdd/current.json` 或对话上下文已记录 active Trellis task；
+   - 本次是 Tier 3 拆分出的子任务：`/onsf-plan` 第 6 步已用 `trellis-adapter` 创建 parent/child task 树，视为已绑定。
+2. 未绑定 → 向用户说明本次是 Tier 2+ 标准需求，询问是否现在创建 Trellis task：
+   - 用户同意 → 执行 `task.py create "<任务标题>" [--slug <目录名>]`，创建后通过 `trellis-adapter` 把 `change_id` 写入新 task 的 `meta.onion`，再继续需求接入。
+   - 用户拒绝 → 不创建，继续走 `.onion-sdd/current.json` + OpenSpec 独立运行；本次 change 生命周期内不再重复询问。
+3. 后续阶段写 `meta.onion.tier`/`change_path` 等字段（见 `DESIGN-SUPPLEMENT.md`「同步时机」表）的前提都是本步骤已产生绑定或用户已明确拒绝。
 
 ## 需求接入
 
