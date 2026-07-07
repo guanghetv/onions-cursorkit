@@ -343,3 +343,36 @@ Integrated YApi contract support into onion-sdd with pull-yapi and re-check skil
 ### Next Steps
 
 - None - task complete
+
+
+## Session 11: onion-sdd 记忆能力优先依赖 Trellis
+
+**Date**: 2026-07-07
+**Task**: onion-sdd 记忆能力优先依赖 Trellis
+**Branch**: `yangpeng-test`
+
+### Summary
+
+/onsf-finish 归档成功后按 Trellis 可用性与是否绑定 task 分三支处理：不可用保持现状；已绑定 task 走 /trellis:finish-work；未绑定但 Trellis 可用时直接调用 add_session.py 记 journal 并加载 trellis-update-spec 判断是否需要沉淀经验，修复此前高频 Tier 0+/1 变更完成后完全没有 Trellis 记忆的缺口。同步更新 onsf-auto 边界及 README/USAGE/飞书文档/DESIGN-SUPPLEMENT 能力对照表。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `89c7706` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

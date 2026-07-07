@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 10
-- **Last Active**: 2026-07-06
+- **Total Sessions**: 11
+- **Last Active**: 2026-07-07
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~345 | Active |
+| `journal-1.md` | ~378 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 11 | 2026-07-07 | onion-sdd 记忆能力优先依赖 Trellis | `89c7706` | `yangpeng-test` |
 | 10 | 2026-07-06 | 改造 onsf-finish 实现自动归档 | `d90cf52` | `yangpeng-test` |
 | 9 | 2026-07-03 | onsf-auto 自动化 SDD 流程 | `3ad5ea1` | `yangpeng-test` |
 | 8 | 2026-06-30 | Integrate YApi into Onion SDD | `409511e` | `yangpeng-test` |
