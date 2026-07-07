@@ -1,0 +1,3 @@
+{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python3 .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".claude/skills/trellis-update-spec/SKILL.md", "reason": "复查分支 C 的 spec 判断文案是否准确反映该技能的模板与边界"}
+{"file": ".trellis/scripts/add_session.py", "reason": "复查分支 C 的 add_session.py 调用参数文案是否和脚本实际接口一致"}

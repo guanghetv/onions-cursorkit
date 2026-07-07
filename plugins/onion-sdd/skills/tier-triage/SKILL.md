@@ -97,13 +97,16 @@ Q6: 是否属于单模块内的小范围行为/体验调整？特征：1 个页�
 - 升级条件: <继续过程中一旦出现什么情况就升级>
 - 紧急 fix 候选: <是/否>  # Tier 0++，先修后补
 - 活跃冲突: <无 / change-id-A（共享文件: xxx）>
-- auto 模式判定: 人工  # Phase 0 固定为人工，后续阶段扩展
+- auto 模式判定: <人工 | 半自动 | 全自动 | 停止>
+- auto 置信度: <0.0-1.0 或 N/A>
+- auto 阻断原因: <无 / 列表>
+- auto 继续假设: <无 / 列表>
 ```
 
 ## 纪律
 
-- Phase 0 只承诺 slash command 触发。
-- 不使用 `/onsf-auto`。
+- 手动入口仍通过 `/onsf-fix`、`/onsf-tweak`、`/onsf-plan`、`/onsf-continue`、`/onsf-finish` 显式触发。
+- `/onsf-auto` 使用 `auto-flow` 在无交互模式下补充 auto 判断；高风险停止，低/中风险可记录假设后继续。
 - 可通过 `trellis-adapter` 读写 Trellis task 的 `meta.onion`，但不修改 Trellis 源码、`.trellis/scripts/**` 或 `.trellis/.runtime/**`。
 - 不修改试点目录外的既有插件。
 - Tier 2+ 进入 onion 完整 SDD 路径；不能把其他插件作为执行依赖。

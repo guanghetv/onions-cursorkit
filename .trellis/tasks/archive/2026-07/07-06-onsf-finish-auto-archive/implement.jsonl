@@ -1,0 +1,7 @@
+{"file": "plugins/onion-sdd/commands/onsf-finish.md", "reason": "核心命令文档，定义自动归档流程与门禁条件"}
+{"file": "plugins/onion-sdd/rules/onion-sdd.mdc", "reason": "全局规则，包含收束纪律和 /onsf-auto 停止条件"}
+{"file": "plugins/onion-sdd/skills/auto-flow/SKILL.md", "reason": "/onsf-auto 编排，涉及自动归档边界"}
+{"file": "plugins/onion-sdd/skills/mini-change/SKILL.md", "reason": "mini change 归档行为描述"}
+{"file": "plugins/onion-sdd/skills/verify-change/SKILL.md", "reason": "归档门禁与 e2e-report.md 验收结论入口"}
+{"file": "plugins/onion-sdd/skills/full-change/SKILL.md", "reason": "Tier 2+ 完成标准与 finish 阶段描述"}
+{"file": "plugins/onion-sdd/skills/trellis-adapter/SKILL.md", "reason": "finish 时 current.json 状态同步协议"}

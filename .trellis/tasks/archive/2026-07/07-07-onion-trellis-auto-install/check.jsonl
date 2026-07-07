@@ -1,0 +1,3 @@
+{"file": ".agents/skills/trellis-meta/references/local-architecture/generated-files.md", "reason": "复查 design.md/full-change 新小节里的 gitignore 表格是否确认采用整目录忽略，且未误伤该文档中列为跨平台真相源的 `.agents/skills/`"}
+{"file": "plugins/onion-sdd/commands/onsf-auto.md", "reason": "复查新增的 auto 边界说明是否清晰、没有跟既有停止条件列表重复或冲突"}
+{"file": "plugins/onion-sdd/USAGE.md", "reason": "复查安装询问文案的命令格式是否和 8.2 节现有格式一致"}

@@ -158,18 +158,18 @@ Tier 0++ 触发条件（全部满足）：
 }
 ```
 
-**写入时机**：每次 /onsf-* 命令执行完成后自动更新。
-**读取时机**：/onsf-continue 优先读取 `current.json`，再 fallback 扫描 OpenSpec。
-**Phase 0 成本**：读写一个 JSON 文件，无需任何依赖。
+**写入时机（协议目标）**：阶段切换时**建议**更新；当前由 Agent 按 `trellis-adapter` 手动写入，**尚无专用 CLI / Hook 保证每次 `/onsf-*` 后自动落盘**。
+**读取时机**：`/onsf-continue` 在 Trellis `meta.onion` 之后读取 `current.json`；缺失或 `idle` 时 fallback 扫描 OpenSpec。
+**Phase 0 成本**：读写一个 JSON 文件，无需任何依赖；自动写入能力待后续补齐。
 
 ### README 中增加
 
 ```markdown
 ## 运行时状态
 
-Phase 0 使用 `.onion-sdd/current.json` 维护当前变更的轻量运行时状态。
-该文件由 onion-sdd 命令自动维护，不要求手动编辑。
-当前 adapter 接入后，该文件仍作为轻量 fallback；adapter 同步 Trellis task metadata 和 journal 摘要。
+Phase 0 使用 `.onion-sdd/current.json` 作为可选轻量恢复 hint。
+该文件**当前不保证自动维护**；无该文件时 `/onsf-continue` 仍可通过 OpenSpec fallback 恢复。
+接入 Trellis 后，优先用 `meta.onion`；`current.json` 作为无 Trellis 时的 fallback hint。
 ```
 
 ---
@@ -324,13 +324,23 @@ openspec/changes/<child-id-2>/
 
 ---
 
-## 九、向前兼容 /onsf-auto
+## 九、/onsf-auto 自动化入口
 
 ### 问题
 
-/onsf-auto 被推迟了至少 6 次但完全没设计。Phase 0 的命令和模板完全以人工交互为前提，后续加 auto 可能返工。
+Phase 0 只做了向前兼容字段。当前第一版 `/onsf-auto` 已落到命令 + `auto-flow` skill：它不是单纯推荐器，而是无交互执行 Onion SDD 流程的自动化入口。
 
-### 最小向前兼容
+### 已落地的第一版边界
+
+- `/onsf-auto` 自动推断 `new`、`continue`、`verify`、`finish-check`，也支持显式子模式。
+- `auto-flow` 负责状态恢复、Tier/auto 判定、风险门禁、spec 自审、实现纪律、diff 自审和验证收束。
+- 策略是高风险停止，低/中风险写明假设后继续。
+- 可以自动执行到实现、验证、归档和自审完成。
+- 不自动 `git commit`、Trellis archive、push 或 PR/MR。
+- `/onsf-finish` 门禁通过后自动执行 `openspec archive <change-id>`；CLI 不可用时使用等效手工归档；失败时停止。
+- 不自动创建、启动或归档 Trellis task；已有 active task 时只同步 `meta.onion`。
+
+### 历史向前兼容
 
 在现有模板中为 `auto_mode` 预留语义，不要求 Phase 0 实现：
 
@@ -351,7 +361,7 @@ openspec/changes/<child-id-2>/
 - auto 阻断原因: N/A                        # 后续阶段：如不能全自动，为什么不
 ```
 
-此字段 Phase 0 固定输出 `人工`，不影响现有逻辑。后续实现 /onsf-auto 时可以直接读取并替换。
+此字段 Phase 0 曾固定输出 `人工`，不影响手动流程。当前 `/onsf-auto` 使用 `全自动`、`半自动`、`停止` 语义替换该预留。
 
 ---
 
@@ -502,12 +512,15 @@ Phase 1 的 Trellis adapter 采用 **onion 插件内 skill + 文档协议**，�
 
 | Onion 事件 | OpenSpec | Trellis |
 |------------|----------|---------|
+| Tier 判断完成，进入 `full-change`（Tier 2+/3）且 Trellis 不可用 | 无 | 询问用户是否安装并初始化 Trellis；同意则先探测 `trellis --version`（已装跳过 npm install），再 `trellis init` + 追加该平台的整目录 gitignore 规则，完成后转入下一行正常流程；拒绝或失败则维持不可用状态继续 |
+| Tier 判断完成，进入 `full-change`（Tier 2+/3）且 Trellis 可用但未绑定 task | 无 | 询问用户是否创建 Trellis task；同意则 `task.py create` 并通过 `trellis-adapter` 写入新 task 的 `meta.onion.change_id`；拒绝则维持未绑定状态，本次 change 生命周期内不再重复询问 |
 | Tier 判断完成 | change 策略确定 | 写 `meta.onion.tier` |
 | OpenSpec 落盘 | proposal/specs/tasks | 写 `change_id`、`change_path`、phase |
 | tasks 更新 | `tasks.md` | 更新 phase / last_action |
 | 外部 spec 接入 | `backend-*.md` / `qa-*.md` | 更新 `source_hashes` |
 | 验证完成 | `e2e-report.md` | phase = finish / verified |
-| finish | 归档判断 | `add_session.py` 写 journal 摘要 |
+| finish（绑定 task） | 归档判断 | 提示用户执行 `/trellis:finish-work`，由其调用 `add_session.py` 写 journal 摘要 |
+| finish（未绑定 task，Trellis 可用） | 归档判断 | `/onsf-finish` 直接调用 `add_session.py` 写 journal 摘要，并加载 `trellis-update-spec` 判断是否需要写入 `.trellis/spec/**` |
 
 ### 恢复优先级
 
@@ -538,3 +551,49 @@ Tier 3 使用 Trellis parent/child task tree：
 - Adapter 协议失败时，删除或忽略 `meta.onion`，回到 `.onion-sdd/current.json` + OpenSpec fallback。
 - 不修改 Trellis 核心脚本，因此不会影响普通 Trellis task 流。
 - `source_hashes` 只用于提示 stale，不作为阻塞性真相源。
+
+---
+
+## 实现纪律与任务粒度（Phase 1 补充）
+
+Tier 2+ 实现阶段在原有 spec/verify 门禁之上，补充 TDD 与任务粒度约束，权威定义见 `rules/onion-sdd.mdc` 的「实现纪律」、`skills/full-change/SKILL.md`。
+
+### TDD 红绿循环与分层验证
+
+- 能写自动化测试的任务遵守 TDD 红绿循环：失败用例 → 最小实现 → 通过；不得先实现再补测试。
+- 前端任务优先分层验证：L1 契约/mock → L2 行为 Scenario → L3 联调/真实 API → L4 Browser 交叉验证；逐 task 在 `tasks.md` 勾选时附对应层级验证证据。
+- 无测试工具或任务性质不适合 TDD（纯配置、文档、紧急 Tier 0++）时，必须在 `tasks.md` 或验证报告中记录静态检查、手动验证或浏览器验证步骤，不得虚构已跑测试。
+- 进入 verify 阶段前，先在 `verify-change` 中给出 TDD/静态验证清单结论（L1/L2 等逐项标注通过/失败/跳过），再考虑浏览器自动化；前置结论未给出前不进入浏览器步骤。
+- 发现升级红线或范围膨胀时，暂停并回到 triage/design。
+
+### 任务粒度约束
+
+`tasks.md` 按**可验证交付物**拆分，不按代码改动行数拆分：
+
+- 一个 task 对应一个可独立验证的交付物（组件、hook、store、页面、API 模块、能力等），不是一行代码或一个文件操作。
+- Tier 2 通常 3-8 个 task；Tier 3 拆分子任务后每个子任务同理；超过 10 个 task 时先自检是否过度拆分。
+- 每个 task 必须有独立可执行的验证点，不能只是"完成 X 的一部分"或"准备 Y"。
+- ❌ 过度拆分：把"创建文件""添加 import""写第一个函数""写样式"拆成 4 个 task——应合并为 1 个"实现 X 组件"task。
+- ✅ 合理拆分：把"实现退款列表组件（含空态、加载态、错误态）"作为 1 个 task，验证点是组件渲染 + 3 种状态展示 + 对应 L2 行为测试通过。
+- 拆分时优先按 OpenSpec `specs/**/spec.md` 的 Requirement / Scenario 边界对齐，而非按文件层级或代码量。
+
+## 已落盘产物的更新协议（Phase 1 补充）
+
+实现过程中，**当用户明确表达**需求或验收口径调整（新增、修改、废弃目标、范围或验收场景）时，必须先同步 OpenSpec 产物再继续实现，不得把调整直接塞进代码导致产物与实现脱节。用户澄清已有需求、补充细节或回答提问**不视为调整**，不触发本协议。权威定义见 `skills/openspec-change/SKILL.md`。
+
+流程：
+
+1. 暂停当前实现。
+2. 与用户确认调整内容、是否仍在原范围内、是否触发升级红线（触发则回到 `tier-triage` 重新分级）。
+3. 按调整影响回写产物：
+   - 影响目标或范围 → 更新 `proposal.md` 的「目标」「变更」「不做范围」「验收」。
+   - 影响可观察行为 → 更新 `specs/**/spec.md` 的 Requirement / Scenario（新增用 `ADDED`，修改用 `MODIFIED`，废弃用 `REMOVED`）。
+   - 影响交付物或验证点 → 更新 `tasks.md`；已完成任务若被调整覆盖，须标记并补回退说明，不得静默删勾。
+4. 在 `proposal.md` 追加 `## 需求调整记录` 小节，逐条记录调整时间、内容、原因，保留可追溯性。
+5. 同步完成后再继续或重新进入实现阶段。
+
+引用关系：本协议是 onion-sdd 中"需求调整 → spec 同步"的权威流程，`full-change`、`auto-flow`、`/onsf-continue` 均引用此处。
+
+### auto-flow 的停止门禁
+
+`auto-flow` 的"必须停止"门禁新增一条：用户在实现过程中**明确表达**需求或验收口径调整时，必须停止实现并按上述协议同步产物后再继续。澄清已有需求、补充细节或回答 Agent 提问**不触发**本条。

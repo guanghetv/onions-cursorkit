@@ -21,4 +21,4 @@ description: 针对已确认、低风险的小修复启动 Onion SDD mini change
 - Phase 0 只承诺 slash command 触发。
 - 不做完整 brainstorming，不默认进入 onion 完整 SDD 路径。
 - 不要求全仓上下文，按需读取即可。
-- 不自动执行 `openspec archive`，不自动提交 git commit。
+- 完成并验证通过后调用 `/onsf-finish` 自动归档 OpenSpec change；不自动提交 git commit。

@@ -1,0 +1,4 @@
+{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python3 .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/scripts/add_session.py", "reason": "journal 写入的实际 CLI 参数/语义（title/commit/summary/branch/package 取值规则），落地 onsf-finish.md 分支 C 的 add_session.py 调用说明前必须核对"}
+{"file": ".claude/skills/trellis-update-spec/SKILL.md", "reason": "spec 积累判断依据的技能协议（模板、判断流程、Code-Spec vs Guide 区分），落地 onsf-finish.md 分支 C 的 spec 判断步骤前必须核对"}
+{"file": ".agents/skills/trellis-finish-work/SKILL.md", "reason": "对照分支 B 现状（/trellis:finish-work 的 journal/task 归档职责），确保新文案不改变、不重复这部分行为"}

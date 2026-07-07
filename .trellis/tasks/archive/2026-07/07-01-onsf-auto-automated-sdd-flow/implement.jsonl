@@ -1,0 +1,4 @@
+{"file":"plugins/onion-sdd/README.md","reason":"Onion SDD command map, capability list, and automation boundary documentation"}
+{"file":"plugins/onion-sdd/DESIGN-SUPPLEMENT.md","reason":"Historical /onsf-auto forward-compatibility notes and phase design context"}
+{"file":"plugins/onion-sdd/skills/tier-triage/SKILL.md","reason":"Tier classification and auto metadata output contract"}
+{"file":"plugins/onion-sdd/skills/trellis-adapter/SKILL.md","reason":"Trellis metadata sync boundary for existing active tasks"}

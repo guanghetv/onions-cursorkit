@@ -87,6 +87,6 @@ openspec/changes/<change-id>/specs/<capability>/spec.md
 | 影响范围 | "改了点东西" | "src/payment/Button.tsx L42-L48" |
 | 验证 | "测过了" | "Safari 17 点击支付 → 跳转收银台；Chrome/Firefox 回归通过" |
 
-## 归档提示
+## 归档
 
-mini change 可在任务完成、定向验证通过、无升级红线后提示用户归档。只提示，不自动执行 `openspec archive`。
+mini change 在任务完成、定向验证通过、无升级红线后，调用 `/onsf-finish` 自动归档。`/onsf-finish` 会执行门禁检查，通过后自动调用 `openspec archive <change-id>`；CLI 不可用时使用等效手工归档。

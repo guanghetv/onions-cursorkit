@@ -5,13 +5,13 @@ description: 将 Onion SDD 完整流程的需求与设计结论写入 OpenSpec c
 
 # OpenSpec Change
 
-本技能负责把 Tier 2+ 完整流程的结论写入 `openspec/changes/<change-id>/`。Agent 写 Markdown 内容；OpenSpec CLI 的创建、校验、归档由用户在终端执行。
+本技能负责把 Tier 2+ 完整流程的结论写入 `openspec/changes/<change-id>/`。Agent 写 Markdown 内容；OpenSpec CLI 的创建、校验按当前环境与用户授权处理；归档统一由 `/onsf-finish` 在门禁通过后自动执行，CLI 不可用时使用等效手工归档。
 
 ## 前置条件
 
 - Tier 已确认为 2 或 3，或 Tier 0+/1 在实现中升级。
 - 已有需求事实、范围边界、关键决策和验收口径。
-- 用户已同意进入 OpenSpec 落盘阶段。
+- 用户已同意进入 OpenSpec 落盘阶段；若由 `/onsf-auto` 触发，则以 `auto-flow` 的 auto 判断、风险门禁和 spec 自审作为无交互落盘依据。
 
 ## 目录
 
@@ -24,13 +24,7 @@ openspec/changes/<change-id>/
         └── spec.md
 ```
 
-如 OpenSpec CLI 可用，提示用户执行：
-
-```bash
-openspec new change "<change-id>"
-```
-
-如 CLI 不可用，可手工创建上述目录和文件，但最终仍建议用户在终端校验。
+OpenSpec change 目录由 Agent 根据当前环境创建：如 CLI 可用，执行 `openspec new change "<change-id>"`；如 CLI 不可用，手工创建上述目录和文件。校验与归档统一由 `/onsf-finish` 在门禁通过后自动执行。
 
 ## change-id
 
@@ -125,6 +119,21 @@ openspec new change "<change-id>"
 - [ ] 1.1 <任务描述>
       验证点: <测试命令、静态检查、手动步骤或 E2E 场景>
 ```
+
+## 已落盘产物的更新协议
+
+实现过程中，**当用户明确表达**需求或验收口径调整（新增、修改、废弃目标、范围或验收场景）时，必须先同步 OpenSpec 产物再继续实现，不得把调整直接塞进代码导致产物与实现脱节。用户澄清已有需求、补充细节或回答提问不视为调整，不触发本协议。
+
+1. 暂停当前实现。
+2. 与用户确认调整内容、是否仍在原范围内、是否触发升级红线（触发则回到 `tier-triage` 重新分级）。
+3. 按调整影响回写产物：
+   - 影响目标或范围 → 更新 `proposal.md` 的「目标」「变更」「不做范围」「验收」。
+   - 影响可观察行为 → 更新 `specs/**/spec.md` 的 Requirement / Scenario（新增用 `ADDED`，修改用 `MODIFIED`，废弃用 `REMOVED`）。
+   - 影响交付物或验证点 → 更新 `tasks.md`；已完成任务若被调整覆盖，须标记并补回退说明，不得静默删勾。
+4. 在 `proposal.md` 追加 `## 需求调整记录` 小节，逐条记录调整时间、内容、原因，保留可追溯性。
+5. 同步完成后再继续或重新进入实现阶段。
+
+本协议是 onion-sdd 中"需求调整 → spec 同步"的权威流程；`full-change`、`auto-flow`、`/onsf-continue` 均引用此处。
 
 ## Trellis 同步
 

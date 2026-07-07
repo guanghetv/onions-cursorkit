@@ -1,0 +1,6 @@
+{"file": "plugins/onion-sdd/commands/onsf-finish.md", "reason": "验证自动归档流程、门禁、降级路径、状态同步描述正确"}
+{"file": "plugins/onion-sdd/rules/onion-sdd.mdc", "reason": "验证不再声明不自动执行 openspec archive"}
+{"file": "plugins/onion-sdd/README.md", "reason": "验证自动化边界与当前不做描述一致"}
+{"file": "plugins/onion-sdd/DESIGN-SUPPLEMENT.md", "reason": "验证流程边界描述一致"}
+{"file": "plugins/onion-sdd/USAGE.md", "reason": "验证使用说明与自动归档行为一致"}
+{"file": "plugins/onion-sdd/docs/feishu-wiki-onion-sdd-usage.md", "reason": "验证飞书知识库文档与自动归档行为一致"}

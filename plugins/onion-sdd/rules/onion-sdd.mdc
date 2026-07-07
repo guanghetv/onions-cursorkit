@@ -18,9 +18,10 @@ globs:
 
 ## 触发边界
 
-- 当前承诺 slash command 触发：`/onsf-fix`、`/onsf-tweak`、`/onsf-plan`、`/onsf-continue`、`/onsf-finish`。
-- `/onsf-auto` 不属于当前基座能力；metrics、marketplace、Spec Pack 等能力可按后续验收或独立任务推进。
+- 当前承诺 slash command 触发：`/onsf-fix`、`/onsf-tweak`、`/onsf-plan`、`/onsf-continue`、`/onsf-finish`、`/onsf-auto`。
+- `/onsf-auto` 是无交互自动化入口，使用 `skills/auto-flow/SKILL.md` 编排现有 Onion SDD skills；metrics、Spec Pack 等能力仍可按后续验收或独立任务推进。
 - OpenSpec 是变更正文唯一真相源；Trellis adapter 只保存状态、引用、hash、parent/child 关系和 journal 摘要。
+- `.onion-sdd/current.json` 是可选恢复 hint；**当前无专用 CLI / Hook 自动维护**，缺失时 `/onsf-continue` 仍可通过 OpenSpec 产物或用户指定 change-id 恢复。
 
 ## 分级写入
 
@@ -28,6 +29,7 @@ globs:
 - Tier 0+：使用 `skills/mini-change/SKILL.md`。
 - Tier 1：使用 `skills/light-change/SKILL.md`。
 - Tier 2+：使用 `skills/full-change/SKILL.md`、`skills/openspec-change/SKILL.md`、`skills/external-spec/SKILL.md`、`skills/pull-yapi/SKILL.md`、`skills/re-check/SKILL.md`、`skills/verify-change/SKILL.md`。
+- 自动化流程：使用 `skills/auto-flow/SKILL.md`，再按 Tier 路由到对应 skill。
 - 需要跨会话恢复或同步 Trellis task metadata 时，使用 `skills/trellis-adapter/SKILL.md`。
 - 飞书项目卡片进入实现前如需创建开发分支，可调用 Common 插件的 `create-feature-branch` 扩展能力；该能力不是 onion-sdd 硬依赖，缺失时提示用户同步 Common skill 或手动建分支。
 - 创建 feature branch 成功且存在 Trellis task 时，用 Trellis 标准 `branch` 字段记录分支；不要把分支名重复写入 `meta.onion`。
@@ -39,8 +41,21 @@ globs:
 - 已完成 Tier 判断。
 - Tier 0+/1 已按 mini/light 模板确认目标、范围和验证。
 - Tier 2+ 已完成需求澄清、范围边界、验收口径和用户落盘确认。
+- `/onsf-auto` 无交互模式下，以 `auto-flow` 的 auto 判断、风险门禁、继续假设和 spec 自审替代中途用户确认；高风险或无法补齐的关键需求仍必须停止。
 
 修改业务代码前应已存在当前 change 的 `tasks.md`；纯文档、配置或紧急 Tier 0++ 可按对应轻量规则处理并补记录。
+
+`/onsf-auto` 可在低/中风险缺口下记录假设并继续；遇到权限、安全、支付、资金、审计、破坏性数据行为、接口删除/重命名、QA/YApi 冲突、关键路径不可验证、需要创建/启动/归档 Trellis task、需要 commit/push/PR 等高风险或不可逆动作时必须停止。`/onsf-finish` 门禁通过后自动执行 `openspec archive <change-id>`，失败时停止。
+
+## 实现纪律
+
+修改业务代码时应遵守以下 TDD 与验证纪律：
+
+- 能写自动化测试的任务遵守 TDD 红绿循环：失败用例 → 最小实现 → 通过；不得先实现再补测试。
+- 前端任务优先分层验证：L1 契约/mock、L2 行为 Scenario、L3 联调/真实 API、L4 Browser 交叉验证。
+- 无测试工具或任务性质不适合 TDD（纯配置、文档、紧急 Tier 0++）时，必须在 `tasks.md` 或验证报告中明确记录静态检查、手动验证或浏览器验证步骤，不得虚构已跑测试。
+- 进入 verify 阶段前，先在 `verify-change` 中给出 TDD/静态验证清单结论，再考虑浏览器自动化。
+- 发现升级红线或范围膨胀时，暂停并回到 triage/design。
 
 ## 前端专项纪律
 
@@ -53,7 +68,7 @@ globs:
 - 不默认搜索 YApi；只有用户明确要求搜索接口，或文档仅给接口名称且用户同意搜索时，才走 YApi 搜索并让用户确认候选。
 - YApi 请求/响应字段、类型、必填、method/path 是接口契约最高依据；QA spec 是 E2E 验收最高依据；冲突必须记录并请用户或协作者裁决。
 - 飞书卡片和需求文档可以作为需求来源；创建 feature 分支前必须先确认需求范围和当前 change 产物，且遵守 `create-feature-branch` 的工作区干净、基线分支、MCP 和 git 权限门禁。
-- Browser 验证前必须先给出清单摘要并获得用户确认；默认使用产品内置浏览器能力，不默认改用用户自配 DevTools MCP。
+- Browser 验证前必须先给出清单摘要并获得用户确认；`/onsf-auto` 中若无法取得确认，默认记录 blocker 或替代验证，不调用浏览器自动化，除非用户输入已明确要求自动浏览器验证且环境可用。默认使用产品内置浏览器能力，不默认改用用户自配 DevTools MCP。
 - 用户要求提交时，提交前必须完成审查；有团队本地审查命令或 skill 时优先使用，否则 Agent 自审待提交 diff。
 - 以上补充不要求新增 brainstorming 硬门禁。
 
@@ -68,7 +83,7 @@ globs:
 
 ## 收束纪律
 
-- 不自动执行 `openspec archive`。
+- `/onsf-finish` 门禁通过或用户明确同意带债归档时，自动执行 `openspec archive <change-id>`；CLI 不可用时使用等效手工归档；失败时停止并报告。
 - 不自动提交 git commit。
 - 输出完成结论时必须说明验证结果、未覆盖风险和是否建议归档。
 - Tier 2+ 以 `e2e-report.md` 的 `## 验收结论` 或用户确认的等价验收证据作为归档判断入口。

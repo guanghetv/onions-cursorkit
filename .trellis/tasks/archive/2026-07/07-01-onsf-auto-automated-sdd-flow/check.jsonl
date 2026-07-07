@@ -1,0 +1,4 @@
+{"file":"plugins/onion-sdd/README.md","reason":"Verify command map and automation boundary remain consistent"}
+{"file":"plugins/onion-sdd/USAGE.md","reason":"Verify user-facing usage includes /onsf-auto and no-auto commit/archive boundaries"}
+{"file":"plugins/onion-sdd/rules/onion-sdd.mdc","reason":"Verify guardrails allow /onsf-auto while preserving high-risk stops"}
+{"file":"plugins/onion-sdd/skills/verify-change/SKILL.md","reason":"Verify browser automation and validation behavior remains compatible with no-interaction auto mode"}

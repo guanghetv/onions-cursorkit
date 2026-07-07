@@ -23,6 +23,7 @@ These guides help you **ask the right questions before coding**.
 |-------|---------|-------------|
 | [Code Reuse Thinking Guide](./code-reuse-thinking-guide.md) | Identify patterns and reduce duplication | When you notice repeated patterns |
 | [Cross-Layer Thinking Guide](./cross-layer-thinking-guide.md) | Think through data flow across layers | Features spanning multiple layers |
+| [Incidental Formatting Guide](./incidental-formatting-guide.md) | Decide whether to keep or revert formatting an edit tool applied outside your intended diff | An edit's diff includes hunks you didn't intend to touch |
 
 ---
 
@@ -50,6 +51,14 @@ These guides help you **ask the right questions before coding**.
 - [ ] Multiple branches update the same derived state from `kind` / `action`
 
 → Read [Code Reuse Thinking Guide](./code-reuse-thinking-guide.md)
+
+### When Your Edit's Diff Has Unintended Hunks
+
+- [ ] `git diff` shows changes in sections you didn't touch (e.g. table realignment, blank-line normalization)
+- [ ] You're about to spend a cycle reverting an entire file because of this
+- [ ] You're unsure whether an incidental hunk is safe to keep
+
+→ Read [Incidental Formatting Guide](./incidental-formatting-guide.md)
 
 ### When Verifying AI Cross-Review Results
 
