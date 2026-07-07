@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 11
+- **Total Sessions**: 12
 - **Last Active**: 2026-07-07
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~378 | Active |
+| `journal-1.md` | ~411 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 12 | 2026-07-07 | onion-sdd 检测缺失 Trellis 时交互式安装初始化 | `ae27c46` | `yangpeng-test` |
 | 11 | 2026-07-07 | onion-sdd 记忆能力优先依赖 Trellis | `89c7706` | `yangpeng-test` |
 | 10 | 2026-07-06 | 改造 onsf-finish 实现自动归档 | `d90cf52` | `yangpeng-test` |
 | 9 | 2026-07-03 | onsf-auto 自动化 SDD 流程 | `3ad5ea1` | `yangpeng-test` |

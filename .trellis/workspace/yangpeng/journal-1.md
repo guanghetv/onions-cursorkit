@@ -376,3 +376,36 @@ Integrated YApi contract support into onion-sdd with pull-yapi and re-check skil
 ### Next Steps
 
 - None - task complete
+
+
+## Session 12: onion-sdd 检测缺失 Trellis 时交互式安装初始化
+
+**Date**: 2026-07-07
+**Task**: onion-sdd 检测缺失 Trellis 时交互式安装初始化
+**Branch**: `yangpeng-test`
+
+### Summary
+
+为 onion-sdd 的 Tier 2+/3 入口（full-change）新增 Trellis 缺失检测与交互式安装/初始化流程：先探测 CLI 再决定是否 npm install，默认只装当前平台，成功后把该平台整目录追加到 .gitignore（讨论后从精确子路径方案简化为整目录忽略，因 gitignore 不会取消已追踪文件的追踪）；/onsf-auto 明确不受影响；六处文档同步。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ae27c46` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
