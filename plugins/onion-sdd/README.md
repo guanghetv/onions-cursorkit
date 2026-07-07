@@ -162,6 +162,8 @@ OpenSpec 与 Trellis 的推荐分工：
 | 开发者 journal、会话摘要 | 绑定 Trellis task → `/trellis:finish-work` 或 workflow.md Phase 3.3 写入；未绑定但 Trellis 可用 → `/onsf-finish` 归档成功后自动调用 `add_session.py` 写入 |
 | spec 经验积累（`.trellis/spec/`） | 绑定 Trellis task → workflow.md Phase 3.3（`trellis-update-spec`）写入；未绑定但 Trellis 可用 → `/onsf-finish` 归档成功后加载 `trellis-update-spec` 判断并按需写入 |
 
+Trellis 完全未安装时：Tier 2+/3（`full-change`）首次触发会主动询问是否安装并初始化，同意后先探测 `trellis --version`（CLI 已存在则跳过安装），未安装才 `npm install -g @mindfoldhq/trellis`，再 `trellis init` 并把该平台的整目录忽略规则追加到 `.gitignore`；拒绝或失败不阻塞，按现状降级路径继续。仅手动入口生效，`/onsf-auto` 不触发。
+
 ## 自动化边界
 
 `/onsf-auto` 支持无交互执行 Onion SDD 流程：自动判断 new/continue/verify/finish-check，按 Tier 生成或更新 OpenSpec，执行实现、验证、归档、spec 自审和 diff 自审。它采用“高风险停止，低/中风险记录假设后继续”的策略。

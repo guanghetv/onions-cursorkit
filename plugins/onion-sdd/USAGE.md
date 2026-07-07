@@ -399,6 +399,10 @@ which openspec
 trellis update    # 升级 bundled skills、脚本模板（不覆盖你已改过的文件）
 ```
 
+#### 自动询问安装（Tier 2+/3）
+
+以上步骤也可以不用手动跑：**Tier 2+/3 首次触发且检测到 Trellis 未安装时**，Agent 会主动询问是否现在安装并初始化。同意后先探测 `trellis --version`——CLI 已全局安装（只是本项目未 `trellis init`）则跳过安装步骤，否则先 `npm install -g @mindfoldhq/trellis`——再执行 `trellis init -u <name> --<当前平台>`，并把该平台的整目录忽略规则（如 `.cursor/`）追加到根 `.gitignore`（与本仓库现状写法一致）。拒绝或安装失败不会阻塞流程，会按现状"Trellis 不可用"路径继续。该询问只在手动入口（`/onsf-plan` 等）生效，`/onsf-auto` 无交互场景不触发。
+
 ### 8.3 前期准备清单
 
 开始 Onion SDD + Trellis 协作前，逐项确认：

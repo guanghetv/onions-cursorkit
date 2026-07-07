@@ -31,6 +31,40 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
 | verify | E2E 或等价验收报告 | `verify-change` |
 | finish | 归档判断、自动归档、带债检查 | `/onsf-finish` |
 
+## Trellis 使用检查
+
+进入需求接入前，先做一次性检测（仅本技能被触发，即 Tier 2+/3 时执行；`/onsf-auto` 无交互场景不触发，见 `onsf-auto.md` 的「Trellis 边界」）：
+
+1. 检测 `.trellis/scripts/add_session.py` 是否存在。
+   - 存在 → Trellis 可用，跳过下述安装流程，直接进入需求接入。
+   - 不存在 → 进入第 2 步。
+2. 向用户说明"当前项目未安装 Trellis，其 journal/spec 积累/task 能力可以增强 onion-sdd 的记忆能力"，询问是否现在安装并初始化。每次触发 Tier 2+/3 且 Trellis 仍不可用时都重新询问，不记忆此前的拒绝。
+3. 用户同意时：
+   a. 确认开发者标识（优先复用 git 全局 `user.name`，取不到则询问用户）。
+   b. 平台选择：默认只初始化当前 Agent 所在平台（例如当前运行在 Cursor 中就只用 `--cursor`），额外询问是否要顺带初始化其它平台（`--claude`/`--codex` 等）。
+   c. 先探测 CLI：跑 `trellis --version`。
+      - 成功（CLI 已全局安装，只是本项目未 `trellis init`）→ 跳过安装，直接执行 `trellis init -u <name> <平台 flag>`。
+      - 失败/命令不存在 → 执行 `npm install -g @mindfoldhq/trellis`（需要 `full_network` 权限）→ `trellis --version` 确认安装成功 → `trellis init -u <name> <平台 flag>`。
+   d. 安装/初始化成功后，按下方「gitignore 追加」更新根 `.gitignore`。
+   e. 完成后视为 Trellis 已可用，继续本技能后续阶段。
+4. 用户拒绝，或安装/初始化过程报错：说明失败原因（网络、权限、CLI 报错内容），不阻塞——按本技能各阶段已有的"如果 Trellis 不可用，回退到 XXX"分支继续 Tier 2+/3 流程。
+
+### gitignore 追加
+
+为**本次实际初始化的平台**追加整目录忽略：
+
+| 平台 | 追加条目 |
+|------|----------|
+| `--cursor` | `.cursor/` |
+| `--claude` | `.claude/` |
+| `--codex` | `.codex/` |
+
+规则：
+- 追加前检查 `.gitignore` 是否已有等价条目（如已存在 `.cursor/` 则跳过）。
+- 只在文件末尾追加，追加前加注释 `# Trellis / AI 平台生成文件（本地初始化产物，无需同步到仓库）`。
+- 不删除或重写用户已有内容；不处理 `.agents/skills/`（Trellis 跨平台真相源，始终追踪）。
+- 整目录忽略不会影响已经被 git 追踪的文件（gitignore 只对未追踪文件生效）。如果该平台目录下已有被追踪的文件（例如其它插件手写并直接提交在同一目录下的文件），忽略规则加入后这些文件不会被自动取消追踪，但后续该目录下的新文件默认不会被暂存，需要时手动 `git add -f`；发现已有追踪文件时在输出中提示用户知晓这一点。
+
 ## 需求接入
 
 加载 `trellis-brainstorm` 技能并按以下协议探索需求：
