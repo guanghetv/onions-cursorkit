@@ -1,4 +1,4 @@
-{"file": ".agents/skills/trellis-meta/references/local-architecture/generated-files.md", "reason": "各平台目录分类表（hooks/settings/agents/skills/commands）是 gitignore 精确追加规则的权威依据，落地 design.md 的 gitignore 表格前必须核对"}
+{"file": ".agents/skills/trellis-meta/references/local-architecture/generated-files.md", "reason": "各平台目录分类表（hooks/settings/agents/skills/commands）是判断整目录忽略是否会影响 `.agents/skills/` 等跨平台真相源的权威依据，落地 design.md 的 gitignore 表格前必须核对"}
 {"file": "plugins/onion-sdd/USAGE.md", "reason": "8.2 节现有的 Trellis 安装/初始化命令格式（npm install -g、trellis init -u <name> --<platform>），新增询问文案必须复用同一套命令格式，不能自造"}
 {"file": "plugins/onion-sdd/commands/onsf-auto.md", "reason": "现有「Trellis 边界」小节的措辞和停止条件列表，新增的 auto 不触发说明要跟现状风格一致，不重复列停止条件"}
 {"file": "plugins/onion-sdd/skills/full-change/SKILL.md", "reason": "需求接入章节现有结构和「如果 Trellis 不可用，回退到...」的既有降级分支写法，新小节要插在正确位置且不与既有降级分支冲突"}
