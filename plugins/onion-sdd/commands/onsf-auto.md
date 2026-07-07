@@ -83,6 +83,7 @@ description: 自动化执行 Onion SDD 流程，按当前状态推断 new/contin
 - 如果没有 active Trellis task，不自动创建；继续使用 OpenSpec 和可选 `.onion-sdd/current.json`。
 - 不修改 Trellis 源码、`.trellis/scripts/**` 或 `.trellis/.runtime/**`。
 - 不复制 OpenSpec 正文到 Trellis task 或 journal。
+- 记录 journal（调用 `add_session.py`）和 spec 积累判断（加载 `trellis-update-spec`）都不算 task 生命周期操作——它们不创建、不启动、不归档 Trellis task。`/onsf-finish` 门禁通过且当前 change 未绑定 Trellis task 时，可按分支 C 规则自动执行，不在下方"停止条件"之列。
 
 ## 收束边界
 

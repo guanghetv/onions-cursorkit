@@ -517,7 +517,8 @@ Phase 1 的 Trellis adapter 采用 **onion 插件内 skill + 文档协议**，�
 | tasks 更新 | `tasks.md` | 更新 phase / last_action |
 | 外部 spec 接入 | `backend-*.md` / `qa-*.md` | 更新 `source_hashes` |
 | 验证完成 | `e2e-report.md` | phase = finish / verified |
-| finish | 归档判断 | `add_session.py` 写 journal 摘要 |
+| finish（绑定 task） | 归档判断 | 提示用户执行 `/trellis:finish-work`，由其调用 `add_session.py` 写 journal 摘要 |
+| finish（未绑定 task，Trellis 可用） | 归档判断 | `/onsf-finish` 直接调用 `add_session.py` 写 journal 摘要，并加载 `trellis-update-spec` 判断是否需要写入 `.trellis/spec/**` |
 
 ### 恢复优先级
 

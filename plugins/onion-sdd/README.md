@@ -159,6 +159,8 @@ OpenSpec 与 Trellis 的推荐分工：
 | 工程执行计划、验证命令、回滚点 | Trellis `implement.md` |
 | 分支名、PR 目标分支、parent/child task | Trellis 标准字段 |
 | change-id、change path、source hashes | `task.json.meta.onion` |
+| 开发者 journal、会话摘要 | 绑定 Trellis task → `/trellis:finish-work` 或 workflow.md Phase 3.3 写入；未绑定但 Trellis 可用 → `/onsf-finish` 归档成功后自动调用 `add_session.py` 写入 |
+| spec 经验积累（`.trellis/spec/`） | 绑定 Trellis task → workflow.md Phase 3.3（`trellis-update-spec`）写入；未绑定但 Trellis 可用 → `/onsf-finish` 归档成功后加载 `trellis-update-spec` 判断并按需写入 |
 
 ## 自动化边界
 

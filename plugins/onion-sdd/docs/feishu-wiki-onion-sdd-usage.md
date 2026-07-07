@@ -316,7 +316,8 @@ Trellis 负责**任务生命周期、工程计划、分支、journal 和跨会�
 | 工程执行计划、验证命令、回滚点    | —                                           | ✅ `implement.md`                           |
 | feature 分支、PR 目标分支         | 记录摘要                                    | ✅ `task.json.branch` / `base_branch`       |
 | 跨会话恢复 change-id              | ✅ `.onion-sdd/current.json`                | ✅ `task.json.meta.onion`                   |
-| 开发者 journal、会话摘要          | —                                           | ✅ `.trellis/workspace/<name>/journal-*.md` |
+| 开发者 journal、会话摘要          | 未绑定 Trellis task 时，`/onsf-finish` 归档成功后自动写入 | ✅ 绑定 task 时，`/trellis:finish-work` 或 workflow.md Phase 3.3 写入 `.trellis/workspace/<name>/journal-*.md` |
+| spec 经验积累（`.trellis/spec/`） | 未绑定 Trellis task 时，`/onsf-finish` 归档成功后加载 `trellis-update-spec` 判断并按需写入 | ✅ 绑定 task 时，走 workflow.md Phase 3.3（`trellis-update-spec`）写入 |
 | parent/child 大任务拆分（Tier 3） | OpenSpec parent/child change                | ✅ Trellis parent/child task tree           |
 | OpenSpec 归档                     | ✅ Agent 在 `/onsf-finish` 中自动执行          | —                                           |
 | Task 归档                         | —                                           | `/trellis:finish-work` 或 `task.py archive` |
