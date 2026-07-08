@@ -47,6 +47,30 @@ globs:
 
 `/onsf-auto` 可在低/中风险缺口下记录假设并继续；遇到权限、安全、支付、资金、审计、破坏性数据行为、接口删除/重命名、QA/YApi 冲突、关键路径不可验证、需要创建/启动/归档 Trellis task、需要 commit/push/PR 等高风险或不可逆动作时必须停止。`/onsf-finish` 门禁通过后自动执行 `openspec archive <change-id>`，失败时停止。
 
+### 分支门禁
+
+修改业务代码前（即将进入 implement 阶段，与上方"修改业务代码前应已存在 `tasks.md`"是同一时间点），必须确认满足以下两条，否则触发门禁。OpenSpec `proposal.md`/`tasks.md` 草稿阶段不受此门禁约束——未提交的草稿文件会随 `git checkout -b` 一起带入新分支，不需要先建分支再写文档。
+
+**触发条件 1：当前分支是受保护分支**（固定列表，不做可配置项）：
+- 精确匹配：`master`、`main`、`develop`
+- 前缀匹配：`release/*`
+- `git branch --show-current` 输出为空（detached HEAD）按受保护分支同等处理
+
+**触发条件 2：当前分支绑定着另一个活跃 change**（检测逻辑见 `tier-triage/SKILL.md`「冲突检测」，本节只定义命中后的动作）：
+- 双层判定，优先级从高到低：① 存在 Trellis active task 且 `task.json.branch` 等于当前分支，取该 task 的 `meta.onion.change_id`；② 无 Trellis/未绑定时，解析当前分支名是否匹配 `feat/<change-id>` 格式且对应 `openspec/changes/` 下真实存在的未归档目录，取解析出的 change-id。
+- 判定出的 change-id 不等于本次要处理的 change-id 时触发。
+- 两层都无法判定归属（无 Trellis 绑定，且分支名不匹配 `feat/<change-id>` 或找不到对应目录）时不触发——避免信息不足导致误判。
+
+**命中任一触发条件时**：
+1. 停止修改业务代码，向用户说明当前处于受保护分支 / 当前分支已绑定另一个 change `<change-id-A>`（触发条件 2 时，必须点名 `<change-id-A>`，并说明"继续会把两次不相关改动混进同一分支的 commit 历史"，不能用受保护分支场景的通用文案带过）。
+2. 用户提供了飞书项目卡片链接 → 按 `full-change/SKILL.md`「开发分支准备」调用 `create-feature-branch` 创建分支。
+3. 用户没有飞书链接，或本次是 Tier 0++ 紧急修复 → 提供分支名 `feat/<change-id>`（`change-id` 为当前 OpenSpec change 的 `MM-DD-<slug>`）供用户确认后创建，或允许用户自行创建分支后告知分支名。
+4. 用户明确要求"就在当前分支继续改" → 尊重用户选择，记录在最终输出或 `proposal.md` 中，本次 change 生命周期内不再重复拦截。
+
+**`/onsf-auto`（无交互自动模式）特化**：不拦截、不停止。命中任一触发条件时，直接按模板 `feat/<change-id>` 生成分支名并 `git checkout -b` 切换，无需确认；在最终输出中说明已自动创建并切换的分支名。触发条件 2 命中时，最终输出必须在风险/blocker 清单里显式点名"检测到跨 change 分支复用，已自动切换到新分支 `feat/<change-id>`，原分支 `<原分支名>` 绑定的 `<change-id-A>` 未受影响"，不能和触发条件 1 的常规提示合并成一句话。若已有飞书链接上下文但 auto 模式无法交互确认，同样直接走 `feat/<change-id>` 模板，不额外尝试调用 `create-feature-branch`（该 skill 依赖飞书 MCP 查询迭代信息，在无交互场景下不适合自动触发）。
+
+Tier 0（纯问答/排查/审阅，无写入动作）不受本门禁约束。
+
 ## 实现纪律
 
 修改业务代码时应遵守以下 TDD 与验证纪律：

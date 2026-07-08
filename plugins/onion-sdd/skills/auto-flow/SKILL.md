@@ -113,6 +113,13 @@ description: 编排 /onsf-auto 的无交互 Onion SDD 自动化流程，覆盖�
 - 需要创建/启动/归档 Trellis task。
 - 需要 `git commit`、推送、创建 PR/MR 或其它不可逆操作。`/onsf-finish` 门禁通过后自动执行 `openspec archive <change-id>`，失败时停止。
 
+## 分支门禁（auto 特化）
+
+进入 `materialize` 阶段前，按 `rules/onion-sdd.mdc`「写入门禁 > 分支门禁」的 auto 模式特化规则处理，覆盖两类触发条件：
+
+- **受保护分支**：自动生成 `feat/<change-id>` 分支并切换，不停止、不拦截、无需确认；在「验证收束」的最终输出中说明已自动创建的分支名。
+- **跨 change 分支复用**（检测依据见 `tier-triage/SKILL.md`「冲突检测 > 跨 change 分支复用检测」）：同样自动生成 `feat/<change-id>` 并切换，但必须在「验证收束」最终输出的风险/blocker 清单中单独点名"检测到当前分支绑定另一个 change `<change-id-A>`，已自动切换到 `feat/<change-id-B>`"，不能与受保护分支场景的提示合并成一句话。
+
 ## 产物生成
 
 按 Tier 路由：

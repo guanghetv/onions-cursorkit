@@ -63,6 +63,7 @@ openspec/changes/<change-id>/specs/<capability>/spec.md
 
 ## 实施纪律
 
+0. 开始修改业务代码前，先过分支门禁（见 `rules/onion-sdd.mdc`「写入门禁 > 分支门禁」）；OpenSpec 草稿阶段不受影响。
 1. 写产物前先确认仍符合 Tier 0+。
 2. 只读取直接相关上下文。
 3. 若实现中发现红线，停止 mini change 并升级到 `/onsf-plan`。
