@@ -1,0 +1,37 @@
+{
+  "id": "onion-branch-gate",
+  "name": "onion-branch-gate",
+  "title": "onion-sdd 开发前分支门禁：禁止在 master 直接开发",
+  "description": "",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "yangpeng",
+  "assignee": "yangpeng",
+  "createdAt": "2026-07-07",
+  "completedAt": "2026-07-08",
+  "branch": null,
+  "base_branch": "yangpeng-test",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "onion": {
+      "version": 1,
+      "change_id": "onion-branch-gate",
+      "change_path": "openspec/changes/onion-branch-gate",
+      "tier": "2",
+      "phase": "finish",
+      "last_action": "六个 onion-sdd 插件文件的分支门禁改动已实现并通过 grep/diff 复核，OpenSpec 产物已补齐，待提交并归档",
+      "last_action_at": "2026-07-08T17:55:00+08:00",
+      "upgrade_risk": false
+    }
+  }
+}
