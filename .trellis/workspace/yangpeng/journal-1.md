@@ -444,3 +444,39 @@ Integrated YApi contract support into onion-sdd with pull-yapi and re-check skil
 ### Next Steps
 
 - None - task complete
+
+
+## Session 14: onion-sdd 流程硬化：运行态 helper / finish 预检 / 文档中文规范
+
+**Date**: 2026-07-09
+**Task**: onion-sdd 流程硬化：运行态 helper / finish 预检 / 文档中文规范
+**Branch**: `yangpeng-test`
+
+### Summary
+
+落地 onion_state.py 与 finish_check.py（Trellis 主写 + current 镜像/兜底）；接线 /onsf-*；沉淀 code-spec 与文档语言规范；归档 OpenSpec change。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a3ba5cf` | (see git log) |
+| `595ac64` | (see git log) |
+| `15c8753` | (see git log) |
+| `7cfabe5` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

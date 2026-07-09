@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 13
-- **Last Active**: 2026-07-07
+- **Total Sessions**: 14
+- **Last Active**: 2026-07-09
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~446 | Active |
+| `journal-1.md` | ~482 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 14 | 2026-07-09 | onion-sdd 流程硬化：运行态 helper / finish 预检 / 文档中文规范 | `a3ba5cf`, `595ac64`, `15c8753`, `7cfabe5` | `yangpeng-test` |
 | 13 | 2026-07-07 | onion-sdd 复盘跟进：task 绑定询问、归档产物同步、编辑范围规范 | `927532f`, `cc702eb`, `a0db35a` | `yangpeng-test` |
 | 12 | 2026-07-07 | onion-sdd 检测缺失 Trellis 时交互式安装初始化 | `ae27c46` | `yangpeng-test` |
 | 11 | 2026-07-07 | onion-sdd 记忆能力优先依赖 Trellis | `89c7706` | `yangpeng-test` |
