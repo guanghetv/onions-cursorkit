@@ -1,0 +1,8 @@
+{"file": "plugins/onion-sdd/README.md", "reason": "能力与协议索引；实现后需对齐脚本入口表述"}
+{"file": "plugins/onion-sdd/USAGE.md", "reason": "用户主路径与 current.json 现状说明，文档收敛权威源"}
+{"file": "plugins/onion-sdd/skills/trellis-adapter/SKILL.md", "reason": "状态同步协议与「不保证写入」现状，helper 接线依据"}
+{"file": "plugins/onion-sdd/commands/onsf-finish.md", "reason": "归档门禁与带债规则，finish_check 接线依据"}
+{"file": "plugins/onion-sdd/skills/tier-triage/SKILL.md", "reason": "Tier 判定权威源与 0++ 定义"}
+{"file": "plugins/onion-sdd/templates/current.example.json", "reason": "current.json 字段模板，需扩展 tier0pp 字段"}
+{"file": ".trellis/tasks/07-09-onion-sdd-flow-hardening/design.md", "reason": "本任务技术设计与脚本契约"}
+{"file": ".trellis/tasks/07-09-onion-sdd-flow-hardening/prd.md", "reason": "需求与验收标准"}

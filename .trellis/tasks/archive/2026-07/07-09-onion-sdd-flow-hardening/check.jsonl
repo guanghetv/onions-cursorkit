@@ -1,0 +1,7 @@
+{"file": "plugins/onion-sdd/rules/onion-sdd.mdc", "reason": "写入/收束门禁，检查纪律是否与脚本一致"}
+{"file": "plugins/onion-sdd/commands/onsf-finish.md", "reason": "预检失败不得 archive"}
+{"file": "plugins/onion-sdd/skills/trellis-adapter/SKILL.md", "reason": "不得再写「不保证写入」；字段与 helper 一致"}
+{"file": "plugins/onion-sdd/USAGE.md", "reason": "用户主路径仅 /onsf-*；状态写入口径"}
+{"file": ".trellis/tasks/07-09-onion-sdd-flow-hardening/prd.md", "reason": "验收标准对照"}
+{"file": ".trellis/tasks/07-09-onion-sdd-flow-hardening/design.md", "reason": "hard/soft 门禁与 0++ 例外对照"}
+{"file": ".trellis/tasks/07-09-onion-sdd-flow-hardening/implement.md", "reason": "执行清单与 review gates"}
