@@ -15,6 +15,8 @@
 |------|------|------|
 | [目录结构](./directory-structure.md) | 工具脚本、插件资产、安装脚本的边界 | 已填充 |
 | [数据库与外部状态](./database-guidelines.md) | 本仓库无数据库；如何处理 JSON 状态和文件型数据 | 已填充 |
+| [Onion SDD 运行态与 finish 预检](./onion-sdd-runtime.md) | `onion_state.py` / `finish_check.py` 契约与读写优先级 | 已填充 |
+| [文档语言规范](../guides/doc-language-guide.md) | 正文中文、标识符保留英文（含 guides） | 已填充 |
 | [错误处理](./error-handling.md) | Python/Node/规则文档中的错误表达 | 已填充 |
 | [质量规范](./quality-guidelines.md) | 校验、提交范围、同步产物和审查要求 | 已填充 |
 | [日志规范](./logging-guidelines.md) | CLI 输出、stderr、警告与敏感信息 | 已填充 |
@@ -23,6 +25,7 @@
 
 - 先确认改动类型：Trellis Python 脚本、Node 工具、插件规则资产，还是纯文档。
 - 涉及插件市场结构时，阅读 `docs/add-a-plugin.md` 与 `scripts/validate-template.mjs`。
+- 涉及 Onion SDD 运行态 / finish 预检时，阅读 [onion-sdd-runtime.md](./onion-sdd-runtime.md)。
 - 涉及 Trellis 自动提交、任务归档、journal 时，阅读 `.trellis/scripts/common/safe_commit.py`，不要扩大 Git staging 范围。
 - 修改同步产物前先判断是否来自 `scripts/sync-guardrails.mjs` 管理；同步产物应回源修改，而不是在本仓库手改。
 

@@ -11,6 +11,10 @@
 - `.trellis/tasks/**/task.json`：任务元数据。
 - `.trellis/workspace/<developer>/journal-*.md` 与 `index.md`：开发者 journal。
 - 试点插件内的模板状态文件，例如 `plugins/onion-sdd/templates/current.example.json`。
+- 业务仓运行态（由 onion-sdd 管理，非 Trellis 源码）：
+  - `.onion-sdd/current.json`：无 Trellis 时的主写落点；有 Trellis 时为镜像/兜底。
+  - `.trellis/tasks/**/task.json` 的 `meta.onion`：有绑定 task 时的主写落点。
+  - 统一入口：`plugins/onion-sdd/scripts/onion_state.py`（契约见 [onion-sdd-runtime.md](./onion-sdd-runtime.md)）。
 
 ## JSON 文件规范
 
