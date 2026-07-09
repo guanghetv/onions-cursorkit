@@ -1,12 +1,27 @@
 # onion-sdd 技术方案补充与完善
 
-> 本文档是对 Onion SDD Phase 0 命令壳方案的补充。
-> 聚焦 Phase 0 命令壳阶段需要进一步澄清的设计细节。
-> Phase 1/2 相关内容仅给设计方向，不要求 Phase 0 实现。
+> 本文档补充 Onion SDD 的设计细节与演进记录。
+> **权威分层**：Tier 判定以 `skills/tier-triage/SKILL.md` 为准；能力/脚本入口以 `README.md` 为准；用户主路径以 `USAGE.md`（只教 `/onsf-*`）为准。
+> 下文用「已实现 / 未做」标注落地状态；历史「Phase 0」表述仅作演进背景，不再表示当前能力缺失。
+
+## 实现状态速览（相对本文历史章节）
+
+| 主题 | 状态 |
+|------|------|
+| Tier 决策树 / 0++ 先修后补 | **已实现**（`tier-triage` + `mark-tier0pp`） |
+| 运行态读写 | **已实现**（`scripts/onion_state.py`：Trellis 主写 + current 镜像/兜底） |
+| finish 可执行预检 | **已实现**（`scripts/finish_check.py`；`/onsf-finish` 归档前置） |
+| 0++ 24h 逾期硬提示 / 归档阻断 | **已实现**（pending + deadline；带债项例外须落盘） |
+| 带债归档定义 | **已实现**（`onsf-finish` + README） |
+| `/onsf-auto` | **已实现**（`auto-flow`；与手动路径差异为刻意设计） |
+| 一周超 2 次 0++ 强制审计 / metrics 聚合 | **未做** |
+| Cursor Hook 自动写状态 | **未做**（刻意：靠 command/skill 硬纪律） |
 
 ---
 
 ## 一、Tier 边界判定清单（替代直觉判定）
+
+> **已实现**：权威定义见 `skills/tier-triage/SKILL.md`。本节保留决策树与示例作补充阅读。
 
 当前基础方案中 Tier 0 vs 0+ vs 1 的判定容易依赖"影响用户行为""小交互"等模糊描述。以下给出可操作的判定清单。
 
@@ -137,7 +152,28 @@ Tier 0++ 触发条件（全部满足）：
 
 ---
 
-## 三、Phase 0 最小状态文件
+## 三、运行态文件与状态 helper
+
+### 问题
+
+如果 `/onsf-continue` 只扫描 `openspec/changes/` 推算状态，恢复体验会不稳定。
+
+### 设计（已实现）
+
+- `.onion-sdd/current.json`：无 Trellis 时的主写落点；有 Trellis 时为镜像/兜底。
+- `task.json.meta.onion`：有绑定 Trellis task 时的主写落点。
+- 统一入口：`scripts/onion_state.py`（读/写优先级见 README / trellis-adapter）。
+- 归档前置：`scripts/finish_check.py`。
+
+**未做**：Cursor Hook 自动写状态；一周超 2 次 0++ 强制审计。
+
+字段模板见 `templates/current.example.json`（含 `tier0pp_*`）。
+
+---
+
+## 三（历史）. Phase 0 最小状态文件
+
+> 以下为演进背景；落地以「三、运行态文件与状态 helper」与 `onion_state.py` 为准。
 
 ### 问题
 
@@ -158,18 +194,17 @@ Tier 0++ 触发条件（全部满足）：
 }
 ```
 
-**写入时机（协议目标）**：阶段切换时**建议**更新；当前由 Agent 按 `trellis-adapter` 手动写入，**尚无专用 CLI / Hook 保证每次 `/onsf-*` 后自动落盘**。
-**读取时机**：`/onsf-continue` 在 Trellis `meta.onion` 之后读取 `current.json`；缺失或 `idle` 时 fallback 扫描 OpenSpec。
-**Phase 0 成本**：读写一个 JSON 文件，无需任何依赖；自动写入能力待后续补齐。
+**写入时机（现状）**：阶段切换**必须**调用 `scripts/onion_state.py`（有绑定 Trellis task 时主写 `meta.onion` 并镜像 `current.json`；否则只写 `current.json`）。无 Cursor Hook；靠 command/skill 硬纪律。
+**读取时机**：`onion_state.py get` 按 Trellis `meta.onion` → `current.json` → idle；`/onsf-continue` 再按需 OpenSpec 扫描。
+**历史备注**：早期 Phase 0 仅有 JSON 协议、无 helper；现已由 `onion_state.py` / `finish_check.py` 落地（见上文「三、运行态文件与状态 helper」）。仍**未做** Hook 自动写。
 
-### README 中增加
+### README 中增加（历史草案；以现行 README 为准）
 
 ```markdown
 ## 运行时状态
 
-Phase 0 使用 `.onion-sdd/current.json` 作为可选轻量恢复 hint。
-该文件**当前不保证自动维护**；无该文件时 `/onsf-continue` 仍可通过 OpenSpec fallback 恢复。
-接入 Trellis 后，优先用 `meta.onion`；`current.json` 作为无 Trellis 时的 fallback hint。
+使用 `scripts/onion_state.py` 统一读写：有 Trellis 时主写 `meta.onion` 并镜像 `.onion-sdd/current.json`；无 Trellis 时只写 `current.json`。
+无该文件时 `/onsf-continue` 仍可通过 OpenSpec fallback 恢复。
 ```
 
 ---
@@ -440,7 +475,7 @@ Phase 2 承诺 ROI 度量但没有 Phase 0 基线。
 | S9 | /onsf-auto 向前兼容字段 | tier-triage/SKILL.md | 推荐 |
 | S10 | 基线度量时间戳 | current.json 设计 | 推荐 |
 
-**Phase 0 最小必做**：S1～S6。这 6 项补丁的成本全部在修改 markdown 文档和技能文件，不涉及任何运行时代码。
+**Phase 0 最小必做（历史）**：S1～S6 最初以 markdown/技能补丁落地。其后已补齐运行时脚本（`onion_state.py`、`finish_check.py`）与 0++ deadline 字段；本节表格保留作演进记录，不以「无运行时代码」描述现状。
 
 ---
 

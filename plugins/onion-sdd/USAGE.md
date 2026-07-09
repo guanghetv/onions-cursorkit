@@ -43,16 +43,17 @@ openspec/changes/            # 活跃变更目录
 
 若项目使用 Trellis，还会用到 `.trellis/tasks/**/task.json` 中的 `meta.onion` 字段做恢复与同步。
 
-#### `.onion-sdd/current.json` 实现说明（重要）
+#### 运行态：Trellis 优先，`current.json` 镜像/兜底
 
 | 项 | 现状 |
 | --- | --- |
-| **协议** | 已定义字段与同步时机（见 `skills/trellis-adapter/SKILL.md`、`templates/current.example.json`） |
-| **读取** | `/onsf-continue` 会在 Trellis `meta.onion` 之后尝试读取该文件 |
-| **自动写入** | **当前未实现**：无专用 CLI、Hook 或强制写入门禁；不保证每次 `/onsf-*` 后都会更新 |
-| **实际恢复** | 无该文件或内容为 `idle` 时，仍可通过 **OpenSpec 产物扫描** 或 **你指定 change-id** 继续 |
+| **脚本** | `scripts/onion_state.py`（读写）、`scripts/finish_check.py`（归档预检） |
+| **读** | Trellis `meta.onion` → `.onion-sdd/current.json` → OpenSpec 扫描 |
+| **写** | 已绑定 Trellis task：**主写** `meta.onion` 并**镜像** `current.json`；否则**只写** `current.json` |
+| **纪律** | 阶段切换必须调用 `onion_state.py`（无 Hook；靠 `/onsf-*` 硬纪律） |
+| **finish** | 必须先跑 `finish_check.py`；失败不得 archive；成功后 `set --idle` |
 
-**真相源始终是 OpenSpec** `openspec/changes/<change-id>/`。`current.json` 只是可选的本地 hint，有则读，无则 fallback。Agent 按 `trellis-adapter` 协议**可以**在阶段切换时手动更新该文件，但这不是当前基座的硬性保证；例外是 `/onsf-finish` 成功归档后必须将 `active_change_id` 置为 `null`、`phase` 置为 `idle`。
+**真相源始终是 OpenSpec** `openspec/changes/<change-id>/`。`current.json` 在有 Trellis 时是镜像与降级兜底，不是主状态源。
 
 ### 2.3 可选增强
 
@@ -294,7 +295,7 @@ recover → infer → triage → materialize → spec-review
 | 需求调整时同步 OpenSpec 产物（proposal/specs/tasks + `## 需求调整记录`） | **Agent**（按 `openspec-change` 的「已落盘产物的更新协议」） |
 | `openspec new change` / `validate`                       | **你**在终端执行（Agent 可手工创建目录作为降级） |
 | `openspec archive`                                       | **Agent** 在 `/onsf-finish` 门禁通过后自动执行；CLI 不可用时等效手工归档 |
-| 维护 `.onion-sdd/current.json`                             | **可选**：协议上由 Agent 按 `trellis-adapter` 更新；**当前无自动写入运行时** |
+| 维护运行态（`meta.onion` / `current.json`）                 | **Agent** 阶段切换必须调用 `onion_state.py`（Trellis 主写 + current 镜像/兜底） |
 | git commit / push                                          | **你**明确要求时 Agent 可协助，且须提交前审查 |
 
 ---
@@ -551,7 +552,7 @@ A：复杂任务会先**询问你**是否创建（Trellis workflow-state 约定�
 A：要接着 OpenSpec change（spec、tasks、E2E）→ `/onsf-continue`；要接着 Trellis 工程阶段（plan/implement/check/commit）→ `/trellis:continue`。Tier 2+ 常两者交替使用。
 
 **Q：`.onion-sdd/current.json` 会自动更新吗？**  
-A：**除 `/onsf-finish` 成功归档必须切回 `idle` 外，当前不会可靠自动更新**。插件内无专用脚本或 Hook 维护该文件；`/onsf-continue` 优先读 Trellis `meta.onion`，其次读 `current.json`（若存在），最后扫描 OpenSpec。没有 `current.json` 也能继续，请指定 change-id 或从活跃 change 列表选择。
+A：阶段切换须由 Agent 调用 `onion_state.py` 更新（有 Trellis 时主写 `meta.onion` 并镜像 current；无 Trellis 时只写 current）。无 Hook。`/onsf-continue` 优先 `onion_state.py get`。没有 `current.json` 也能继续（可指定 change-id 或扫 OpenSpec）。
 
 **Q：Trellis metadata 写坏了怎么办？**  
 A：忽略 `meta.onion`，用 `.onion-sdd/current.json` + OpenSpec 目录恢复；OpenSpec 正文不会被删。

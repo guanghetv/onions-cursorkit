@@ -5,7 +5,7 @@ description: 在不改造 Trellis 源码的前提下，同步 Onion SDD OpenSpec
 
 # Trellis Adapter
 
-本技能用于 Onion SDD 与 Trellis task runtime 的状态同步。它只定义和执行插件侧协议：OpenSpec 保存正文，`.onion-sdd/current.json` 保存轻量恢复状态，Trellis task 保存 `meta.onion` metadata、parent/child 关系和 journal 摘要。
+本技能用于 Onion SDD 与 Trellis task runtime 的状态同步。它只定义和执行插件侧协议：OpenSpec 保存正文；运行态通过 `scripts/onion_state.py` 统一读写——已绑定 Trellis task 时**主写** `task.json.meta.onion` 并**镜像** `.onion-sdd/current.json`，无 Trellis / 未绑定时**只写** `current.json`。
 
 ## 适用场景
 
@@ -78,6 +78,8 @@ Trellis task 的标准字段可承载通用运行态：
 | `upgrade_risk` | Onion triage | 是否发现升级红线 |
 | `source_hashes` | OpenSpec files | 产物 hash，用于提示 stale，不作为正文真相源 |
 | `parent_change_id` | Tier 3 child | 可选，指向 parent change |
+| `tier0pp_deadline` | Tier 0++ | ISO 8601；进入 0++ 时默认 now+24h |
+| `tier0pp_openspec_pending` | Tier 0++ | `true` 表示仍待补 mini OpenSpec |
 
 `meta.onion` 只放 onion/OpenSpec 专有引用。不要把 `branch`、`base_branch`、任务状态或 parent/child 重复写进 `meta.onion`；这些使用 Trellis 标准字段。
 
@@ -94,6 +96,8 @@ Trellis task 的标准字段可承载通用运行态：
   "last_action": "qa spec 已接入，待执行 verify-change",
   "last_action_at": "2026-06-25T18:30:00+08:00",
   "upgrade_risk": false,
+  "tier0pp_deadline": null,
+  "tier0pp_openspec_pending": false,
   "trellis_task": {
     "task_dir": ".trellis/tasks/06-25-add-invoice-export",
     "status": "in_progress"
@@ -101,24 +105,48 @@ Trellis task 的标准字段可承载通用运行态：
 }
 ```
 
-`trellis_task` 只是恢复提示。若 task 不存在或已归档，忽略该字段，继续使用 `active_change_id` 和 OpenSpec 产物恢复。
+`trellis_task` 只是恢复提示与写路径绑定。若 task 不存在或已归档，忽略该字段，继续使用 `active_change_id` 和 OpenSpec 产物恢复。
+
+## 状态 helper（必须）
+
+阶段切换、恢复、0++ 标记与 finish 收尾**必须**调用插件脚本（不要手写 JSON 绕过优先级）：
+
+```bash
+# 探测路径：cursorkit 本仓开发用 plugins/onion-sdd/scripts/；
+# 业务仓 marketplace 安装时以 Cursor 插件安装目录下的 scripts/ 为准。
+SCRIPTS=plugins/onion-sdd/scripts   # 或插件安装目录/scripts
+
+python3 "$SCRIPTS/onion_state.py" --repo-root . get
+python3 "$SCRIPTS/onion_state.py" --repo-root . set --change-id <id> --tier <tier> --phase <phase> --last-action "<摘要>"
+python3 "$SCRIPTS/onion_state.py" --repo-root . bind-trellis --trellis-task-dir .trellis/tasks/<task>
+python3 "$SCRIPTS/onion_state.py" --repo-root . mark-tier0pp --change-id <id>
+python3 "$SCRIPTS/onion_state.py" --repo-root . clear-tier0pp-pending --change-id <id>
+python3 "$SCRIPTS/onion_state.py" --repo-root . set --idle --last-action "OpenSpec change <id> 已自动归档"
+```
+
+| 方向 | 优先级 |
+|------|--------|
+| **读** | ① 已绑定且可信的 Trellis `meta.onion` → ② `.onion-sdd/current.json` → ③ OpenSpec 扫描（由 continue/auto 编排） |
+| **写** | ① 已绑定 Trellis task：**主写** `meta.onion`，并**镜像** `current.json` → ② 无 Trellis / 未绑定：**只写** `current.json` |
+
+`current.json` 在有 Trellis 时是镜像与降级兜底，不是主状态源。meta 写失败时脚本警告并降级为只写 `current.json`，不阻塞流程。
 
 ## 实现现状（current.json / meta.onion）
 
 | 能力 | current.json | task.json.meta.onion |
 | --- | --- | --- |
 | 协议定义 | ✅ `templates/current.example.json` | ✅ 本技能字段表 |
-| `/onsf-continue` 读取 | ✅ 第二优先级 | ✅ 第一优先级（有 Trellis task 时） |
-| 自动写入运行时 | ❌ 无 CLI / Hook / 强制门禁 | ⚠️ 依赖 Agent 按本技能更新 `task.json` |
+| `/onsf-continue` 读取 | ✅ 第二优先级（经 `onion_state.py get`） | ✅ 第一优先级（有绑定 task 时） |
+| 写入运行时 | ✅ 阶段切换必须调用 `onion_state.py`（无 Hook；靠 command/skill 硬纪律） | ✅ 有绑定时由 helper 主写 |
 | 缺失时 | OpenSpec 产物扫描 / 用户指定 change-id | fallback 到 current.json 或 OpenSpec |
 
 OpenSpec `openspec/changes/<change-id>/` 始终是变更正文唯一真相源。`current.json` 与 `meta.onion` 只保存引用与阶段 hint，**不得**复制 proposal/spec 正文。
 
-## 同步时机（协议目标）
+## 同步时机（硬纪律）
 
-以下「写 current / 写 meta.onion」为**建议的同步点**；执行时由 Agent 按本技能手动更新文件，**不保证**每次 `/onsf-*` 自动落盘。
+以下时机**必须**调用 `onion_state.py`（`set` / `mark-tier0pp` / `clear-tier0pp-pending` / `set --idle`）；输出中应可核对 `primary_write`（`trellis` | `current`）。
 
-没有活跃 change 时，允许使用空闲状态，避免 `/onsf-continue` 误恢复上一轮已完成变更：
+没有活跃 change 时，使用空闲状态，避免 `/onsf-continue` 误恢复上一轮已完成变更：
 
 ```json
 {
@@ -129,18 +157,22 @@ OpenSpec `openspec/changes/<change-id>/` 始终是变更正文唯一真相源。
   "last_action": "当前无活跃 Onion change",
   "last_action_at": "2026-06-25T18:30:00+08:00",
   "upgrade_risk": false,
+  "tier0pp_deadline": null,
+  "tier0pp_openspec_pending": false,
   "trellis_task": null
 }
 ```
 
-| 时机 | 写 OpenSpec | 写 current | 写 Trellis metadata / journal |
-|------|-------------|------------|-------------------------------|
-| Tier 判断完成 | 无或创建 change 前准备 | `tier`、`phase`、`upgrade_risk` | `meta.onion.tier`、`phase` |
-| OpenSpec 落盘 | proposal/specs/tasks | `active_change_id`、`phase` | `change_id`、`change_path` |
-| tasks 更新 | `tasks.md` | `last_action`、`phase` | `last_action`、`last_action_at` |
-| 外部 spec 接入 | `backend-*.md` / `qa-*.md` | `phase=integrate` | `source_hashes.backend` / `source_hashes.qa` |
-| 验证完成 | `e2e-report.md` | `phase=finish` | `source_hashes.e2e`、journal 摘要 |
-| finish | 自动归档：`openspec archive <change-id>` 或等效手工移动 | `active_change_id=null`、`phase=idle`、`last_action` | `last_action`、`last_action_at`、journal 写恢复/归档摘要 |
+| 时机 | 写 OpenSpec | 调用 helper | 效果 |
+|------|-------------|-------------|------|
+| Tier 判断完成 | 无或创建 change 前准备 | `set --tier --phase triage` | 主写 meta（若已绑定）+ 镜像/只写 current |
+| 判定 Tier 0++ | 可后补 | `mark-tier0pp` | `tier=0++`、`tier0pp_deadline=now+24h`、`pending=true` |
+| OpenSpec 落盘 | proposal/specs/tasks | `set --change-id --phase openspec` | 绑定 change_id / path |
+| 0++ 补齐 mini OpenSpec | proposal/tasks | `clear-tier0pp-pending` | `pending=false` |
+| tasks 更新 | `tasks.md` | `set --phase --last-action` | 阶段与摘要 |
+| 外部 spec 接入 | `backend-*.md` / `qa-*.md` | `set --phase integrate` + source hashes | integrate |
+| 验证完成 | `e2e-report.md` | `set --phase finish` | finish |
+| finish 归档成功 | archive | `set --idle` | `active_change_id=null`、`phase=idle` |
 
 ## 恢复优先级
 

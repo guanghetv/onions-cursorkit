@@ -24,12 +24,13 @@ description: 自动化执行 Onion SDD 流程，按当前状态推断 new/contin
 ## 执行顺序
 
 1. 读取 `skills/auto-flow/SKILL.md`。
-2. 恢复上下文：
-   - Trellis active task 的 `task.json.meta.onion`
-   - `.onion-sdd/current.json`
-   - `openspec/changes/**` 产物扫描
+2. **恢复上下文（必须）**：
+   ```bash
+   python3 <onion-sdd>/scripts/onion_state.py --repo-root . get
+   ```
+   再按需扫描 `openspec/changes/**`。若 `tier0pp_openspec_pending` 逾期，输出硬提示并优先处理补档/带债项，再推断模式。
 3. 推断或采用显式子模式：`new` / `continue` / `verify` / `finish-check`。
-4. 使用 `tier-triage` 产出 Tier、auto 模式、置信度、阻断原因和继续假设。
+4. 使用 `tier-triage` 产出 Tier、auto 模式、置信度、阻断原因和继续假设；阶段切换调用 `onion_state.py set`（0++ 用 `mark-tier0pp`）。
 5. 按风险门禁执行：
    - 低/中风险缺口：写明假设后继续。
    - 高风险缺口：停止并输出 blocker。
@@ -38,9 +39,10 @@ description: 自动化执行 Onion SDD 流程，按当前状态推断 new/contin
    - Tier 1：`light-change`
    - Tier 2+：`full-change` + `openspec-change`
 7. 做 spec 自审，修复低风险问题；高风险冲突停止。
-8. 在已有 `tasks.md` 后执行实现、验证和 diff 自审。
+8. 在已有 `tasks.md` 后执行实现、验证和 diff 自审；阶段结束更新 `onion_state.py`。
 9. 必要时调用 `external-spec`、`pull-yapi`、`re-check`、`verify-change`。
-10. 输出完成状态：ready for user review / ready for commit / blocked / finish-ready。
+10. `finish-check` 或准备归档前跑 `finish_check.py`；非 0 则 blocked，不 archive。
+11. 输出完成状态：ready for user review / ready for commit / blocked / finish-ready。
 
 ## Auto 模式
 

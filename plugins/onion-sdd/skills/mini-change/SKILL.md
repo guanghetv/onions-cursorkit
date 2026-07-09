@@ -64,10 +64,11 @@ openspec/changes/<change-id>/specs/<capability>/spec.md
 ## 实施纪律
 
 0. 开始修改业务代码前，先过分支门禁（见 `rules/onion-sdd.mdc`「写入门禁 > 分支门禁」）；OpenSpec 草稿阶段不受影响。
-1. 写产物前先确认仍符合 Tier 0+。
+1. 写产物前先确认仍符合 Tier 0+；Tier 0++ 须 `onion_state.py mark-tier0pp`。
 2. 只读取直接相关上下文。
 3. 若实现中发现红线，停止 mini change 并升级到 `/onsf-plan`。
-4. 完成后在最终回复中给出变更文件、验证命令和残余风险。
+4. 阶段切换（openspec / implement / verify）后**必须**调用 `onion_state.py set`（有绑定 task 时主写 meta + 镜像 current）；0++ 补齐 mini OpenSpec 后调用 `clear-tier0pp-pending`。
+5. 完成后在最终回复中给出变更文件、验证命令、残余风险，以及 `primary_write`。
 
 ## 质量自检（写完后必须过一遍）
 
@@ -90,4 +91,4 @@ openspec/changes/<change-id>/specs/<capability>/spec.md
 
 ## 归档
 
-mini change 在任务完成、定向验证通过、无升级红线后，调用 `/onsf-finish` 自动归档。`/onsf-finish` 会执行门禁检查，通过后自动调用 `openspec archive <change-id>`；CLI 不可用时使用等效手工归档。
+mini change 在任务完成、定向验证通过、无升级红线后，调用 `/onsf-finish`。`/onsf-finish` **必须先跑** `scripts/finish_check.py`；预检失败不得 archive。通过后自动调用 `openspec archive <change-id>`，并 `onion_state.py set --idle`；CLI 不可用时使用等效手工归档。

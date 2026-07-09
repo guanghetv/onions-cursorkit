@@ -109,6 +109,7 @@ openspec/changes/<change-id>/
 - `tasks.md` 已更新。
 - 定向验证与小范围回归有明确结果。
 - 残余风险已在最终回复或产物中说明。
+- 阶段切换已调用 `onion_state.py set`；收尾走 `/onsf-finish`（先跑 `finish_check.py`，成功后 `set --idle`）。
 
 ## 质量自检（写完后必须过一遍）
 

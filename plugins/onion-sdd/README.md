@@ -28,6 +28,9 @@ plugins/onion-sdd/
 │   └── onsf-finish.md
 ├── rules/
 │   └── onion-sdd.mdc
+├── scripts/
+│   ├── onion_state.py      # 运行态：Trellis meta 主写 + current 镜像/兜底
+│   └── finish_check.py     # /onsf-finish 归档前置预检
 ├── skills/
     ├── tier-triage/SKILL.md
     ├── mini-change/SKILL.md
@@ -182,9 +185,25 @@ Trellis 完全未安装时：Tier 2+/3（`full-change`）首次触发会主动�
 - 不修改试点目录外的既有插件。
 - 不修改 Trellis 源码、`.trellis/scripts/**` 或 `.trellis/.runtime/**`。
 
-## 运行时状态
+## 运行时状态与脚本
 
-`.onion-sdd/current.json` 是**可选的**轻量恢复 hint，用于记录当前 change、tier、phase 等（协议见 `skills/trellis-adapter/SKILL.md`）：
+阶段切换、恢复与 finish 预检通过插件脚本执行（无 Cursor Hook；靠 `/onsf-*` 与 skill 硬纪律）：
+
+```bash
+SCRIPTS=plugins/onion-sdd/scripts   # 本仓开发；业务仓以 Cursor 插件安装目录/scripts 为准
+
+python3 "$SCRIPTS/onion_state.py" --repo-root . get
+python3 "$SCRIPTS/onion_state.py" --repo-root . set --change-id <id> --tier <t> --phase <p> --last-action "<摘要>"
+python3 "$SCRIPTS/onion_state.py" --repo-root . mark-tier0pp --change-id <id>
+python3 "$SCRIPTS/finish_check.py" --repo-root . [--change-id <id>]
+```
+
+| 方向 | 优先级 |
+|------|--------|
+| **读** | Trellis `meta.onion` → `.onion-sdd/current.json` → OpenSpec 扫描 |
+| **写** | 已绑定 Trellis task：**主写** `meta.onion` 并**镜像** `current.json`；否则**只写** `current.json` |
+
+`current.json` 在有 Trellis 时是镜像与降级兜底，不是主状态源。OpenSpec 仍是变更正文唯一真相源。
 
 ```jsonc
 {
@@ -195,6 +214,8 @@ Trellis 完全未安装时：Tier 2+/3（`full-change`）首次触发会主动�
   "last_action": "tasks.md 第 3 项已勾选完成，定向验证通过",
   "last_action_at": "2025-06-25T15:30:00+08:00",
   "upgrade_risk": false,
+  "tier0pp_deadline": null,
+  "tier0pp_openspec_pending": false,
   "trellis_task": {
     "task_dir": ".trellis/tasks/06-25-fix-payment-button",
     "status": "in_progress"
@@ -209,17 +230,9 @@ Trellis 完全未安装时：Tier 2+/3（`full-change`）首次触发会主动�
 }
 ```
 
-**实现现状**：
+`/onsf-finish` 必须先跑 `finish_check.py`；失败不得 archive。归档成功后 `onion_state.py set --idle`。没有活跃变更时 `phase=idle`，`/onsf-continue` 不恢复上一轮已完成变更。
 
-- **读取**：`/onsf-continue` 在 Trellis `meta.onion` 之后尝试读取该文件。
-- **写入**：**当前无自动运行时**（无专用 CLI / Hook / 强制门禁）。协议上 Agent 可在阶段切换时更新，但不保证每次 `/onsf-*` 都会写。
-- **无文件时**：仍可通过 OpenSpec 产物扫描或用户指定 change-id 恢复；OpenSpec 仍是变更正文唯一真相源。
-
-接入 Trellis 后，优先用 `task.json.meta.onion` 做跨会话引用；`current.json` 作为无 Trellis 或 metadata 缺失时的 fallback hint。Trellis task metadata 只保存引用、phase、hash 和摘要，不复制 OpenSpec 正文。
-
-没有活跃变更时，`active_change_id` 可为 `null` 且 `phase` 为 `idle`。`/onsf-continue` 遇到 idle 状态时不恢复上一轮已完成变更，而是进入 OpenSpec fallback 或等待用户指定 change-id。
-
-模板见 `templates/current.example.json`。
+模板见 `templates/current.example.json`；协议见 `skills/trellis-adapter/SKILL.md`。
 
 ## 带债归档
 
@@ -252,6 +265,8 @@ Trellis 完全未安装时：Tier 2+/3（`full-change`）首次触发会主动�
 ```bash
 find plugins/onion-sdd -type f | sort
 python3 -m json.tool plugins/onion-sdd/.cursor-plugin/plugin.json
-rg -n "auto-flow|full-change|openspec-change|external-spec|pull-yapi|re-check|verify-change" plugins/onion-sdd
-rg -n "trellis-adapter|meta.onion|trellis_task|source_hashes" plugins/onion-sdd
+python3 -m json.tool plugins/onion-sdd/templates/current.example.json
+python3 plugins/onion-sdd/scripts/onion_state.py --help
+python3 plugins/onion-sdd/scripts/finish_check.py --help
+rg -n "onion_state|finish_check|tier0pp_|auto-flow|trellis-adapter" plugins/onion-sdd
 ```

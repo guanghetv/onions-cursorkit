@@ -20,8 +20,11 @@ globs:
 
 - 当前承诺 slash command 触发：`/onsf-fix`、`/onsf-tweak`、`/onsf-plan`、`/onsf-continue`、`/onsf-finish`、`/onsf-auto`。
 - `/onsf-auto` 是无交互自动化入口，使用 `skills/auto-flow/SKILL.md` 编排现有 Onion SDD skills；metrics、Spec Pack 等能力仍可按后续验收或独立任务推进。
-- OpenSpec 是变更正文唯一真相源；Trellis adapter 只保存状态、引用、hash、parent/child 关系和 journal 摘要。
-- `.onion-sdd/current.json` 是可选恢复 hint；**当前无专用 CLI / Hook 自动维护**，缺失时 `/onsf-continue` 仍可通过 OpenSpec 产物或用户指定 change-id 恢复。
+- OpenSpec 是变更正文唯一真相源；运行态通过 `scripts/onion_state.py` 统一读写。
+- **读优先级**：已绑定 Trellis `meta.onion` → `.onion-sdd/current.json` → OpenSpec 扫描。
+- **写优先级**：已绑定 Trellis task 时主写 `meta.onion` 并镜像 `current.json`；无 Trellis / 未绑定时只写 `current.json`。
+- 阶段切换、0++ 标记/清 pending、finish 归档成功后置 idle：**必须**调用 `onion_state.py`（无 Hook；靠本规则与 command 硬纪律）。
+- `/onsf-finish` 归档前**必须**先跑 `scripts/finish_check.py`；exit ≠ 0 时禁止 `openspec archive` 与手工移动归档。
 
 ## 分级写入
 
@@ -45,7 +48,7 @@ globs:
 
 修改业务代码前应已存在当前 change 的 `tasks.md`；纯文档、配置或紧急 Tier 0++ 可按对应轻量规则处理并补记录。
 
-`/onsf-auto` 可在低/中风险缺口下记录假设并继续；遇到权限、安全、支付、资金、审计、破坏性数据行为、接口删除/重命名、QA/YApi 冲突、关键路径不可验证、需要创建/启动/归档 Trellis task、需要 commit/push/PR 等高风险或不可逆动作时必须停止。`/onsf-finish` 门禁通过后自动执行 `openspec archive <change-id>`，失败时停止。
+`/onsf-auto` 可在低/中风险缺口下记录假设并继续；遇到权限、安全、支付、资金、审计、破坏性数据行为、接口删除/重命名、QA/YApi 冲突、关键路径不可验证、需要创建/启动/归档 Trellis task、需要 commit/push/PR 等高风险或不可逆动作时必须停止。`/onsf-finish` 必须先跑 `finish_check.py`；通过后自动执行 `openspec archive <change-id>`，失败时停止。Tier 0++ `tier0pp_openspec_pending` 逾期且无 `## 带债项` 时预检 hard fail。
 
 ### 分支门禁
 
@@ -107,7 +110,8 @@ Tier 0（纯问答/排查/审阅，无写入动作）不受本门禁约束。
 
 ## 收束纪律
 
-- `/onsf-finish` 门禁通过或用户明确同意带债归档时，自动执行 `openspec archive <change-id>`；CLI 不可用时使用等效手工归档；失败时停止并报告。
+- `/onsf-finish` 必须先跑 `finish_check.py`；预检失败不得 archive。门禁通过或用户明确同意带债归档时，自动执行 `openspec archive <change-id>`；CLI 不可用时使用等效手工归档；失败时停止并报告。
+- 归档成功后必须 `onion_state.py set --idle`。
 - 不自动提交 git commit。
 - 输出完成结论时必须说明验证结果、未覆盖风险和是否建议归档。
 - Tier 2+ 以 `e2e-report.md` 的 `## 验收结论` 或用户确认的等价验收证据作为归档判断入口。

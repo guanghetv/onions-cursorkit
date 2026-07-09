@@ -36,19 +36,26 @@ description: 编排 /onsf-auto 的无交互 Onion SDD 自动化流程，覆盖�
 
 ## 恢复上下文
 
-按以下顺序恢复，任一步骤不可信时降级到下一项：
+优先调用状态 helper（读优先级与 `trellis-adapter` 一致）：
 
-1. Trellis active task 的 `task.json.meta.onion.change_id` 和 `change_path`。
-2. `.onion-sdd/current.json` 的 `active_change_id`、`tier`、`phase`。
-3. 用户显式指定的 change-id。
-4. `openspec/changes/**` 活跃产物扫描。
+```bash
+python3 <onion-sdd>/scripts/onion_state.py --repo-root . get
+```
+
+按 `source: trellis|current|idle` 恢复；再按需降级：
+
+1. `onion_state.py get`（Trellis `meta.onion` → `current.json`）。
+2. 用户显式指定的 change-id。
+3. `openspec/changes/**` 活跃产物扫描。
+
+若 `tier0pp_openspec_pending` 已逾期：输出硬提示（补 mini OpenSpec / `clear-tier0pp-pending`，或 `proposal.md` 落盘 `## 带债项`），再继续推断。
 
 冲突处理：
 
 - Trellis meta 与 `.onion-sdd/current.json` 指向不同 change：优先 Trellis active task；若用户显式指定，则用用户指定。
 - Trellis meta 指向不存在的 change：标记 stale，降级。
 - 多个候选且无法从用户输入或 active task 判断：停止，输出候选和 blocker。
-- 没有 active Trellis task：不创建 task，继续 OpenSpec-only 自动化。
+- 没有 active Trellis task：不创建 task，继续 OpenSpec-only 自动化（只写 `current.json`）。
 
 ## 推断模式
 
@@ -111,7 +118,7 @@ description: 编排 /onsf-auto 的无交互 Onion SDD 自动化流程，覆盖�
 - 用户在实现过程中**明确表达**需求或验收口径调整（新增、修改、废弃目标、范围或验收场景）时，必须停止实现并按 `openspec-change` 的「已落盘产物的更新协议」同步产物后再继续。用户澄清已有需求、补充细节或回答 Agent 提问**不触发**本条。
 - 关键路径无法验证，也没有等价证据。
 - 需要创建/启动/归档 Trellis task。
-- 需要 `git commit`、推送、创建 PR/MR 或其它不可逆操作。`/onsf-finish` 门禁通过后自动执行 `openspec archive <change-id>`，失败时停止。
+- 需要 `git commit`、推送、创建 PR/MR 或其它不可逆操作。归档前必须先跑 `finish_check.py`；非 0 则 blocked，不得 archive。
 
 ## 分支门禁（auto 特化）
 
@@ -182,16 +189,9 @@ description: 编排 /onsf-auto 的无交互 Onion SDD 自动化流程，覆盖�
   - blockers
   - 是否 ready for user review / commit / finish-check
 
-## Trellis 同步
+## 运行态同步（必须）
 
-如果存在 active Trellis task，可按 `trellis-adapter` 更新轻量 metadata：
-
-- `task.json.meta.onion.change_id`
-- `task.json.meta.onion.change_path`
-- `task.json.meta.onion.tier`
-- `task.json.meta.onion.phase`
-- `task.json.meta.onion.last_action`
-- `task.json.meta.onion.source_hashes`
+阶段切换（triage / materialize / implement / verify / close）**必须**调用 `onion_state.py`（`set` / `mark-tier0pp` / `clear-tier0pp-pending`）；有绑定 Trellis task 时主写 `meta.onion` 并镜像 `current.json`，否则只写 `current.json`。输出核对 `primary_write`。
 
 禁止：
 
@@ -200,6 +200,7 @@ description: 编排 /onsf-auto 的无交互 Onion SDD 自动化流程，覆盖�
 - 自动归档 task。
 - 修改 `.trellis/scripts/**` 或 `.trellis/.runtime/**`。
 - 把 OpenSpec 正文复制进 Trellis task 或 journal。
+- 手写 JSON 绕过 `onion_state.py` 写优先级。
 
 ## 收束边界
 
@@ -208,6 +209,7 @@ description: 编排 /onsf-auto 的无交互 Onion SDD 自动化流程，覆盖�
 - 不自动 `git commit`。
 - 不自动 Trellis archive。
 - 不自动 push / PR / MR。
-- `/onsf-finish` 门禁通过后自动执行 `openspec archive <change-id>`；CLI 不可用时使用等效手工归档；失败时停止并报告。
+- `finish-check` 或准备归档前必须跑 `finish_check.py`；非 0 则 blocked。
+- `/onsf-finish` 预检通过后自动执行 `openspec archive <change-id>`，并 `onion_state.py set --idle`；CLI 不可用时使用等效手工归档；失败时停止并报告。
 
 如需提交或远程同步，最终输出只提示下一步命令或建议用户明确授权。

@@ -9,18 +9,28 @@ description: 检查 Onion SDD 变更的验证证据、任务状态与归档条�
 
 ## 执行顺序
 
-1. 定位当前 `openspec/changes/<change-id>/`。
-2. 读取 `proposal.md`、`tasks.md`、`specs/**/spec.md`、验证记录和 `e2e-report.md`。
-3. 对 Tier 0+/1，检查 mini/light change 的目标、任务和定向验证是否闭合。
-4. 对 Tier 2+，读取 `skills/verify-change/SKILL.md` 的验收口径，检查 `e2e-report.md` 或等价验收证据。
-5. 检查是否存在"带债项"：`proposal.md` 中 `## 带债项` 章节，逐条判断是否可接受。
-6. 输出检查结论：是否可归档、仍需补哪些验证、是否存在已知风险、债项数。
-7. **门禁通过后自动归档**：
+1. 定位当前 `openspec/changes/<change-id>/`（可用 `onion_state.py get` 解析 `active_change_id`）。
+2. **Finish 预检（必须，归档前置）**：
+   ```bash
+   python3 <onion-sdd>/scripts/finish_check.py --repo-root . [--change-id <id>] [--tier <tier>]
+   ```
+   - exit ≠ 0：**立即停止**。不得调用 `openspec archive`，不得手工移动归档目录。
+   - Hard：找不到 change 目录；`tasks.md` 未完成项（未标「不做」/won't do/cancelled）；Tier 2+ 缺 `e2e-report.md` 或 `## 验收结论`；Tier 0++ `pending` 逾期且 `proposal.md` 无 `## 带债项`。
+   - Soft：`openspec validate`（CLI 不可用则跳过，不单独导致失败）。
+3. 读取 `proposal.md`、`tasks.md`、`specs/**/spec.md`、验证记录和 `e2e-report.md`，做人工可读补充检查（债项可接受性等）。
+4. 对 Tier 0+/1，确认 mini/light 目标、任务和定向验证闭合。
+5. 对 Tier 2+，对照 `skills/verify-change/SKILL.md` 与 `e2e-report.md` 的 `## 验收结论`。
+6. 检查「带债项」：逐条判断是否可接受；带债归档须用户本轮明确同意。
+7. 输出检查结论：是否可归档、仍需补哪些验证、已知风险、债项数。
+8. **仅当预检通过（且带债时已获同意）后自动归档**：
    - 调用 `openspec archive <change-id>`。
-   - 若 `openspec` CLI 不可用，使用等效手工归档：将 `openspec/changes/<change-id>/` 移动到 `openspec/changes/archive/<YYYY-MM-DD>-<change-id>/`，命名方式与 OpenSpec CLI 归档一致。
-   - 归档失败时停止并报告，保留 `.onion-sdd/current.json` 中的 `active_change_id` 便于重试。
-8. 归档成功后更新 `.onion-sdd/current.json`：`active_change_id` 置为 `null`，`phase` 置为 `idle`，`last_action` 记录归档时间。
-9. 判断 Trellis 可用性与当前 change 是否绑定 Trellis task，按分支 A/B/C 执行对应的 Trellis 收尾动作（见下方"Trellis 收尾分工"）。
+   - 若 `openspec` CLI 不可用，使用等效手工归档：将 `openspec/changes/<change-id>/` 移动到 `openspec/changes/archive/<YYYY-MM-DD>-<change-id>/`。
+   - 归档失败时停止并报告，保留运行态中的 `active_change_id` 便于重试。
+9. 归档成功后调用：
+   ```bash
+   python3 <onion-sdd>/scripts/onion_state.py --repo-root . set --idle --last-action "OpenSpec change <change-id> 已自动归档"
+   ```
+10. 判断 Trellis 可用性与当前 change 是否绑定 Trellis task，按分支 A/B/C 执行对应的 Trellis 收尾动作（见下方"Trellis 收尾分工"）。
 
 ## 完成标准
 
@@ -28,9 +38,10 @@ description: 检查 Onion SDD 变更的验证证据、任务状态与归档条�
 - 验证命令与结果可追溯。
 - Tier 2+ 默认需要 `e2e-report.md`；若使用等价验收证据，必须在最终输出中说明来源、覆盖范围和用户确认。
 - 若存在 `e2e-report.md`，以其中 `## 验收结论` 为准。
+- **预检失败不得 archive**（含手工移动降级路径）。
 - 门禁通过后自动归档 OpenSpec change；CLI 不可用时使用等效手工归档。
-- 归档成功后 `.onion-sdd/current.json` 切回 `idle` 状态。
-- 归档失败时输出明确错误，不破坏现有产物状态。
+- 归档成功后必须 `onion_state.py set --idle`（主写 meta 镜像/只写 current）。
+- 归档失败时输出明确错误，不破坏现有产物状态，不置 idle。
 
 ## 自动归档流程
 
@@ -147,7 +158,10 @@ description: 检查 Onion SDD 变更的验证证据、任务状态与归档条�
 
 ## 约束
 
+- **必须先跑 `finish_check.py`**；非 0 则停止，禁止 archive。
 - 门禁通过或用户明确同意带债归档时，自动执行 `openspec archive <change-id>`；CLI 不可用时使用等效手工归档；失败时停止并报告。
+- 归档成功后必须 `onion_state.py set --idle`。
 - 不自动提交 git commit。
 - 不自动 push、创建 PR/MR 或归档 Trellis task。
 - journal 只表示本次变更或会话摘要，不表示 Trellis 运行态。
+- 无 `--force` 绕过预检。
