@@ -2,7 +2,7 @@
 
 Onion SDD 是一个通用 SDD 插件，用 slash command 把变更按复杂度分层：小变更走轻量 OpenSpec 产物，中大型变更进入 onion 自有完整 SDD 基座能力。它保留成熟 SDD 闭环中的需求接入、OpenSpec、任务规划、外部 spec 接入、E2E/验收和归档门禁，同时降低小任务的流程厚度。
 
-**使用说明（安装、命令、典型流程）见 [USAGE.md](./USAGE.md)**；[飞书知识库](https://guanghe.feishu.cn/wiki/XpetwuJJjitqYukZiPYc1atPn3c) 同步面向团队分发。
+**使用说明（安装、命令、典型流程）见 [USAGE.md](./USAGE.md)**；[飞书知识库](https://guanghe.feishu.cn/wiki/XpetwuJJjitqYukZiPYc1atPn3c) 同步面向团队分发。**版本变更见 [CHANGELOG.md](./CHANGELOG.md)**。
 
 ## 当前能力
 
@@ -18,6 +18,7 @@ Onion SDD 是一个通用 SDD 插件，用 slash command 把变更按复杂度�
 ```text
 plugins/onion-sdd/
 ├── .cursor-plugin/plugin.json
+├── CHANGELOG.md
 ├── DESIGN-SUPPLEMENT.md
 ├── commands/
 │   ├── onsf-fix.md
