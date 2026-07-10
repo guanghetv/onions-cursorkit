@@ -17,6 +17,7 @@
 | `plugins/<name>/rules/*.mdc` | Cursor rule，必须有 frontmatter | `plugins/backend/rules/go-error-handling.mdc` |
 | `plugins/<name>/commands/*.md` | slash command 文档 | `plugins/go-cutover-suite/commands/go-cutover.md` |
 | `plugins/<name>/skills/<skill>/SKILL.md` | 可复用 skill | `plugins/workspace-specflow/skills/dev-start/SKILL.md` |
+| `plugins/<name>/scripts/*.py` | 插件内薄运行时 helper（可选；如 onion-sdd） | `plugins/onion-sdd/scripts/onion_state.py` |
 | `.trellis/scripts/` | Trellis 本地 Python 工具 | `.trellis/scripts/task.py` |
 | `scripts/` | Node/CI 辅助脚本 | `scripts/validate-template.mjs` |
 | `.cursor-plugin/marketplace.json` | 插件市场索引 | `.cursor-plugin/marketplace.json` |

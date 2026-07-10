@@ -5,17 +5,18 @@ description: 从已有 OpenSpec 变更产物恢复 Onion SDD 上下文并继续�
 
 # /onsf-continue
 
-用于继续已有 `openspec/changes/<change-id>/`。当前先尝试使用 Trellis active task 的 `task.json.meta.onion` 恢复上下文；Trellis metadata 缺失或不可信时回退到 `.onion-sdd/current.json`（**可选文件，当前无自动写入运行时**），最后再从 OpenSpec 产物和用户意图推断。
+用于继续已有 `openspec/changes/<change-id>/`。优先通过 `scripts/onion_state.py get` 恢复运行态（Trellis `meta.onion` → `current.json` → idle）；再按需扫描 OpenSpec 产物与用户意图。
 
 ## 执行顺序
 
-1. 读取 `skills/trellis-adapter/SKILL.md`，尝试从 Trellis active task 的 `task.json.meta.onion.change_id` 和 `change_path` 恢复。
-2. 若 Trellis metadata 缺失、stale 或指向不存在的 change，读取 `.onion-sdd/current.json` 中的 `active_change_id`、`tier`、`phase`、`last_action`。若 `active_change_id` 为 `null` 或 `phase` 为 `idle`，视为当前没有活跃 Onion change，进入 OpenSpec fallback 或请用户指定 change-id。
-3. 若状态文件不存在或不可信，定位用户指定的 change-id；若未指定，只列出候选并请用户选择。
+1. **运行态恢复（必须）**：调用 `python3 <onion-sdd>/scripts/onion_state.py --repo-root . get`，按 `source: trellis|current|idle` 恢复；再按需 OpenSpec 扫描。详见 `skills/trellis-adapter/SKILL.md`。
+2. **Tier 0++ 逾期扫描（必须）**：若 `tier0pp_openspec_pending=true` 且当前时间已过 `tier0pp_deadline`，输出**硬提示**：须补 mini OpenSpec 并 `clear-tier0pp-pending`，或在 `proposal.md` 落盘 `## 带债项`（含 follow-up）；不得当作已完成变更继续推进归档。
+3. 若状态为 idle / 无 change-id，定位用户指定的 change-id；若未指定，只列出候选并请用户选择。
 4. 读取该变更目录下的 `proposal.md`、`tasks.md`、`specs/**/spec.md`、`research/**`、`backend-*.md`、`backend-yapi-*.md`、`qa-*.md`、`e2e-report.md` 等存在的产物。
 5. 使用 `skills/tier-triage/SKILL.md` 判断继续路径。
 6. Tier 0+/1：继续使用 `mini-change` 或 `light-change` 的任务与验证纪律。
 7. Tier 2+：读取 `full-change` 判断完整流程阶段；必要时调用 `openspec-change`、`external-spec`、`pull-yapi`、`re-check` 或 `verify-change`。
+8. **阶段切换后必须**调用 `onion_state.py set`（或 `clear-tier0pp-pending`）更新 phase / last_action；输出中核对 `primary_write`。
 
 ## 状态推断
 
@@ -36,10 +37,10 @@ description: 从已有 OpenSpec 变更产物恢复 Onion SDD 上下文并继续�
 
 ## 完整流程恢复
 
-- Trellis active task 与 `.onion-sdd/current.json` 指向不同 change 时，提示冲突，默认以 Trellis active task 为准；用户明确指定 change-id 时用用户指定值。
+- 优先用 `onion_state.py get`；Trellis 与 current 冲突时默认以 Trellis 为准；用户明确指定 change-id 时用用户指定值。
 - Trellis 指向的 change 不存在时，标记 stale，fallback 到 current/OpenSpec。
-- `.onion-sdd/current.json` 指向的 Trellis task 不存在时，忽略 `trellis_task`，但保留 change 恢复。
-- `.onion-sdd/current.json` 的 `active_change_id` 为 `null` 或 `phase=idle` 时，表示无活跃 change，不应恢复上一轮已完成变更。
+- current 指向的 Trellis task 不存在时，忽略 `trellis_task`，但保留 change 恢复。
+- `phase=idle` 或 `active_change_id=null` 时，表示无活跃 change，不应恢复上一轮已完成变更。
 - Tier 2+ 读取 `full-change` 作为阶段编排依据。
 - 缺完整 OpenSpec 产物时，使用 `openspec-change` 补齐。
 - 存在 `research/**` 时，先读取每个主题的调研结论；如仍有未决技术问题，调用或派发 `trellis-research`，Trellis 不可用时主会话补调研并写入文件。
@@ -51,6 +52,6 @@ description: 从已有 OpenSpec 变更产物恢复 Onion SDD 上下文并继续�
 ## 约束
 
 - 只读取当前变更相关产物和必要代码。
-- 使用 Trellis task metadata 时只读写 `meta.onion` 和 journal 摘要，不复制 OpenSpec 正文。
+- 阶段切换必须调用 `onion_state.py`；使用 Trellis task metadata 时只读写 `meta.onion` 和 journal 摘要，不复制 OpenSpec 正文。
 - 不修改 Trellis 源码、`.trellis/scripts/**` 或 `.trellis/.runtime/**`；如必须改 Trellis 才能继续，先向用户确认。
 - `/onsf-continue` 本身不自动归档；恢复后进入 `/onsf-finish` 时由 `/onsf-finish` 自动归档。不自动提交 git commit。

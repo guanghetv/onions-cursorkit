@@ -1,106 +1,119 @@
-# Thinking Guides
+# 思考指南（Thinking Guides）
 
-> **Purpose**: Expand your thinking to catch things you might not have considered.
-
----
-
-## Why Thinking Guides?
-
-**Most bugs and tech debt come from "didn't think of that"**, not from lack of skill:
-
-- Didn't think about what happens at layer boundaries → cross-layer bugs
-- Didn't think about code patterns repeating → duplicated code everywhere
-- Didn't think about edge cases → runtime errors
-- Didn't think about future maintainers → unreadable code
-
-These guides help you **ask the right questions before coding**.
+> **目的**：在动手前扩展思考面，避免「没想到」导致的缺陷与技术债。
 
 ---
 
-## Available Guides
+## 为什么需要思考指南？
 
-| Guide | Purpose | When to Use |
-|-------|---------|-------------|
-| [Code Reuse Thinking Guide](./code-reuse-thinking-guide.md) | Identify patterns and reduce duplication | When you notice repeated patterns |
-| [Cross-Layer Thinking Guide](./cross-layer-thinking-guide.md) | Think through data flow across layers | Features spanning multiple layers |
-| [Incidental Formatting Guide](./incidental-formatting-guide.md) | Decide whether to keep or revert formatting an edit tool applied outside your intended diff | An edit's diff includes hunks you didn't intend to touch |
+多数缺陷和技术债来自**没想到**，而不是不会写：
 
----
+- 没想到跨层边界会发生什么 → 跨层 bug
+- 没想到模式在重复 → 到处复制粘贴
+- 没想到边界情况 → 运行时错误
+- 没想到后续维护者 → 难读难改
 
-## Quick Reference: Thinking Triggers
-
-### When to Think About Cross-Layer Issues
-
-- [ ] Feature touches 3+ layers (API, Service, Component, Database)
-- [ ] Data format changes between layers
-- [ ] Multiple consumers need the same data
-- [ ] You're not sure where to put some logic
-- [ ] You are adding an event kind, JSONL record, RPC payload, or config field
-- [ ] UI / command code starts casting raw payload fields directly
-
-→ Read [Cross-Layer Thinking Guide](./cross-layer-thinking-guide.md)
-
-### When to Think About Code Reuse
-
-- [ ] You're writing similar code to something that exists
-- [ ] You see the same pattern repeated 3+ times
-- [ ] You're adding a new field to multiple places
-- [ ] **You're modifying any constant or config**
-- [ ] **You're creating a new utility/helper function** ← Search first!
-- [ ] Two files read the same untyped payload field with local casts
-- [ ] Multiple branches update the same derived state from `kind` / `action`
-
-→ Read [Code Reuse Thinking Guide](./code-reuse-thinking-guide.md)
-
-### When Your Edit's Diff Has Unintended Hunks
-
-- [ ] `git diff` shows changes in sections you didn't touch (e.g. table realignment, blank-line normalization)
-- [ ] You're about to spend a cycle reverting an entire file because of this
-- [ ] You're unsure whether an incidental hunk is safe to keep
-
-→ Read [Incidental Formatting Guide](./incidental-formatting-guide.md)
-
-### When Verifying AI Cross-Review Results
-
-- [ ] Reviewer claims "user input can be malicious" → Check the actual data source (internal manifest? user config? external API?)
-- [ ] Reviewer flags "missing validation" → Is the data from a trusted internal source?
-- [ ] Reviewer says "behavior change" → Read the code comments — is it intentional design?
-- [ ] Reviewer identifies a "bug" in test → Mentally delete the feature being tested — does the test still pass? If yes → tautological test
-
-**Common AI reviewer false-positive patterns**:
-1. **Trust boundary confusion**: Treating internal data (bundled JSON manifests) as untrusted external input
-2. **Ignoring design comments**: Flagging intentional behavior documented in code comments as bugs
-3. **Variable misreading**: Not tracing a variable to its actual definition (e.g., Map keyed by path vs name)
-
-**Verification rule**: Every CRITICAL/WARNING finding must be verified against the actual code before prioritizing. Budget ~35% false-positive rate for AI reviews.
+这些指南帮助你在编码前**问对问题**。
 
 ---
 
-## Pre-Modification Rule (CRITICAL)
+## 可用指南
 
-> **Before changing ANY value, ALWAYS search first!**
+| 指南 | 用途 | 何时使用 |
+|------|------|----------|
+| [代码复用思考指南](./code-reuse-thinking-guide.md) | 识别模式、减少重复 | 发现重复模式时 |
+| [跨层思考指南](./cross-layer-thinking-guide.md) | 梳理跨层数据流 | 功能跨越多层时 |
+| [附带格式化指南](./incidental-formatting-guide.md) | 判断工具附带改动的去留 | diff 出现非预期 hunk 时 |
+| [文档语言规范](./doc-language-guide.md) | 正文中文、标识符保留英文 | 写/改任何 Markdown 文档时 |
+
+---
+
+## 速查：思考触发器
+
+### 何时考虑跨层问题
+
+- [ ] 功能触及 3 层及以上（API、Service、Component、Database）
+- [ ] 层与层之间数据格式会变化
+- [ ] 多个消费者需要同一份数据
+- [ ] 不确定逻辑该放在哪一层
+- [ ] 正在新增 event kind、JSONL 记录、RPC payload 或配置字段
+- [ ] UI / 命令代码开始直接对原始 payload 字段做类型断言
+
+→ 阅读 [跨层思考指南](./cross-layer-thinking-guide.md)
+
+### 何时考虑代码复用
+
+- [ ] 正在写与已有代码相似的逻辑
+- [ ] 同一模式已重复 3 次及以上
+- [ ] 要在多处添加同一字段
+- [ ] **正在修改任意常量或配置**
+- [ ] **正在新建工具函数 / helper** ← 先搜索！
+- [ ] 两处以上用本地断言读取同一未类型化 payload 字段
+- [ ] 多个分支根据 `kind` / `action` 更新同一派生状态
+
+→ 阅读 [代码复用思考指南](./code-reuse-thinking-guide.md)
+
+### 何时处理非预期的 diff hunk
+
+- [ ] `git diff` 出现你未改动的区域（如表格对齐、空行规范化）
+- [ ] 正打算因这类噪音整文件回滚
+- [ ] 不确定某个附带 hunk 是否可保留
+
+→ 阅读 [附带格式化指南](./incidental-formatting-guide.md)
+
+### 何时处理 Onion SDD 运行态 / finish 门禁
+
+- [ ] 阶段切换必须调用 `onion_state.py`（不要手写 JSON 绕过写优先级）
+- [ ] 已绑定 Trellis task → 主写 `meta.onion` 并镜像 `current.json`；否则只写 current
+- [ ] `/onsf-finish` 归档前必须先跑 `finish_check.py`
+- [ ] Tier 0++ 逾期仍 pending 时：补 mini OpenSpec 并清 pending，或在 proposal 落盘 `## 带债项`
+
+→ 阅读 [Onion SDD 运行态与 finish 预检](../backend/onion-sdd-runtime.md)
+
+### 何时核对 AI 交叉审查结论
+
+- [ ] 审查称「用户输入可能被恶意利用」→ 核对真实数据来源（内部清单？用户配置？外部 API？）
+- [ ] 审查称「缺少校验」→ 数据是否来自可信内部源？
+- [ ] 审查称「行为变化」→ 读代码注释，是否为有意设计？
+- [ ] 审查称测试有「bug」→ 在脑中删掉被测功能，测试是否仍通过？若是 → 同义反复测试
+
+**常见 AI 审查误报模式**：
+
+1. **信任边界混淆**：把内部数据（打包的 JSON 清单）当成不可信外部输入
+2. **忽略设计注释**：把注释已说明的有意行为当成 bug
+3. **变量误读**：未追溯到真实定义（例如按 path 而非 name 做 Map 键）
+
+**核对规则**：每条 CRITICAL/WARNING 都必须对照实际代码核实后再排优先级。可按约 35% 误报率做预算。
+
+---
+
+## 修改前规则（强制）
+
+> **改任何值之前，先搜索！**
 
 ```bash
-# Search for the value you're about to change
+# 搜索你即将修改的值
 grep -r "value_to_change" .
 ```
 
-This single habit prevents most "forgot to update X" bugs.
+这一习惯能避免大多数「忘了改另一处」的问题。
 
 ---
 
-## How to Use This Directory
+## 如何使用本目录
 
-1. **Before coding**: Skim the relevant thinking guide
-2. **During coding**: If something feels repetitive or complex, check the guides
-3. **After bugs**: Add new insights to the relevant guide (learn from mistakes)
-
----
-
-## Contributing
-
-Found a new "didn't think of that" moment? Add it to the relevant guide.
+1. **编码前**：浏览相关思考指南
+2. **编码中**：感到重复或复杂时查阅指南
+3. **出 bug 后**：把新认知写回对应指南
 
 ---
 
-**Core Principle**: 30 minutes of thinking saves 3 hours of debugging.
+## 贡献
+
+发现新的「没想到」时刻？写进对应指南。
+
+写文档时遵守 [文档语言规范](./doc-language-guide.md)：正文中文，专有名词与代码保留英文。
+
+---
+
+**核心原则**：想清楚 30 分钟，少调 3 小时。

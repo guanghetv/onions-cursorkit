@@ -23,6 +23,16 @@ description: 判断用户请求属于 Onion SDD 的 Tier 0、0+、0++、1、2 �
 
 不阻断流程，但要求用户确认知晓冲突。如果 Trellis active task 或 `.onion-sdd/current.json` 中已有活跃 change，优先提示先完成该变更。
 
+### 跨 change 分支复用检测
+
+判定"当前分支绑定的 change"，按优先级依次尝试：
+
+1. **Trellis 优先**：存在 Trellis active task 且其 `branch` 字段等于 `git branch --show-current` 的结果，取该 task 的 `meta.onion.change_id`。
+2. **分支名兜底**（没有 Trellis，或 Trellis active task 不存在/未绑定 `branch` 字段时）：解析 `git branch --show-current` 的结果是否匹配 `feat/<change-id>` 格式，且 `<change-id>` 对应 `openspec/changes/` 下一个真实存在的未归档目录，命中则取该 change-id。
+3. 以上两层都未命中：视为无法判定，不触发本检测。
+
+如果判定出的 change-id 与本次判断要处理的 change 不同（新建 change，或用户明确要处理另一个 change），触发 `rules/onion-sdd.mdc`「写入门禁 > 分支门禁」的门禁动作（拦截+路由），而不是停留在上面的软提示。
+
 ## Tier 定义
 
 | Tier | 判断标准 | 默认产物 |

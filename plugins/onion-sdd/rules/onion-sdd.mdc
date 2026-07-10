@@ -20,8 +20,11 @@ globs:
 
 - 当前承诺 slash command 触发：`/onsf-fix`、`/onsf-tweak`、`/onsf-plan`、`/onsf-continue`、`/onsf-finish`、`/onsf-auto`。
 - `/onsf-auto` 是无交互自动化入口，使用 `skills/auto-flow/SKILL.md` 编排现有 Onion SDD skills；metrics、Spec Pack 等能力仍可按后续验收或独立任务推进。
-- OpenSpec 是变更正文唯一真相源；Trellis adapter 只保存状态、引用、hash、parent/child 关系和 journal 摘要。
-- `.onion-sdd/current.json` 是可选恢复 hint；**当前无专用 CLI / Hook 自动维护**，缺失时 `/onsf-continue` 仍可通过 OpenSpec 产物或用户指定 change-id 恢复。
+- OpenSpec 是变更正文唯一真相源；运行态通过 `scripts/onion_state.py` 统一读写。
+- **读优先级**：已绑定 Trellis `meta.onion` → `.onion-sdd/current.json` → OpenSpec 扫描。
+- **写优先级**：已绑定 Trellis task 时主写 `meta.onion` 并镜像 `current.json`；无 Trellis / 未绑定时只写 `current.json`。
+- 阶段切换、0++ 标记/清 pending、finish 归档成功后置 idle：**必须**调用 `onion_state.py`（无 Hook；靠本规则与 command 硬纪律）。
+- `/onsf-finish` 归档前**必须**先跑 `scripts/finish_check.py`；exit ≠ 0 时禁止 `openspec archive` 与手工移动归档。
 
 ## 分级写入
 
@@ -45,7 +48,31 @@ globs:
 
 修改业务代码前应已存在当前 change 的 `tasks.md`；纯文档、配置或紧急 Tier 0++ 可按对应轻量规则处理并补记录。
 
-`/onsf-auto` 可在低/中风险缺口下记录假设并继续；遇到权限、安全、支付、资金、审计、破坏性数据行为、接口删除/重命名、QA/YApi 冲突、关键路径不可验证、需要创建/启动/归档 Trellis task、需要 commit/push/PR 等高风险或不可逆动作时必须停止。`/onsf-finish` 门禁通过后自动执行 `openspec archive <change-id>`，失败时停止。
+`/onsf-auto` 可在低/中风险缺口下记录假设并继续；遇到权限、安全、支付、资金、审计、破坏性数据行为、接口删除/重命名、QA/YApi 冲突、关键路径不可验证、需要创建/启动/归档 Trellis task、需要 commit/push/PR 等高风险或不可逆动作时必须停止。`/onsf-finish` 必须先跑 `finish_check.py`；通过后自动执行 `openspec archive <change-id>`，失败时停止。Tier 0++ `tier0pp_openspec_pending` 逾期且无 `## 带债项` 时预检 hard fail。
+
+### 分支门禁
+
+修改业务代码前（即将进入 implement 阶段，与上方"修改业务代码前应已存在 `tasks.md`"是同一时间点），必须确认满足以下两条，否则触发门禁。OpenSpec `proposal.md`/`tasks.md` 草稿阶段不受此门禁约束——未提交的草稿文件会随 `git checkout -b` 一起带入新分支，不需要先建分支再写文档。
+
+**触发条件 1：当前分支是受保护分支**（固定列表，不做可配置项）：
+- 精确匹配：`master`、`main`、`develop`
+- 前缀匹配：`release/*`
+- `git branch --show-current` 输出为空（detached HEAD）按受保护分支同等处理
+
+**触发条件 2：当前分支绑定着另一个活跃 change**（检测逻辑见 `tier-triage/SKILL.md`「冲突检测」，本节只定义命中后的动作）：
+- 双层判定，优先级从高到低：① 存在 Trellis active task 且 `task.json.branch` 等于当前分支，取该 task 的 `meta.onion.change_id`；② 无 Trellis/未绑定时，解析当前分支名是否匹配 `feat/<change-id>` 格式且对应 `openspec/changes/` 下真实存在的未归档目录，取解析出的 change-id。
+- 判定出的 change-id 不等于本次要处理的 change-id 时触发。
+- 两层都无法判定归属（无 Trellis 绑定，且分支名不匹配 `feat/<change-id>` 或找不到对应目录）时不触发——避免信息不足导致误判。
+
+**命中任一触发条件时**：
+1. 停止修改业务代码，向用户说明当前处于受保护分支 / 当前分支已绑定另一个 change `<change-id-A>`（触发条件 2 时，必须点名 `<change-id-A>`，并说明"继续会把两次不相关改动混进同一分支的 commit 历史"，不能用受保护分支场景的通用文案带过）。
+2. 用户提供了飞书项目卡片链接 → 按 `full-change/SKILL.md`「开发分支准备」调用 `create-feature-branch` 创建分支。
+3. 用户没有飞书链接，或本次是 Tier 0++ 紧急修复 → 提供分支名 `feat/<change-id>`（`change-id` 为当前 OpenSpec change 的 `MM-DD-<slug>`）供用户确认后创建，或允许用户自行创建分支后告知分支名。
+4. 用户明确要求"就在当前分支继续改" → 尊重用户选择，记录在最终输出或 `proposal.md` 中，本次 change 生命周期内不再重复拦截。
+
+**`/onsf-auto`（无交互自动模式）特化**：不拦截、不停止。命中任一触发条件时，直接按模板 `feat/<change-id>` 生成分支名并 `git checkout -b` 切换，无需确认；在最终输出中说明已自动创建并切换的分支名。触发条件 2 命中时，最终输出必须在风险/blocker 清单里显式点名"检测到跨 change 分支复用，已自动切换到新分支 `feat/<change-id>`，原分支 `<原分支名>` 绑定的 `<change-id-A>` 未受影响"，不能和触发条件 1 的常规提示合并成一句话。若已有飞书链接上下文但 auto 模式无法交互确认，同样直接走 `feat/<change-id>` 模板，不额外尝试调用 `create-feature-branch`（该 skill 依赖飞书 MCP 查询迭代信息，在无交互场景下不适合自动触发）。
+
+Tier 0（纯问答/排查/审阅，无写入动作）不受本门禁约束。
 
 ## 实现纪律
 
@@ -83,7 +110,8 @@ globs:
 
 ## 收束纪律
 
-- `/onsf-finish` 门禁通过或用户明确同意带债归档时，自动执行 `openspec archive <change-id>`；CLI 不可用时使用等效手工归档；失败时停止并报告。
+- `/onsf-finish` 必须先跑 `finish_check.py`；预检失败不得 archive。门禁通过或用户明确同意带债归档时，自动执行 `openspec archive <change-id>`；CLI 不可用时使用等效手工归档；失败时停止并报告。
+- 归档成功后必须 `onion_state.py set --idle`。
 - 不自动提交 git commit。
 - 输出完成结论时必须说明验证结果、未覆盖风险和是否建议归档。
 - Tier 2+ 以 `e2e-report.md` 的 `## 验收结论` 或用户确认的等价验收证据作为归档判断入口。

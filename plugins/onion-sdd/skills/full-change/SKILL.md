@@ -132,19 +132,18 @@ Trellis 可用时，进入「需求接入」前检查本次 Tier 2+/3 变更是�
 
 ## 开发分支准备
 
-`create-feature-branch` 是 Common 插件提供的通用扩展能力，不属于 onion-sdd 自有基座。正常需求进入开发实现前，如果用户提供飞书项目卡片并需要创建开发分支，可以调用该 skill；不要把分支创建逻辑复制到 onion-sdd 内。
+进入 implement 阶段前的分支门禁判定见 `rules/onion-sdd.mdc`「写入门禁 > 分支门禁」。本小节说明门禁判定"需要创建分支"且用户提供了飞书项目卡片时，具体如何调用 `create-feature-branch`；`create-feature-branch` 是 Common 插件提供的通用扩展能力，不属于 onion-sdd 自有基座，不要把分支创建逻辑复制到 onion-sdd 内。
 
-触发条件：
+触发条件（满足任一即调用本小节流程）：
 
-- 用户粘贴飞书项目卡片链接或卡片信息，且包含可解析的工作项链接，例如 `/detail/<id>`。
-- 用户表达“开始开发”“创建分支”“切开发分支”或团队约定当前需求开发前必须建 feature 分支。
-- 当前工作区准备进入 `implement` 阶段。
+- 分支门禁判定当前处于受保护分支，且用户提供了飞书项目卡片链接或卡片信息，包含可解析的工作项链接，例如 `/detail/<id>`。
+- 用户表达“开始开发”“创建分支”“切开发分支”，希望在分支门禁触发前主动提前创建。
 
 执行纪律：
 
 1. 先完成需求事实、范围和 OpenSpec/`tasks.md` 的最小落盘，避免在需求不清时提前建分支。
 2. 调用 `create-feature-branch` 前，遵守该 skill 自身门禁：工作区必须干净、默认从 `master` 更新后创建分支、需要飞书项目 MCP 和 git/network 权限。
-3. 如果 Common 插件或 `create-feature-branch` 不可用，不阻塞 onion-sdd 需求分析；明确提示用户安装 Common 插件、同步该 skill，或手动创建分支。
+3. 如果 Common 插件或 `create-feature-branch` 不可用，或用户没有飞书链接：按分支门禁的 `feat/<change-id>` 兜底路径处理，不阻塞 onion-sdd 需求分析。
 4. 分支创建成功后，在当前 change 的 `proposal.md` 或最终摘要中记录飞书卡片 ID/URL、需求文档来源和 feature branch 名称。
 5. 如果当前 change 绑定 Trellis task，优先用 `task.py set-branch <task> <branch>` 写入 Trellis 标准 `branch` 字段，不把分支名重复写入 `meta.onion`。
 6. 分支创建失败时，不继续修改业务代码；说明失败原因和下一步处理方式。
@@ -239,6 +238,7 @@ Trellis 可用时，进入「需求接入」前检查本次 Tier 2+/3 变更是�
 - 无测试工具或任务性质不适合 TDD（纯配置、文档、紧急 Tier 0++）时，记录静态检查、手动验证或浏览器验证步骤代替，不得虚构已跑测试。
 - Tier 2+ 大范围改动建议派发 `trellis-implement` 子代理执行；不可用时主会话按本技能执行。
 - 发现升级红线或范围膨胀时，暂停并回到 triage/design。
+- 各阶段结束（triage / openspec / implement / integrate / verify）**必须**调用 `onion_state.py set`（有绑定 task 时主写 meta + 镜像 current）；输出核对 `primary_write`。
 
 ## 事件驱动
 
@@ -252,7 +252,7 @@ Trellis 可用时，进入「需求接入」前检查本次 Tier 2+/3 变更是�
 | 测试 spec 到了 / QA 文档到了 | 使用 `external-spec` 写入 `qa-*.md` 并做差异分析 |
 | 跑 E2E / 浏览器验证 / 验证一下 | 使用 `verify-change` 生成或更新 `e2e-report.md` |
 | 需求变了 / spec 改了 / 验收口径调整 | 暂停实现，按 `openspec-change` 的「已落盘产物的更新协议」同步 proposal/specs/tasks，再继续；触发升级红线则回到 `tier-triage` |
-| 可以收尾 / 能归档吗 | 使用 `/onsf-finish` 检查归档条件并自动归档 |
+| 可以收尾 / 能归档吗 | 使用 `/onsf-finish`（先跑 `finish_check.py`）检查并自动归档 |
 
 ## 质量审查
 
@@ -272,7 +272,7 @@ Trellis 可用时，进入「需求接入」前检查本次 Tier 2+/3 变更是�
 - `tasks.md` 已更新，未完成项有明确状态。
 - 外部 spec / YApi 差异已处理或记录。
 - Tier 2+ 有 `e2e-report.md` 或用户认可的等价验收证据。
-- `/onsf-finish` 检查归档条件，门禁通过后自动执行 `openspec archive <change-id>`；CLI 不可用时使用等效手工归档。
+- `/onsf-finish` 必须先跑 `finish_check.py`；预检失败不得 archive。通过后自动执行 `openspec archive <change-id>`，并 `onion_state.py set --idle`；CLI 不可用时使用等效手工归档。
 
 ## 停止条件
 

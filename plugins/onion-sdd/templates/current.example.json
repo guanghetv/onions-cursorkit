@@ -7,6 +7,8 @@
   "last_action_at": "2025-06-25T15:30:00+08:00",
   "upgrade_risk": false,
   "notes": "用户提醒注意兼容性",
+  "tier0pp_deadline": null,
+  "tier0pp_openspec_pending": false,
   "trellis_task": {
     "task_dir": ".trellis/tasks/06-25-fix-payment-button",
     "status": "in_progress"

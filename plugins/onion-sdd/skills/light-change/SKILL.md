@@ -24,6 +24,10 @@ openspec/changes/<change-id>/
         └── spec.md
 ```
 
+## 分支门禁
+
+开始修改业务代码前，先过分支门禁（见 `rules/onion-sdd.mdc`「写入门禁 > 分支门禁」）；OpenSpec 草稿阶段不受影响。
+
 ## proposal.md 模板
 
 ```markdown
@@ -105,6 +109,7 @@ openspec/changes/<change-id>/
 - `tasks.md` 已更新。
 - 定向验证与小范围回归有明确结果。
 - 残余风险已在最终回复或产物中说明。
+- 阶段切换已调用 `onion_state.py set`；收尾走 `/onsf-finish`（先跑 `finish_check.py`，成功后 `set --idle`）。
 
 ## 质量自检（写完后必须过一遍）
 

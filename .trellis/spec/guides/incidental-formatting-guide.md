@@ -1,37 +1,37 @@
-# Incidental Formatting Guide
+# 附带格式化指南（Incidental Formatting Guide）
 
-> **Purpose**: State the scope discipline that applies *before* you edit, and use `git diff` only to verify you followed it — not to decide, after the fact, what counts as in scope.
-
----
-
-## The Standing Rule (precondition — decide before you edit, not from the diff)
-
-Only touch content that belongs to the current requirement's scope. This is a pre-development convention, not something inferred from `git diff` afterward: don't reformat, restyle, reorder, or reword anything outside the task's scope, even if it looks like a harmless cleanup or an improvement you noticed along the way.
-
-`git diff` after the edit is a **verification step** — it checks whether you (or a tool acting on your behalf) actually respected the rule above. It is never the place where the "is this okay to touch" decision gets made; that decision is already fixed before you start editing.
+> **目的**：说明在编辑**之前**就应遵守的范围纪律，并用 `git diff` 仅作事后核验——而不是在事后才决定什么算在范围内。
 
 ---
 
-## The Problem This Guide Addresses
+## 常设规则（前置条件——在编辑前决定，而不是从 diff 推断）
 
-Some edit tools (or the underlying editor) auto-reformat a file on write as a side effect — e.g. realigning Markdown pipe-table columns with padding, or normalizing blank lines around lists — independent of what you asked for. This can inject changes into sections you never intended to touch, even ones far from your edit.
+只改动属于当前需求范围的内容。这是开发前约定，不是事后从 `git diff` 推断出来的：不要对任务范围之外的任何内容做重新格式化、改样式、重排或改写，即便看起来像无害清理或你顺手发现的改进。
 
-This is a **tool side-effect**, not a scope decision. The standing rule ("don't touch unrelated content") still applies in full; the question is only how to classify what the tool injected once you verify it with `git diff`.
-
----
-
-## Classifying a Tool-Injected Hunk During Verification
-
-When `git diff` shows a hunk outside your intended change, it means the tool deviated from the standing rule on your behalf. Classify it immediately — don't leave it open as a debate across turns:
-
-| Hunk type | Why it passes/fails the standing rule | Action |
-|-----------|----------------------------------------|--------|
-| **Format-only** — whitespace/column padding/alignment, blank-line normalization; no word, value, or order changed | No actual content was touched — the rule is upheld in substance despite the diff noise | Leave it; no revert needed |
-| **Content change** — any wording, value, ordering, or logic difference, however small | The rule was violated, regardless of which tool caused it | Revert immediately; restore the original text for that hunk |
+编辑后的 `git diff` 是**核验步骤**——它检查你（或代你操作的工具）是否真正遵守了上述规则。它绝不是做出「这能不能动」决策的地方；该决策在开始编辑前就已经固定。
 
 ---
 
-## Example
+## 本指南要解决的问题
+
+某些编辑工具（或底层编辑器）会在写入时作为副作用自动重新格式化文件——例如用 padding 重新对齐 Markdown 管道表格列，或规范化列表周围的空行——与你要求的改动无关。这可能把变更注入到你从未打算触碰的段落，甚至远离你编辑点的区域。
+
+这是**工具副作用**，不是范围决策。常设规则（「不要动无关内容」）仍然完全适用；问题只是：用 `git diff` 核验时，如何归类工具注入的内容。
+
+---
+
+## 核验时归类工具注入的 hunk
+
+当 `git diff` 显示一个超出你预期改动的 hunk 时，意味着工具替你偏离了常设规则。立即归类——不要把它留作跨轮次的争论：
+
+| Hunk 类型 | 为何通过/未通过常设规则 | 动作 |
+|-----------|-------------------------|------|
+| **仅格式**——空白/列 padding/对齐、空行规范化；未改动任何词、值或顺序 | 实际内容未被触碰——尽管有 diff 噪音，规则在实质上得到遵守 | 保留；无需回退 |
+| **内容变更**——任何措辞、值、顺序或逻辑差异，无论多小 | 规则被违反，无论由哪个工具造成 | 立即回退；恢复该 hunk 的原文 |
+
+---
+
+## 示例
 
 ```diff
 - | 阶段 | 产物 | 入口 |
@@ -40,20 +40,20 @@ When `git diff` shows a hunk outside your intended change, it means the tool dev
 + | --------- | --------------------------------------------- | ------------- |
 ```
 
-✅ **Leave it** — only padding/alignment added, cell text unchanged; no unrelated content was actually touched.
+✅ **保留**——只增加了 padding/对齐，单元格文本未变；实际未触碰无关内容。
 
 ```diff
 - | 平台 | 追加条目 |
 + | 平台 | 追加条目（不含 opsx-*.md） |
 ```
 
-❌ **Revert** — cell wording changed; this is a scope violation caught during verification, not a formatting side-effect.
+❌ **回退**——单元格措辞变了；这是核验时发现的范围违规，不是格式化副作用。
 
 ---
 
-## Why This Matters
+## 为何重要
 
-- The scope discipline ("don't touch unrelated content") must be settled before you start editing — treating it as something `git diff` decides after the fact gets the causality backwards and invites scope creep.
-- Reverting harmless formatting churns the diff for no reason and costs a review cycle.
-- Silently keeping a content change that hitched a ride on a tool's auto-format pass is a correctness bug — the user only asked for one specific change.
-- `git diff` after editing exists to catch tool side-effects that slipped past your intent, not to renegotiate scope.
+- 「不要动无关内容」的范围纪律必须在开始编辑前就定好——把它当成事后由 `git diff` 决定，会把因果颠倒，并招致范围蔓延。
+- 回退无害的格式化会无谓搅动 diff，并多耗一轮评审。
+- 默默保留搭工具自动格式化便车的内容变更是正确性 bug——用户只要求了一处特定改动。
+- 编辑后的 `git diff` 用来抓住滑过你意图的工具副作用，而不是重新协商范围。
