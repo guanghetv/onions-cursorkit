@@ -2,7 +2,7 @@
 
 ## 概述
 
-本规格定义 AICR 提交前门禁升级后的目标形态：以平台批量改造为主路径，采用仓库固化 runtime 的薄入口模式，保持本地门禁稳定；MR 覆盖率统计与发布由 `AI-CodeReview` 服务承接。
+本规格定义 AICR 提交前门禁升级后的目标形态：以平台批量改造为主路径，采用仓库固化 runtime 的薄入口模式，保持本地门禁稳定；MR 覆盖率统计与发布由 `AI-CodeReview` 服务承接。`/cr` 本地审查与 hook 安装解耦。
 
 ## ADDED Requirements
 
@@ -10,10 +10,12 @@
 
 系统 SHALL 提供平台级批量改造能力，用于将目标仓库从旧接入方式迁移到新接入方式，避免开发者逐仓手工初始化。
 
+批量入口为 `batch-rollout.sh --repos-file <path>`；SHALL 支持 `MODE=dry-run|apply`。SHALL NOT 要求实现按 GitLab `group` 自动枚举仓库（仓库清单由调用方预先准备）。
+
 #### Scenario: dry-run 预检
 
 - **WHEN** 平台以 `dry-run` 模式执行批量改造
-- **THEN** 输出每个仓库的预期改动、风险点和状态（`PREVIEW`/`UPDATED`/`UNCHANGED`/`FAILED`）
+- **THEN** 输出每个仓库的预期改动与状态（`PREVIEW`/`UPDATED`/`UNCHANGED`/`FAILED`）
 - **AND** 不实际写入仓库文件
 
 #### Scenario: apply 生效
@@ -43,9 +45,11 @@
 - **WHEN** 仓库执行初始化或升级后
 - **THEN** runtime 必需脚本与 `.githooks` 入口 SHALL 完整可用
 - **AND** 缺失关键文件时应提示修复
-- **AND** 升级时 SHALL 移除已废弃的旧 runtime 文件（如 `repo-context.mjs`、`resolve-runtime-dir.sh`）
+- **AND** 升级时 SHALL 移除已废弃的旧 runtime 文件（含但不限于 `repo-context.mjs`、`resolve-runtime-dir.sh`、`aggregate-mr.mjs`、`gitlab-auth.mjs`、`diff-fingerprint.mjs`、`hook-post-commit.sh`、`hook-pre-push.sh`）
 
 runtime 包含：`hook-pre-commit.sh`、`aicr-utils.mjs`、`validate-cr-gate.mjs`、`event-log.mjs`、`link-cr-commit.mjs`、`upload-events-ci.mjs`。
+
+薄入口包含：`.githooks/pre-commit`、`.githooks/post-commit`、`.githooks/pre-push`。
 
 ### Requirement: 本地门禁语义保持不变
 
@@ -73,6 +77,12 @@ runtime 包含：`hook-pre-commit.sh`、`aicr-utils.mjs`、`validate-cr-gate.mjs
 - **WHEN** 暂存区文件路径未变但 diff 内容已变更
 - **THEN** `diff_fingerprint` 与最近一次 `cr_completed` 不一致
 - **AND** pre-commit 阻断并提示重新执行 `/cr`
+
+#### Scenario: validator 异常放行
+
+- **WHEN** `validate-cr-gate.mjs` 不可用或崩溃（退出码 ≥ 2）
+- **THEN** 记录 `telemetry_error` 与 `commit_attempted(status=telemetry_fallback)`
+- **AND** 放行本次提交
 
 ### Requirement: post-commit 按 commit 关联审查证据
 
@@ -108,14 +118,14 @@ runtime 包含：`hook-pre-commit.sh`、`aicr-utils.mjs`、`validate-cr-gate.mjs
 #### Scenario: push 触发上报
 
 - **WHEN** 开发者执行 `git push` 且 `.git/aicr/events.ndjson` 非空
-- **THEN** `upload-events-ci.mjs` POST 至 `AICR_INGEST_URL`（含 `project_id` 或 `project_path`、`branch`、`author`、`events[]`）
+- **THEN** `upload-events-ci.mjs` POST 至 `AICR_INGEST_URL`（含 `project_id` 或 `project_path`、`repo`、`branch`、`author`、`events[]`）
 - **AND** 成功时输出 `UPLOAD_OK`
 
 #### Scenario: 上报失败保留快照
 
 - **WHEN** ingest 请求失败或网络不可用
 - **THEN** 写入 `.git/aicr/ci-export/*.ndjson` 本地快照
-- **AND** push 仍成功完成
+- **AND** push 仍成功完成（薄入口不因 uploader 失败而阻断）
 
 ### Requirement: 覆盖率统计应由 AI-CodeReview 服务主导
 
@@ -136,14 +146,42 @@ runtime 包含：`hook-pre-commit.sh`、`aicr-utils.mjs`、`validate-cr-gate.mjs
 
 系统 SHALL 通过 `install.sh` 提供幂等安装与 Git 还原能力，确保可控接入。
 
+`install.sh` SHALL 写入薄 hook 与 `vendor/aicr-runtime/`，设置 `core.hooksPath=.githooks`；SHALL NOT 复制 `cr-before-commit.mdc` 到业务仓；SHALL NOT 自动执行 runtime `--self-check`（自检由验收文档手动触发）。
+
 #### Scenario: 首次安装
 
 - **WHEN** 仓库执行 `install.sh` 或批量改造 apply
 - **THEN** 写入薄 hook 与 `vendor/aicr-runtime/`（不写入 `.aicr-migration-backup/` 本地备份）
-- **AND** 安装后执行自检
+- **AND** 不复制 `cr-before-commit.mdc`
+- **AND** 不在安装脚本内强制跑 `--self-check`
 
 #### Scenario: 批次还原
 
 - **WHEN** 批量改造出现系统性问题
 - **THEN** 平台通过 Git（`git restore --source=<git_ref> -- .githooks vendor/aicr-runtime`）还原 `.githooks` 与 `vendor/aicr-runtime`
 - **AND** 回滚结果可经 Git 历史审计
+
+### Requirement: /cr 本地审查不依赖 hook 安装
+
+系统 SHALL 保证 `aicr-local` 的 `/cr` 在未执行 `cr-precommit-setup` / 未安装业务仓 hook 时仍可完成本地审查。
+
+#### Scenario: 未集成 hook 仍可 /cr
+
+- **WHEN** 业务仓不存在 `vendor/aicr-runtime/event-log.mjs` 且未配置 `core.hooksPath=.githooks`
+- **THEN** 用户仍可通过 `git add` + `/cr` 完成暂存区审查并输出报告
+- **AND** 步骤 11 因缺少 `event-log.mjs` 而跳过事件写入，且不视为审查失败
+
+#### Scenario: 已集成 hook 时写事件
+
+- **WHEN** 业务仓已安装 `vendor/aicr-runtime/event-log.mjs` 且审查结论为 `✅ 无明显问题`
+- **THEN** `/cr` 步骤 11 写入 `cr_completed(status=pass)` 供 pre-commit 校验
+
+### Requirement: Agent 提交前规则由插件下发
+
+系统 SHALL 通过 common 插件下发 `cr-before-commit.mdc`（约束 Agent 协助提交前完整执行 `/cr`），SHALL NOT 由安装脚本将其复制进业务仓库。
+
+#### Scenario: 安装不落盘规则文件
+
+- **WHEN** 对业务仓执行 `install.sh`
+- **THEN** 业务仓不新增 `cr-before-commit.mdc`（或等价路径下的同名规则文件）
+- **AND** 规则仍由已安装的 common 插件对 Agent 生效
