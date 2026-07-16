@@ -2,7 +2,7 @@
 
 Onion SDD 是一个通用 SDD 插件，用 slash command 把变更按复杂度分层：小变更走轻量 OpenSpec 产物，中大型变更进入 onion 自有完整 SDD 基座能力。它保留成熟 SDD 闭环中的需求接入、OpenSpec、任务规划、外部 spec 接入、E2E/验收和归档门禁，同时降低小任务的流程厚度。
 
-**使用说明（安装、命令、典型流程）见 [USAGE.md](./USAGE.md)**；[飞书知识库](https://guanghe.feishu.cn/wiki/XpetwuJJjitqYukZiPYc1atPn3c) 同步面向团队分发。
+**使用说明（安装、命令、典型流程）见 [USAGE.md](./USAGE.md)**；[飞书知识库](https://guanghe.feishu.cn/wiki/XpetwuJJjitqYukZiPYc1atPn3c) 同步面向团队分发。**版本变更见 [CHANGELOG.md](./CHANGELOG.md)**。
 
 ## 当前能力
 
@@ -18,6 +18,7 @@ Onion SDD 是一个通用 SDD 插件，用 slash command 把变更按复杂度�
 ```text
 plugins/onion-sdd/
 ├── .cursor-plugin/plugin.json
+├── CHANGELOG.md
 ├── DESIGN-SUPPLEMENT.md
 ├── commands/
 │   ├── onsf-fix.md
@@ -165,7 +166,7 @@ OpenSpec 与 Trellis 的推荐分工：
 | 开发者 journal、会话摘要 | 绑定 Trellis task → `/trellis:finish-work` 或 workflow.md Phase 3.3 写入；未绑定但 Trellis 可用 → `/onsf-finish` 归档成功后自动调用 `add_session.py` 写入 |
 | spec 经验积累（`.trellis/spec/`） | 绑定 Trellis task → workflow.md Phase 3.3（`trellis-update-spec`）写入；未绑定但 Trellis 可用 → `/onsf-finish` 归档成功后加载 `trellis-update-spec` 判断并按需写入 |
 
-Trellis 完全未安装时：Tier 2+/3（`full-change`）首次触发会主动询问是否安装并初始化，同意后先探测 `trellis --version`（CLI 已存在则跳过安装），未安装才 `npm install -g @mindfoldhq/trellis`，再 `trellis init` 并把该平台的整目录忽略规则追加到 `.gitignore`；拒绝或失败不阻塞，按现状降级路径继续。仅手动入口生效，`/onsf-auto` 不触发。
+Trellis 检查（Tier 2+/3 进入 `full-change` 时，仅手动入口）：未安装时会询问是否安装并初始化（先探测 `trellis --version`，未装 CLI 才 `npm install -g`，再 `trellis init` 并追加 `.gitignore`）；已安装但检测到 `Trellis update available` 时会询问是否执行 `trellis upgrade` + `trellis update`。拒绝或失败不阻塞，`/onsf-auto` 不触发。
 
 ## 自动化边界
 

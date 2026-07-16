@@ -36,7 +36,7 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
 进入需求接入前，先做一次性检测（仅本技能被触发，即 Tier 2+/3 时执行；`/onsf-auto` 无交互场景不触发，见 `onsf-auto.md` 的「Trellis 边界」）：
 
 1. 检测 `.trellis/scripts/add_session.py` 是否存在。
-   - 存在 → Trellis 可用，跳过下述安装流程；按下方「task 绑定询问」处理后再进入需求接入。
+   - 存在 → Trellis 可用，跳过下述安装流程；先执行下方「更新检查」，再按「task 绑定询问」处理，最后进入需求接入。
    - 不存在 → 进入第 2 步。
 2. 向用户说明"当前项目未安装 Trellis，其 journal/spec 积累/task 能力可以增强 onion-sdd 的记忆能力"，询问是否现在安装并初始化。每次触发 Tier 2+/3 且 Trellis 仍不可用时都重新询问，不记忆此前的拒绝。
 3. 用户同意时：
@@ -48,6 +48,20 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
    d. 安装/初始化成功后，按下方「gitignore 追加」更新根 `.gitignore`。
    e. 完成后视为 Trellis 已可用，继续本技能后续阶段。
 4. 用户拒绝，或安装/初始化过程报错：说明失败原因（网络、权限、CLI 报错内容），不阻塞——按本技能各阶段已有的"如果 Trellis 不可用，回退到 XXX"分支继续 Tier 2+/3 流程。
+
+### 更新检查
+
+Trellis 已可用（第 1 步命中「存在」）时，进入「task 绑定询问」前先做一次轻量版本检查。仅在本技能被触发时执行；`/onsf-auto` 无交互场景不触发。
+
+1. 读取项目模板版本：`.trellis/.version`。
+2. 执行 `trellis --version`，从输出中查找 `Trellis update available: <current> -> <latest>`；若无该行，也可对比 CLI 版本与 `.version` 是否明显不一致。
+3. **无更新** → 直接进入「task 绑定询问」。
+4. **有更新** → 向用户说明「Trellis 可从 {current} 升级到 {latest}，是否现在执行？」每次 Tier 2+/3 检测到更新时都重新询问，不记忆此前的拒绝。
+5. 用户同意时，按顺序执行：
+   a. `trellis upgrade`（升级全局 CLI；需要 `full_network` 权限）。
+   b. `trellis update`（同步项目 bundled skills、脚本模板与平台命令；不覆盖用户已改过的文件）。
+   c. 若 `trellis update` 提示「modified by user」冲突，列出冲突文件并请用户选择 keep / overwrite；**不得擅自 `--force`**。
+6. 用户拒绝，或任一步失败：说明原因，不阻塞——继续「task 绑定询问」及后续 Tier 2+/3 流程。
 
 ### gitignore 追加
 
