@@ -480,3 +480,36 @@ Integrated YApi contract support into onion-sdd with pull-yapi and re-check skil
 ### Next Steps
 
 - None - task complete
+
+
+## Session 15: 接入 Onion SDD AICR 提交门禁
+
+**Date**: 2026-07-17
+**Task**: 接入 Onion SDD AICR 提交门禁
+**Branch**: `feat/0.0.6版本迭代`
+
+### Summary
+
+将 aicr-local 接入 onion-sdd 提交边界：用户授权后暂存并以 /cr 审查最终 diff；保留 trellis-check 工程质量职责；同步规则、技能与文档，并写入 spec 约定。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `de47690` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
