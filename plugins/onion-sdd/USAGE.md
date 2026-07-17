@@ -66,6 +66,7 @@ openspec/changes/            # 活跃变更目录
 | **飞书 MCP**                                                     | 读取飞书需求文档                               | 用户粘贴正文或导出文件                                                               |
 | **Figma MCP**                                                    | 读取设计稿（前端 Tier 2+）                     | 用户描述或截图                                                                       |
 | **common 插件 `create-feature-branch`**                          | 按飞书卡片创建 feature 分支                    | 提示手动建分支                                                                       |
+| **common 插件 `aicr-local`**                                     | 用户授权提交后的暂存区 diff 审查               | Agent 对暂存区自审                                                                   |
 | **Cursor 内置浏览器**                                            | Tier 2+ E2E 自动化                             | 手工验证并写入 `e2e-report.md`                                                       |
 
 ---
@@ -296,7 +297,7 @@ recover → infer → triage → materialize → spec-review
 | `openspec new change` / `validate`                       | **你**在终端执行（Agent 可手工创建目录作为降级） |
 | `openspec archive`                                       | **Agent** 在 `/onsf-finish` 门禁通过后自动执行；CLI 不可用时等效手工归档 |
 | 维护运行态（`meta.onion` / `current.json`）                 | **Agent** 阶段切换必须调用 `onion_state.py`（Trellis 主写 + current 镜像/兜底） |
-| git commit / push                                          | **你**明确要求时 Agent 可协助，且须提交前审查 |
+| git commit / push                                          | **你**明确要求时 Agent 可协助；先暂存目标文件，优先用 `/cr` 审查最终暂存 diff，slash command 不可用时按 `aicr-local` Skill 审查 |
 
 ---
 
@@ -518,11 +519,11 @@ Onion 侧同步写入 `task.json.meta.onion`（由 Agent 通过 `trellis-adapter
 
 5. 收尾（顺序重要）
    └─ /onsf-finish                     # 自动归档 OpenSpec change
-   └─ git commit（Phase 3.4，工作区须干净）
+   └─ 用户确认提交 → 暂存目标文件 → `/cr` 审查（不可用时按 `aicr-local` Skill）→ git commit（Phase 3.4，工作区须干净）
    └─ /trellis:finish-work             # Trellis task 归档 + journal
 ```
 
-**双归档顺序**：先 OpenSpec 验收通过 → `/onsf-finish` 自动归档 → 代码 commit → `/trellis:finish-work`。OpenSpec 未通过时，**不要**执行 `/trellis:finish-work`。
+**双归档顺序**：先 OpenSpec 验收通过 → `/onsf-finish` 自动归档 → 用户确认提交 → 暂存目标文件 → 优先 `/cr` 审查（slash command 不可用时按 `aicr-local` Skill）→ 代码 commit → `/trellis:finish-work`。未安装或无法使用 `aicr-local` 时，降级为 Agent 自审暂存区；修复后必须重新暂存并复审。OpenSpec 未通过时，**不要**执行 `/trellis:finish-work`。
 
 ### 8.7 Tier 3：父子任务
 

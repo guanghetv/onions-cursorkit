@@ -84,6 +84,14 @@ Tier 0（纯问答/排查/审阅，无写入动作）不受本门禁约束。
 - 进入 verify 阶段前，先在 `verify-change` 中给出 TDD/静态验证清单结论，再考虑浏览器自动化。
 - 发现升级红线或范围膨胀时，暂停并回到 triage/design。
 
+## 提交前审查
+
+- 用户明确要求提交后，先暂存本次待提交文件，再完成提交前审查；未授权时不得自动 `git add`、调用 `/cr` 或提交。
+- 提交前 diff 审查优先使用 `aicr-local`：优先调用 `/cr` 审查暂存区；slash command 不可用时，读取并按 `aicr-local` Skill 审查暂存区。
+- 未安装或无法使用 `aicr-local` 时，降级为 Agent 对暂存区 diff 自审；审查发现问题后，先修复、重新暂存并复审，再执行 `git commit`。
+- 同一暂存 diff 已完成 AICR 审查且未发生变化时，不重复审查；任何修复或新增暂存内容都必须重新审查。
+- `aicr-local` 仅负责提交前 diff 审查，不替代 `trellis-check` 的 lint、typecheck、测试、Spec 对齐和跨层检查，也不替代 `verify-change` 的验收。
+
 ## 前端专项纪律
 
 当修改前端业务代码且当前变更属于 Onion SDD Tier 2+ 时，补充以下纪律：
@@ -96,7 +104,6 @@ Tier 0（纯问答/排查/审阅，无写入动作）不受本门禁约束。
 - YApi 请求/响应字段、类型、必填、method/path 是接口契约最高依据；QA spec 是 E2E 验收最高依据；冲突必须记录并请用户或协作者裁决。
 - 飞书卡片和需求文档可以作为需求来源；创建 feature 分支前必须先确认需求范围和当前 change 产物，且遵守 `create-feature-branch` 的工作区干净、基线分支、MCP 和 git 权限门禁。
 - Browser 验证前必须先给出清单摘要并获得用户确认；`/onsf-auto` 中若无法取得确认，默认记录 blocker 或替代验证，不调用浏览器自动化，除非用户输入已明确要求自动浏览器验证且环境可用。默认使用产品内置浏览器能力，不默认改用用户自配 DevTools MCP。
-- 用户要求提交时，提交前必须完成审查；有团队本地审查命令或 skill 时优先使用，否则 Agent 自审待提交 diff。
 - 以上补充不要求新增 brainstorming 硬门禁。
 
 ## 上下文纪律

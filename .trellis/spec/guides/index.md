@@ -67,6 +67,7 @@
 - [ ] 已绑定 Trellis task → 主写 `meta.onion` 并镜像 `current.json`；否则只写 current
 - [ ] `/onsf-finish` 归档前必须先跑 `finish_check.py`
 - [ ] Tier 0++ 逾期仍 pending 时：补 mini OpenSpec 并清 pending，或在 proposal 落盘 `## 带债项`
+- [ ] 用户授权提交时：暂存 → `/cr`（aicr-local）→ 再 commit；勿用 AICR 替代 `trellis-check`
 
 → 阅读 [Onion SDD 运行态与 finish 预检](../backend/onion-sdd-runtime.md)
 
