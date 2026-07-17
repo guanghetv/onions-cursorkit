@@ -486,7 +486,7 @@ Integrated YApi contract support into onion-sdd with pull-yapi and re-check skil
 
 **Date**: 2026-07-17
 **Task**: 接入 Onion SDD AICR 提交门禁
-**Branch**: `feat/0.0.6版本迭代`
+**Branch**: `feat/0.1.0版本迭代`
 
 ### Summary
 

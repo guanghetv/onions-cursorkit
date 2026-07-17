@@ -29,7 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
-| 15 | 2026-07-17 | 接入 Onion SDD AICR 提交门禁 | `de47690` | `feat/0.0.6版本迭代` |
+| 15 | 2026-07-17 | 接入 Onion SDD AICR 提交门禁 | `de47690` | `feat/0.1.0版本迭代` |
 | 14 | 2026-07-09 | onion-sdd 流程硬化：运行态 helper / finish 预检 / 文档中文规范 | `a3ba5cf`, `595ac64`, `15c8753`, `7cfabe5` | `yangpeng-test` |
 | 13 | 2026-07-07 | onion-sdd 复盘跟进：task 绑定询问、归档产物同步、编辑范围规范 | `927532f`, `cc702eb`, `a0db35a` | `yangpeng-test` |
 | 12 | 2026-07-07 | onion-sdd 检测缺失 Trellis 时交互式安装初始化 | `ae27c46` | `yangpeng-test` |
