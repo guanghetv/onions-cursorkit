@@ -22,3 +22,9 @@
 - 走读有 AICR 与无 AICR 的两条流程，确认 `/onsf-auto` 不执行 Git 暂存或提交动作。
 
 验证点：相关文档、规则和技能均有一致的正常及降级流程。
+
+## 4. 发版留痕（归档后补充）
+
+- `plugins/onion-sdd/.cursor-plugin/plugin.json` → `0.1.0`
+- `plugins/onion-sdd/CHANGELOG.md` 新增 `## [0.1.0] - 2026-07-17`（AICR 提交门禁）
+- marketplace `onion-sdd` description 同步提及提交前 AICR 审查

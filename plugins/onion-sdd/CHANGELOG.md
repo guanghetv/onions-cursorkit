@@ -15,6 +15,18 @@
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-07-17
+
+### Added
+
+- 提交前 AICR 门禁：用户明确授权提交后，先暂存目标文件，再优先用 `aicr-local` 的 `/cr` 审查最终暂存 diff；slash command 不可用时按该 Skill 审查；未安装或不可用时降级为 Agent 自审暂存区。
+- 规则层明确 `trellis-check`（工程质量）与 `aicr-local`（提交前 diff 审查）的职责边界；同一暂存 diff 未变化时不复审，修复后须重新暂存并复审。
+
+### Changed
+
+- `full-change` / `auto-flow` / `onsf-continue`：提交前审查口径与规则对齐；`/onsf-auto` 的 `diff-review` 仍不自动暂存或调用 `/cr`。
+- `README.md`、`USAGE.md`、飞书同步文档：Commit review 步骤统一为「授权 → 暂存 → AICR/降级自审 → commit」。
+
 ## [0.0.4] - 2026-07-10
 
 ### Added
