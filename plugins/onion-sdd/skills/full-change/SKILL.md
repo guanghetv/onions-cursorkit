@@ -26,7 +26,7 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
 | design | 方案澄清、关键决策、API/数据/交互契约 | 本技能 / `pull-yapi` |
 | openspec | `proposal.md`、`specs/**/spec.md`、`tasks.md` | `openspec-change` |
 | implement | 按 `tasks.md` 执行，遵守 TDD / 定向验证纪律（Tier 2+ 大范围改动建议派发 `trellis-implement` 子代理执行；不可用时主会话按本技能执行） | 本技能 |
-| check | 独立质量审查（代码规范、回归、spec 对齐） | `trellis-check` |
+| check | 工程质量审查（静态检查、测试、回归、spec 对齐） | `trellis-check` |
 | integrate | 后端/QA/YApi/外部 spec 接入与差异分析 | `external-spec` / `pull-yapi` / `re-check` |
 | verify | E2E 或等价验收报告 | `verify-change` |
 | finish | 归档判断、自动归档、带债检查 | `/onsf-finish` |
@@ -270,7 +270,7 @@ Trellis 可用时，进入「需求接入」前检查本次 Tier 2+/3 变更是�
 
 ## 质量审查
 
-实现完成后、进入 integrate 之前，调用或加载 `trellis-check` 进行独立质量审查：
+实现完成后、进入 integrate 之前，调用或加载 `trellis-check` 进行工程质量审查：
 
 - 检查代码是否符合项目规范（lint、类型、约定）。
 - 检查实现是否与 `proposal.md` 和 `specs/` 对齐。
@@ -278,7 +278,9 @@ Trellis 可用时，进入「需求接入」前检查本次 Tier 2+/3 变更是�
 - 检查是否有本次变更范围外的无关改动。
 
 审查发现问题时，先修复并重新验证，再继续 integrate。
-如果 Trellis 不可用，由 Agent 对 diff 做自审，覆盖上述四个维度。
+如果 Trellis 不可用，仍须执行项目可用的 lint、类型检查、测试和 OpenSpec 对照，并记录未能执行的检查与原因。
+
+提交前的最终 diff 审查不属于本阶段：仅当用户明确要求 `git commit` 时，按 `rules/onion-sdd.mdc` 暂存目标文件并使用 `aicr-local` 审查暂存区；`aicr-local` 不替代本节的工程质量检查。
 
 ## 完成标准
 

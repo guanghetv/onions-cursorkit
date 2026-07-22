@@ -124,6 +124,14 @@ python3 plugins/onion-sdd/scripts/onion_state.py --repo-root . set --idle \
 
 `/onsf-*` 与 `trellis-adapter` / `auto-flow` / `full-change` / `mini-change` 将阶段切换写成硬纪律；无 Cursor Hook。归档前必须 `finish_check.py`。
 
+## 约定：提交前 AICR 与 trellis-check 分工
+
+**What**：用户明确授权 `git commit` 后，先暂存目标文件，再审查最终暂存 diff。优先 `/cr`（`aicr-local`）；slash command 不可用时按该 Skill；未安装则 Agent 自审暂存区。修复后重新暂存并复审；暂存 diff 未变不重复审。
+
+**Why**：`trellis-check` 负责实现后的 lint/typecheck/测试/Spec 与跨层；`aicr-local` 只审提交物。二者不互相替代。`/onsf-auto` 的 `diff-review` 不暂存、不调用 `/cr`。
+
+**Related**：`plugins/onion-sdd/rules/onion-sdd.mdc`「提交前审查」；`plugins/common/skills/aicr-local/`。
+
 ## 陷阱
 
 > **警告**：Agent 漏调 `onion_state.py` 时，中间阶段状态可能 stale；finish 预检只能兜底归档门禁，不能自动补写历史 phase。

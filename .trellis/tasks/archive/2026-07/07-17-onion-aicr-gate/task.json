@@ -1,0 +1,40 @@
+{
+  "id": "onion-aicr-gate",
+  "name": "onion-aicr-gate",
+  "title": "接入 Onion SDD AICR 提交门禁",
+  "description": "用户授权提交后暂存并以 aicr-local(/cr) 审查最终 diff；保留 trellis-check 工程质量职责；同步规则、技能与文档。",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": "onion-sdd",
+  "priority": "P2",
+  "creator": "yangpeng",
+  "assignee": "yangpeng",
+  "createdAt": "2026-07-17",
+  "completedAt": "2026-07-17",
+  "branch": "feat/0.1.0版本迭代",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": "de47690",
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    "plugins/onion-sdd/rules/onion-sdd.mdc",
+    "plugins/onion-sdd/skills/full-change/SKILL.md",
+    "plugins/onion-sdd/skills/auto-flow/SKILL.md",
+    "plugins/onion-sdd/commands/onsf-continue.md",
+    "plugins/onion-sdd/README.md",
+    "plugins/onion-sdd/USAGE.md",
+    "plugins/onion-sdd/docs/feishu-wiki-onion-sdd-usage.md",
+    "plugins/onion-sdd/CHANGELOG.md",
+    "plugins/onion-sdd/.cursor-plugin/plugin.json",
+    ".trellis/spec/backend/onion-sdd-runtime.md"
+  ],
+  "notes": "功能已合入 de47690。发版：onion-sdd 升至 0.1.0（2026-07-17），CHANGELOG 已记录 AICR 提交门禁与文档对齐。",
+  "meta": {
+    "release": "0.1.0",
+    "releaseDate": "2026-07-17"
+  }
+}

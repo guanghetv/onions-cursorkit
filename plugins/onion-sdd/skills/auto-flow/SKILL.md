@@ -174,6 +174,8 @@ python3 <onion-sdd>/scripts/onion_state.py --repo-root . get
 
 发现问题时，低风险问题自动修复并重跑相关检查；高风险问题停止并报告 blocker。
 
+本阶段仅核对当前 change 的范围、产物与验证证据，不暂存文件，也不调用 `aicr-local` 或 `/cr`。用户后续明确要求提交时，再按 `rules/onion-sdd.mdc` 的提交前 AICR 门禁审查最终暂存 diff。
+
 ## 验证收束
 
 - 运行项目中可发现且与改动相关的 lint、typecheck、unit/component 测试。
@@ -188,6 +190,8 @@ python3 <onion-sdd>/scripts/onion_state.py --repo-root . get
   - diff 自审结果
   - blockers
   - 是否 ready for user review / commit / finish-check
+
+若 ready for commit，应提示：用户明确授权后，先暂存目标文件，再使用 `aicr-local` 审查暂存区；未安装或不可用时，降级为 Agent 对暂存区自审。
 
 ## 运行态同步（必须）
 
