@@ -31,3 +31,8 @@ temp/
 .cursor/
 .claude/
 .codex/
+# Onion SDD 本地运行态（勿提交）
+.onion-sdd/
+
+__pycache__/
+*.pyc
