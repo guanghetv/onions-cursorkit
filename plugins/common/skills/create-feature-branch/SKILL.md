@@ -1,6 +1,6 @@
 ---
 name: create-feature-branch
-description: 根据飞书需求链接自动创建标准化的feature分支并推送到远程。支持单个或多个飞书链接，多链接时以第一个任务的名称和迭代为主，ID按顺序拼接。当用户提供飞书项目需求链接并需要创建开发分支时使用。Use when user provides Feishu project links or asks to create feature branches from Feishu tasks.
+description: 根据飞书需求链接自动创建标准化的feature分支并推送到远程。工作项信息优先用 Meegle CLI（@lark-project/meegle）查询，飞书项目 MCP 为备选。支持单个或多个飞书链接，多链接时以第一个任务的名称和迭代为主，ID按顺序拼接。当用户提供飞书项目需求链接并需要创建开发分支时使用。Use when user provides Feishu project links or asks to create feature branches from Feishu tasks.
 ---
 
 # 创建Feature分支
@@ -11,7 +11,7 @@ description: 根据飞书需求链接自动创建标准化的feature分支并推
 
 - ✅ 支持单个飞书链接：`feat/<迭代>-<任务名称>-m-<ID>`
 - ✅ 支持多个飞书链接：`feat/<迭代>-<第一个任务名称>-m-<ID1>-m-<ID2>-m-<ID3>...`
-- ✅ 自动从第一个任务获取迭代信息和任务名称
+- ✅ 自动从第一个任务获取迭代信息和任务名称（**Meegle CLI 优先**，飞书项目 MCP 备选）
 - ✅ 自动检查工作区状态和分支冲突
 - ✅ 自动推送并设置远程追踪
 
@@ -68,9 +68,34 @@ git branch --show-current
 
 **权限要求**：`required_permissions: ["network", "git_write"]`
 
-### 4. 查询飞书任务信息
+### 4. 查询飞书任务信息（CLI 优先，MCP 备选）
 
-通过**飞书项目 MCP** 调用 `get_workitem_brief` 查询**第一个任务**（Cursor 中 MCP server 标识当前多为 **`FeishuProjectMcp`**；旧文档或配置中的 **`feishu-project-mcp`** 仍指同一能力，以本机 MCP 列表中的实际名称为准）：
+查询**第一个任务**的名称、规划迭代与 ID。工具优先级：
+
+1. **首选：Meegle CLI**（`@lark-project/meegle` / 命令 `meegle`）
+2. **备选：飞书项目 MCP**（`get_workitem_brief`；Cursor 中 server 标识多为 **`FeishuProjectMcp`**，旧称 **`feishu-project-mcp`** 视为同一能力）
+
+**4a. Meegle CLI（首选）**
+
+执行业务查询前须通过 Meegle 授权检查（`meegle auth status`；未登录则按 meegle 技能完成 `auth login`）。可从 URL 解析 `project_key`（如 `ruxiao`），或先 `meegle url decode --url "<链接>"`。
+
+```bash
+meegle workitem get \
+  --work-item-id "<第一个ID>" \
+  --project-key "<空间 simpleName 或 project_key>" \
+  --fields '["名称","规划迭代","ID"]' \
+  --format json
+```
+
+字段名也可用 field_key（如 `name`）；以能取到「名称 / 规划迭代 / ID」为准。CLI 命令细节遵循本机 meegle 技能（`meegle inspect workitem.get`）。
+
+**4b. 飞书项目 MCP（备选）**
+
+仅当下列任一情况成立时使用 MCP，**不得**在 CLI 已成功时仍先调 MCP：
+
+- 本机未安装 `meegle` / 命令不可用
+- `meegle auth` 失败且用户无法当场完成登录
+- `workitem get` 返回错误
 
 ```json
 {
@@ -79,9 +104,11 @@ git branch --show-current
 }
 ```
 
+CLI 与 MCP 均失败时：按错误提示停止，**禁止**编造任务名或迭代。
+
 ### 5. 获取迭代名称
 
-从规划迭代字段提取迭代工作项ID，再次查询获取迭代名称：
+从规划迭代字段提取迭代工作项ID，再次查询获取迭代名称（**同一优先级**：先 CLI `meegle workitem get`，失败再 MCP `get_workitem_brief`）：
 - 如果迭代字段为空或查询失败，使用 `unknown`
 
 ### 6. 格式化分支名
@@ -142,8 +169,8 @@ git branch --set-upstream-to=origin/<分支名> <分支名>
 2. ✅ 检查工作区状态（`git status --porcelain`）
 3. ✅ `git fetch` 后 `git checkout master` 并 `git pull origin master`；**禁止**自动改用 `main`；**禁止**停留在 develop 上直接建分支（权限：`["network", "git_write"]`）
 4. ✅ 门禁：默认路径下 `git branch --show-current` 为 `master` 后再继续（用户显式指定其它基线时除外）
-5. ✅ 查询第一个任务的详情（`FeishuProjectMcp` / `feishu-project-mcp`，见步骤 4）
-6. ✅ 查询迭代名称（如失败使用 `unknown`）
+5. ✅ 查询第一个任务的详情：**优先** `meegle workitem get`；CLI 不可用/失败再 MCP `get_workitem_brief`（见步骤 4）
+6. ✅ 查询迭代名称（同通道优先级；失败使用 `unknown`）
 7. ✅ 格式化分支名（`feat/<迭代>-<名称>-m-<ID1>-m-<ID2>...`）
 8. ✅ 检查远程分支是否存在（权限：`["network"]`）
 9. ✅ 创建并推送分支（权限：`["all"]`）
@@ -167,10 +194,13 @@ git branch --set-upstream-to=origin/<分支名> <分支名>
 4. **错误处理**：
    - 工作区有变更：立即停止
    - 无法解析链接：提示格式错误
+   - Meegle CLI 失败：回退 MCP；两者皆失败则停止并提示（勿编造名称/迭代）
    - 迭代字段为空：使用 `unknown` 继续
    - 分支已存在：提示用户处理
    - 追踪关联失败：手动设置
    - `git checkout master` 失败（无 `master`）：停止并说明本技能默认基线为 `master`；请用户调整仓库分支，或**明确指定**以某分支（如 `main`）为基线后再执行
+
+5. **查询通道**：不改变分支命名、基线门禁、多链接拼接与推送逻辑；仅调整飞书工作项信息的获取方式（CLI → MCP）。
 
 ## 参考文档
 

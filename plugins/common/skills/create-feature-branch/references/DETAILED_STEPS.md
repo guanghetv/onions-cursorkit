@@ -104,19 +104,51 @@ all_ids = work_item_ids
 正确格式示例：https://project.feishu.cn/ruxiao/tec_prd/detail/6717631602...
 ```
 
-## 步骤4：查询飞书任务详情
+## 步骤4：查询飞书任务详情（CLI 优先，MCP 备选）
 
-调用飞书项目 MCP 的 `get_workitem_brief` 查询**第一个**任务的信息（作为主任务）。Cursor 里 MCP server 名称通常为 **`FeishuProjectMcp`**；若文档仍写 **`feishu-project-mcp`**，视为同一 MCP，以 Cursor「MCP 已连接服务」中的实际标识为准。
+查询**第一个**任务的信息（作为主任务）。工具优先级：
 
-**调用参数：**
+1. **首选**：Meegle CLI（`@lark-project/meegle` / `meegle`）
+2. **备选**：飞书项目 MCP `get_workitem_brief`（Cursor server 多为 **`FeishuProjectMcp`**；旧称 **`feishu-project-mcp`** 视为同一能力）
+
+### 4a. Meegle CLI（首选）
+
+业务查询前执行授权检查：
+
+```bash
+meegle auth status --format json
+```
+
+未登录时按 meegle 技能完成 `meegle auth login --host <host>`（飞书项目一般为 `project.feishu.cn`）。可选：
+
+```bash
+meegle url decode --url "<用户飞书链接>" --format json
+```
+
+从 URL 或 decode 结果取得 `project_key` / `simple_name`（如 `ruxiao`），再查询：
+
+```bash
+meegle workitem get \
+  --work-item-id "6717631602" \
+  --project-key "ruxiao" \
+  --fields '["名称","规划迭代","ID"]' \
+  --format json
+```
+
+字段也可用 field_key（如 `name`）；以能解析出任务名称、规划迭代、工作项 ID 为准。不确定参数时：`meegle inspect workitem.get`（必要时加 `--refresh`）。
+
+### 4b. 飞书项目 MCP（备选）
+
+仅当 CLI 未安装、`auth` 失败且无法完成登录、或 `workitem get` 报错时使用。**CLI 已成功时不得先调 MCP。**
+
 ```json
 {
-  "work_item_id": "6717631602",  // 使用第一个提取到的工作项ID
+  "work_item_id": "6717631602",
   "fields": ["名称", "规划迭代", "ID"]
 }
 ```
 
-**返回数据示例：**
+**返回数据示例（语义，CLI/MCP 字段形态可能不同）：**
 ```
 工作项名称: 【分账】支持延迟型专项课
 规划迭代: [{"工作项 ID":"6688772577","工作项名称":""}]
@@ -130,8 +162,8 @@ all_ids = work_item_ids
 
 **注意事项：**
 - 如果工作项ID无效或无权限访问，会返回错误
-- 需要处理API调用失败的情况
-- 规划迭代字段返回的是一个数组，包含迭代工作项的ID
+- 规划迭代字段通常为数组，包含迭代工作项的ID
+- CLI 与 MCP 均失败时停止，**禁止**编造任务名或迭代
 
 **错误处理：**
 ```
@@ -139,25 +171,34 @@ all_ids = work_item_ids
 请检查：
 1. 工作项ID是否正确
 2. 是否有该任务的访问权限
-3. 飞书MCP服务是否正常
+3. Meegle CLI：是否已安装、`meegle auth status` 是否已登录
+4. 备选：飞书项目 MCP 是否已启用且可调用
 ```
 
 ## 步骤5：获取规划迭代名称
 
-从步骤4获取的规划迭代字段中提取迭代工作项ID，然后查询迭代的实际名称。
+从步骤4获取的规划迭代字段中提取迭代工作项ID，然后查询迭代的实际名称（**通道优先级与步骤4相同**：先 CLI，失败再 MCP）。
 
 **提取迭代工作项ID：**
 
-从规划迭代字段返回的数据中提取：
+从规划迭代字段返回的数据中提取（字段名因通道可能为「工作项 ID」或结构化 id）：
 ```json
 [{"工作项 ID":"6688772577","工作项名称":""}]
 ```
 
-提取出 `工作项 ID` 值：`6688772577`
+提取出迭代工作项 ID：`6688772577`
 
-**查询迭代详情：**
+**查询迭代详情（首选 CLI）：**
 
-使用 `get_workitem_brief` 再次查询迭代工作项的详细信息：
+```bash
+meegle workitem get \
+  --work-item-id "6688772577" \
+  --project-key "ruxiao" \
+  --fields '["名称"]' \
+  --format json
+```
+
+**备选 MCP：**
 
 ```json
 {
@@ -173,8 +214,8 @@ all_ids = work_item_ids
 
 **处理逻辑：**
 - 如果规划迭代字段为空数组 `[]`：迭代名称使用 `unknown`
-- 如果规划迭代字段的 `工作项 ID` 为空：迭代名称使用 `unknown`
-- 如果查询迭代详情失败：迭代名称使用 `unknown`
+- 如果规划迭代字段的工作项 ID 为空：迭代名称使用 `unknown`
+- 如果查询迭代详情失败（CLI 与 MCP 皆失败或跳过）：迭代名称使用 `unknown`
 - 如果查询成功：使用返回的迭代名称
 
 **错误处理：**

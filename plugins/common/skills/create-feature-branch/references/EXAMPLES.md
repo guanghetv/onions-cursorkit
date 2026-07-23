@@ -16,11 +16,11 @@ https://project.feishu.cn/ruxiao/tec_prd/detail/6717631602?parentUrl=%2Fruxiao%2
 2. **检查工作区**：✓ 干净
 3. **当前分支**：master ✓
 4. **拉取代码**：✓ 已是最新（使用 `required_permissions: ["network", "git_write"]`）
-5. **查询飞书任务**：获取到任务信息
+5. **查询飞书任务**（优先 `meegle workitem get`，失败再 MCP）：获取到任务信息
    - 名称：axiosRetry功能优化
    - 规划迭代工作项ID：6688772577
    - 任务ID：6717631602
-6. **查询迭代详情**：工作项ID `6688772577`
+6. **查询迭代详情**（同通道优先级）：工作项ID `6688772577`
    - 迭代名称：Sprint124
 7. **格式化分支名**：`feat/124-axiosRetry功能优化-m-6717631602`
 8. **检查远程分支**：✓ 不存在（使用 `required_permissions: ["network"]`）
@@ -81,7 +81,7 @@ https://project.feishu.cn/ruxiao/tec_prd/detail/6717631604
 2. **检查工作区**：✓ 干净
 3. **当前分支**：master ✓
 4. **拉取代码**：✓ 已是最新（使用 `required_permissions: ["network", "git_write"]`）
-5. **查询飞书任务**：获取到**第一个任务**的信息
+5. **查询飞书任务**（优先 Meegle CLI，失败再 MCP）：获取到**第一个任务**的信息
    - 名称：优化支付模块
    - 规划迭代工作项ID：6688772577
    - 任务ID：6717631602
