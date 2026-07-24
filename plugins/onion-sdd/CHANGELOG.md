@@ -15,6 +15,18 @@
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-07-24
+
+### Added
+
+- `scripts/onion_state.py`：未显式传 `--repo-root` 且未设 `ONION_SDD_ROOT` 时，从 cwd 向上查找最近的含 `.trellis/` 的目录作为 repo-root，找不到回退 cwd。修复 pnpm monorepo 子包 cwd 看不到外层 `.trellis/` 导致状态/产物落错位置的回归。优先级不变：显式 `--repo-root` > `ONION_SDD_ROOT` > 自动解析。
+- `scripts/finish_check.py`：归档预检新增非致命 WARN——扫描 change 在 `docs/**` 下新建/修改且文件名含 convention/guideline/standard/规范/约定 的文件，提示应迁入 `.trellis/spec/<package>/<layer>/`（Phase 3.3 spec update）。WARN 不改变 exit code，不阻塞归档。
+- `skills/openspec-change/SKILL.md`：新增「规范/约定的归属」小节——`tasks.md` 只装产品/验收交付物；编码约定/规范属 Phase 3.3 spec 积累，落 `.trellis/spec/`，禁止进 `tasks.md` 与 `docs/`。
+
+### Changed
+
+- `rules/onion-sdd.mdc`：运行态段补充 repo-root 自动解析说明，建议手动调用优先让脚本自动解析，避免硬编码 `--repo-root .`。
+
 ## [0.1.1] - 2026-07-24
 
 ### Added
