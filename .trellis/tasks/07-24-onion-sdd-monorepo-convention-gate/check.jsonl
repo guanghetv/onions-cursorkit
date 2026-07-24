@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/backend/onion-sdd-runtime.md", "reason": "校验 repo-root 解析与 finish 门禁改动是否符合运行态契约"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "插件资产质量与校验入口，check 阶段对齐"}
