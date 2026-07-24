@@ -513,3 +513,40 @@ Integrated YApi contract support into onion-sdd with pull-yapi and re-check skil
 ### Next Steps
 
 - None - task complete
+
+
+## Session 16: onion-sdd monorepo repo-root 解析与规范交付物门禁
+
+**Date**: 2026-07-24
+**Task**: onion-sdd monorepo repo-root 解析与规范交付物门禁
+**Branch**: `feat/0.1.1版本迭代`
+
+### Summary
+
+为 onion-sdd 补齐 monorepo repo-root 自动向上解析（修复子包 cwd 看不到外层 .trellis/ 导致状态/产物落错）与规范类交付物门禁（openspec-change 硬规则 + finish_check 非致命 convention WARN），更新运行态 spec，发版 0.1.2。
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `7ac29d3` | (see git log) |
+| `3d3bb6a` | (see git log) |
+| `bcc73e2` | (see git log) |
+| `9d5e360` | (see git log) |
+| `75864ee` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
