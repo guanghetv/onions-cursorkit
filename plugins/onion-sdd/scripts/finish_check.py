@@ -205,6 +205,42 @@ def check_convention_in_docs(repo_root: Path) -> List[str]:
     return warns
 
 
+def check_stale_trellis_tasks(repo_root: Path) -> List[str]:
+    """Non-fatal WARN: in_progress Trellis tasks whose bound OpenSpec change is archived/missing.
+
+    Reads `.trellis/tasks/*/task.json` and `openspec/changes/**` data only; never modifies
+    `.trellis/scripts/**`. Returns WARN lines; never affects exit code.
+    """
+    warns: List[str] = []
+    tasks_dir = repo_root / ".trellis" / "tasks"
+    if not tasks_dir.is_dir():
+        return warns
+    changes_dir = repo_root / "openspec" / "changes"
+    if not changes_dir.is_dir():
+        return warns
+    for task_dir in sorted(tasks_dir.iterdir()):
+        if not task_dir.is_dir() or task_dir.name == "archive":
+            continue
+        data = onion_state.load_json(task_dir / "task.json")
+        if not data or data.get("status") != "in_progress":
+            continue
+        meta = data.get("meta")
+        if not isinstance(meta, dict):
+            continue
+        onion = meta.get("onion")
+        if not isinstance(onion, dict):
+            continue
+        change_id = onion.get("change_id")
+        if not change_id:
+            continue
+        if (changes_dir / change_id).is_dir():
+            continue  # active change still present -> not stale
+        warns.append(
+            f"WARN: Trellis task {task_dir.name} 仍为 in_progress，但其 bound OpenSpec change {change_id} 已归档/缺失，建议执行 /trellis:finish-work 清理"
+        )
+    return warns
+
+
 def resolve_change_id(repo_root: Path, args: argparse.Namespace) -> Tuple[Optional[str], Dict[str, Any], List[str]]:
     warnings: List[str] = []
     if args.change_id:
@@ -329,6 +365,11 @@ def run_check(repo_root: Path, args: argparse.Namespace) -> Tuple[int, Dict[str,
     convention_warns = check_convention_in_docs(repo_root)
     if convention_warns:
         notes.extend(convention_warns)
+
+    # Non-fatal WARN: stale in_progress Trellis tasks whose bound change is archived/missing
+    stale_warns = check_stale_trellis_tasks(repo_root)
+    if stale_warns:
+        notes.extend(stale_warns)
 
     ok = len(hard_failures) == 0
     report = {
