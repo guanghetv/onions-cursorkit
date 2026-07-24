@@ -109,6 +109,14 @@ description: 检查 Onion SDD 变更的验证证据、任务状态与归档条�
 1. OpenSpec：已自动归档完成；若失败，已在输出中说明原因。
 2. Trellis：若代码提交完成且工作区干净，提示继续执行 `/trellis:finish-work`，由 Trellis 负责 task archive 和 workspace journal。
 
+**输出必选项（硬规则）**：OpenSpec 归档成功后，输出**必须**含一条 `Trellis 收尾待办` 行，点名当前绑定的 task：
+
+```text
+- Trellis 收尾待办: task <task-dir> 仍为 in_progress，请执行 /trellis:finish-work 归档（含 task archive 与 journal）
+```
+
+该行为收尾结论必选项：未输出该行不得在结论中宣称「全部完成 / 已归档」；带债归档场景同样适用。仍**不**在 `/onsf-finish` 内自动调用 `/trellis:finish-work`（保留其 Step 2 提交 sanity 门禁与 journal 记录边界）。
+
 不在 `/onsf-finish` 内直接调用 `add_session.py`，也不额外加载 `trellis-update-spec`——绑定 task 时，整体会话已经在遵循 Trellis workflow.md 的 Phase 3.3（`trellis-implement -> trellis-check -> trellis-update-spec -> commit`），重复记录会导致 journal/spec 判断被记两次。
 
 ### 分支 C（新增）：Trellis 可用，且当前 change 未绑定 Trellis task
