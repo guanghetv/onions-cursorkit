@@ -10,25 +10,38 @@
 | B: stale-task 诊断 | `scripts/finish_check.py` | 归档预检新增非致命 WARN |
 | 发版 | `CHANGELOG.md`、`.cursor-plugin/plugin.json` | 版本号 |
 
-## A: Branch B 提醒强化
+## A: Branch B 自动归档 Trellis task（返工：原 0.1.3 仅提醒，现改为自动归档）
 
-### 现状
+### 流程顺序变更（根因修复）
 
-`onsf-finish.md` 分支 B 现写法：「保持现状，输出中给出两段建议 … 2. Trellis：若代码提交完成且工作区干净，提示继续执行 `/trellis:finish-work`」。是「建议」，可被忽略；且未约束「未提示不得宣称完成」。
+旧顺序：`/onsf-finish`（归档 OpenSpec）→ 代码 commit → `/trellis:finish-work`（归档 Trellis task）。两个 finish 夹着一次 commit，故分离。
 
-### 改动
+新顺序：**代码 commit（Phase 3.4）→ `/onsf-finish`（单命令归档两边）**。commit 前置后，`/onsf-finish` 末尾工作区已干净，可一并归档 Trellis task。
 
-在 Branch B 段补「输出必选项」硬规则：
+### Branch B 新执行序列
 
-- OpenSpec 归档成功后，输出**必须**含一条 `Trellis 收尾待办` 行，格式如：
-  `- Trellis 收尾待办: task <task-dir> 仍为 in_progress，请执行 /trellis:finish-work 归档（含 task archive 与 journal）`
-- 该行为收尾结论必选项：未输出不得在结论宣称「全部完成/已归档」；带债归档同样适用。
-- 仍**不**在 `/onsf-finish` 内调用 `/trellis:finish-work`（保留其 Step 2 提交 sanity 门禁）。
+1. `finish_check.py`（现有预检，gate）。
+2. **工作区干净检查**：`git status --porcelain`，过滤 `.trellis/workspace/`、`.trellis/tasks/`；若仍有脏路径 → bail：「工作区有未提交的本任务代码，先 commit 再跑 `/onsf-finish`」，**不归档任何东西**。
+3. `openspec archive <change-id>`（CLI 不可用则手工移动），产生未提交的目录移动。
+4. **自动 commit openspec 归档移动**（scoped）：`git add openspec/changes/` + `git commit -m "chore: archive openspec change <change-id>"`。这是 scoped chore 提交（纯文件移动，非代码），与 `task.py archive` / `add_session.py` 的 auto-commit 同性质，不走 AICR。
+5. `onion_state.py set --idle`。
+6. **委托 `trellis-finish-work` skill**：此时工作区干净（仅步骤 4 的 commit）→ 该 skill 执行 `task.py archive <bound-task>`（auto-commit）+ `add_session.py`（auto-commit journal）。
+7. 输出：OpenSpec change 与 Trellis task 均已归档、均已提交；给出最终 commit 序列。
+
+### 约束放宽
+
+`onsf-finish.md` 原「不自动提交 git commit」放宽为：**仅自动提交 openspec 归档移动这一项 scoped chore**；代码 commit 仍由 Phase 3.4 在 `/onsf-finish` 之前完成；不自动 push/PR。
 
 ### 边界
 
-- Branch A（无 Trellis）/ Branch C（未绑定 task）不变：A 不涉及 Trellis；C 本就无 bound task 可归档。
-- 与 B 的 stale WARN 互补：A 提醒「当前 bound task 别忘」，B 提醒「历史遗留 task 该清」。
+- Branch A（无 Trellis）：不变。
+- Branch C（未绑定 task）：不变（本就自做 add_session + spec 判断）。
+- `/trellis:finish-work` 仍保留，供**纯 Trellis 任务**（无 OpenSpec change）使用；onion-sdd bound change 不再需要它。
+- B（stale 诊断）保留为兜底：防纯 Trellis 任务漏归档，以及历史遗留 task 被发现。
+
+### 回滚点
+
+- 出问题：把 Branch B 步骤 3-6 换回「只 OpenSpec 归档 + 建议跑 /trellis:finish-work」即恢复 0.1.3 行为。
 
 ## B: stale-task 诊断
 

@@ -13,10 +13,11 @@
 
 ## Requirements
 
-### R1: 强化 Branch B 提醒（A，纯 command 输出）
-- `commands/onsf-finish.md` Branch B 段：OpenSpec 归档成功后，输出必须含一条醒目的「Trellis 收尾待办」，点名当前绑定的 task 与建议命令 `/trellis:finish-work`。
-- 该待办为收尾结论的必选项：未输出不得在结论里宣称「全部完成/已归档」；带债归档场景同样适用。
-- 不在 `/onsf-finish` 内自动调用 `/trellis:finish-work`（保留其提交门禁边界）。
+### R1: Branch B 自动归档 Trellis task（A，返工 0.1.3 的「仅提醒」）
+- 流程顺序改为：**代码 commit（Phase 3.4）→ `/onsf-finish`（单命令归档两边）**。
+- `commands/onsf-finish.md` Branch B：finish_check → 工作区干净检查（脏则 bail，不归档）→ `openspec archive` → **自动 commit openspec 归档移动**（scoped chore）→ `onion_state set --idle` → 委托 `trellis-finish-work` skill 归档 bound task + journal。
+- 「不自动提交 git commit」放宽为：仅自动提交 openspec 归档移动这一项 scoped chore；代码 commit 仍前置由 Phase 3.4 完成；不自动 push/PR。
+- `/trellis:finish-work` 保留供纯 Trellis 任务使用；onion-sdd bound change 不再需要它。
 
 ### R2: stale-task 诊断（B，onion-sdd 内实现）
 - 在 `scripts/finish_check.py` 新增非致命 WARN：扫描 `repo_root/.trellis/tasks/*/task.json` 中 `status=in_progress` 的任务，读取 `meta.onion.change_id`，若其 bound OpenSpec change 已归档（位于 `openspec/changes/archive/`）或目录缺失，则视为 stale，输出 WARN 点名 task 与建议命令 `/trellis:finish-work`。
@@ -28,16 +29,19 @@
 
 ## Acceptance Criteria
 
-- [ ] `commands/onsf-finish.md` Branch B 含「Trellis 收尾待办」必选输出规则，点名 task 与 `/trellis:finish-work`。
-- [ ] `finish_check.py` 对「1 个 in_progress task 且其 bound change 已归档」的仓库输出 stale WARN，exit code 不变。
-- [ ] `finish_check.py` 对「in_progress task 的 bound change 仍存在（未归档）」的仓库不产生 stale WARN。
+- [ ] `commands/onsf-finish.md` Branch B 描述新顺序：commit 前置 → 单命令归档 OpenSpec + Trellis task + journal，含工作区干净 bail、openspec 归档移动自动 commit、委托 trellis-finish-work。
+- [ ] 「不自动提交」约束放宽说明：仅 openspec 归档移动 scoped chore 自动 commit；代码 commit 仍前置；不 push/PR。
+- [ ] `/trellis-finish-work` 仍保留供纯 Trellis 任务使用。
+- [ ] `finish_check.py` 对「1 个 in_progress task 且其 bound change 已归档」输出 stale WARN，exit code 不变（B 兜底，保留）。
 - [ ] `finish_check.py` 对无 Trellis（`.trellis/` 缺失）的仓库不产生 stale WARN，行为不变。
 - [ ] 不修改 `.trellis/scripts/**` 或 Trellis 源码。
-- [ ] CHANGELOG 与 plugin.json 版本一致为 0.1.3。
+- [ ] USAGE.md 与飞书 wiki 同步新流程顺序。
+- [ ] CHANGELOG 与 plugin.json 版本一致为 0.1.4。
 
 ## Out of Scope
 
-- 不让 `/onsf-finish` 自动调用 `/trellis:finish-work`（避免绕过其提交 sanity 门禁与 journal 记录）。
-- 不修改 `.trellis/scripts/**`（如 `task.py list --stale`），诊断只在 onion-sdd 侧读数据。
+- 不自动 push、创建 PR/MR（代码 commit 仍由 Phase 3.4 前置完成；openspec 归档移动由 `/onsf-finish` 自动 scoped commit）。
+- 不修改 `.trellis/scripts/**`（诊断只读数据；归档通过委托 `trellis-finish-work` skill 调用现有脚本，不修改）。
 - 不把 stale WARN 升级为 HARD FAIL。
 - 不改 onion-sdd 之外插件。
+- 不让 `/onsf-finish` 接管纯 Trellis 任务的归档（无 OpenSpec change 的仍走 `/trellis:finish-work`）。
