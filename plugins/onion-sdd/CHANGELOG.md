@@ -15,6 +15,24 @@
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-07-24
+
+### Changed
+
+- `commands/onsf-finish.md` Branch B（绑定 Trellis task）从「建议跑 `/trellis:finish-work`」改为**自动归档 Trellis task + journal**：归档前新增工作区干净检查（脏则 bail），`openspec archive` 后自动提交 scoped chore（openspec 归档移动），再委托 `trellis-finish-work` skill 执行 `task.py archive` + `add_session.py`。单命令收尾，用户无需再跑 `/trellis:finish-work`。
+- 收尾流程顺序调整：代码 commit（Phase 3.4）**前置于** `/onsf-finish`；`/onsf-finish` 末尾工作区干净，可一并归档两边。
+- 「不自动提交 git commit」约束放宽为：仅自动提交 openspec 归档移动这一项 scoped chore（纯文件移动，非代码，不走 AICR）；代码 commit 仍前置；不自动 push/PR。
+- `USAGE.md`、`docs/feishu-wiki-onion-sdd-usage.md` 流程图与链路同步为新顺序。
+
+### Added
+
+- `commands/onsf-finish.md`：归档前工作区干净检查（过滤 `.trellis/workspace/`、`.trellis/tasks/`），脏则 bail 不归档。
+
+### Notes
+
+- `/trellis:finish-work` 保留供纯 Trellis 任务（无 OpenSpec change）使用；onion-sdd bound change 不再需要它。
+- `finish_check.py` 的 stale-task WARN（0.1.3）保留为兜底，防纯 Trellis 任务漏归档与历史遗留 task 被发现。
+
 ## [0.1.3] - 2026-07-24
 
 ### Added
