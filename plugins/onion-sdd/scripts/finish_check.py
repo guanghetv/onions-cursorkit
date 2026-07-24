@@ -39,6 +39,8 @@ WONT_DO_MARKERS = (
     "won't-do",
 )
 
+CONVENTION_KEYWORDS = ("convention", "guideline", "standard", "规范", "约定")
+
 TASK_ITEM_RE = re.compile(r"^(\s*)[-*]\s+\[([ xX])\]\s+(.*)$")
 HEADING_DEBT_RE = re.compile(r"^##\s+带债项\s*$", re.MULTILINE)
 HEADING_ACCEPT_RE = re.compile(r"^##\s+验收结论\s*$", re.MULTILINE)
@@ -152,6 +154,55 @@ def run_openspec_validate(repo_root: Path, change_id: str) -> Dict[str, Any]:
         "stdout": (proc.stdout or "").strip()[-2000:],
         "stderr": (proc.stderr or "").strip()[-2000:],
     }
+
+
+def _git_changed_paths(repo_root: Path) -> List[str]:
+    """Working-tree changed (added/modified/untracked/renamed) paths via git status --porcelain."""
+    git = shutil.which("git")
+    if not git:
+        return []
+    try:
+        proc = subprocess.run(
+            [git, "status", "--porcelain", "--untracked-files=all"],
+            cwd=str(repo_root),
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+    paths: List[str] = []
+    for line in (proc.stdout or "").splitlines():
+        if len(line) < 4:
+            continue
+        xy = line[:2]
+        if not any(c in xy for c in ("A", "M", "?", "R", "C")):
+            continue
+        rest = line[3:]
+        if " -> " in rest:
+            rest = rest.split(" -> ", 1)[1]
+        paths.append(rest.strip().strip('"'))
+    return paths
+
+
+def check_convention_in_docs(repo_root: Path) -> List[str]:
+    """Non-fatal WARN: docs/** files whose name looks like a coding convention.
+
+    Conventions belong in .trellis/spec/<package>/<layer>/ (Phase 3.3 spec update),
+    not in change docs/. Returns WARN lines; never affects exit code.
+    """
+    warns: List[str] = []
+    for path in _git_changed_paths(repo_root):
+        norm = path.replace("\\", "/")
+        if not norm.startswith("docs/"):
+            continue
+        base = norm.rsplit("/", 1)[-1].lower()
+        if any(kw.lower() in base for kw in CONVENTION_KEYWORDS):
+            warns.append(
+                f"WARN: 检测到 {norm} 疑似编码规范，建议迁入 .trellis/spec/<package>/<layer>/（Phase 3.3 spec update）"
+            )
+    return warns
 
 
 def resolve_change_id(repo_root: Path, args: argparse.Namespace) -> Tuple[Optional[str], Dict[str, Any], List[str]]:
@@ -273,6 +324,11 @@ def run_check(repo_root: Path, args: argparse.Namespace) -> Tuple[int, Dict[str,
     # Soft validate
     if change_dir.is_dir():
         soft.append({"check": "openspec validate", **run_openspec_validate(repo_root, change_id)})
+
+    # Non-fatal WARN: conventions leaking into docs/ (Phase 3.3 spec territory)
+    convention_warns = check_convention_in_docs(repo_root)
+    if convention_warns:
+        notes.extend(convention_warns)
 
     ok = len(hard_failures) == 0
     report = {
