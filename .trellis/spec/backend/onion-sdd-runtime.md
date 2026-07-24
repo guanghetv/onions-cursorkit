@@ -66,6 +66,7 @@ python3 "$SCRIPTS/finish_check.py" --repo-root . [--change-id ID] [--tier T] [--
 | **Hard**（exit ≠ 0，禁止 archive） | 无 change-id/目录；`tasks.md` 未勾选且未命中豁免词；Tier 2+ 缺 `e2e-report.md` 或 `## 验收结论`；0++ `pending` 且已过 `deadline` 且 proposal 无 `## 带债项` |
 | **Soft** | `openspec validate`：CLI 不可用则 skip；失败不单独导致 hard fail |
 | **Warn**（非致命，不改 exit code） | `check_convention_in_docs`：change 在 `docs/**` 下新建/修改且文件名含 convention/guideline/standard/规范/约定，提示应迁入 `.trellis/spec/<package>/<layer>/`（Phase 3.3 spec update） |
+| **Warn**（非致命，不改 exit code） | `check_stale_trellis_tasks`：扫描 `in_progress` Trellis task，若其 `meta.onion.change_id` 指向的 OpenSpec change 已归档/缺失，提示执行 `/trellis:finish-work` 清理。只读 `.trellis/tasks/**` 与 `openspec/changes/**`，不改 `.trellis/scripts/**` |
 
 tasks 豁免词表（行内子串，大小写不敏感部分以实现为准）：`不做`、`won't do`、`cancelled`。
 
