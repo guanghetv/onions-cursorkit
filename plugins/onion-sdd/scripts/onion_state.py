@@ -92,6 +92,42 @@ def current_path(repo_root: Path) -> Path:
     return repo_root / ".onion-sdd" / "current.json"
 
 
+def ensure_onion_gitignored(repo_root: Path) -> None:
+    """Ensure .onion-sdd/ is ignored by git (local runtime state, not for the repo).
+
+    Idempotent: appends `.onion-sdd/` to root .gitignore only if no equivalent
+    active entry exists. Notes the append on stderr so the action is visible
+    without polluting stdout JSON.
+    """
+    gitignore = repo_root / ".gitignore"
+    target = ".onion-sdd/"
+    raw = ""
+    if gitignore.is_file():
+        try:
+            raw = gitignore.read_text(encoding="utf-8")
+        except OSError:
+            return
+    for line in raw.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if stripped in (target, target.rstrip("/")):
+            return
+    comment = "# Onion SDD 本地运行态（兜底指针，无需同步到仓库）"
+    prefix = "" if raw == "" or raw.endswith("\n") else "\n"
+    block = f"{prefix}{comment}\n{target}\n"
+    try:
+        with gitignore.open("a", encoding="utf-8") as fh:
+            fh.write(block)
+    except OSError as exc:
+        print(f"[onion_state] 无法追加 .gitignore: {exc}", file=sys.stderr)
+        return
+    print(
+        f"[onion_state] 已将 {target} 追加到 .gitignore（本地运行态，无需同步仓库）",
+        file=sys.stderr,
+    )
+
+
 def resolve_trellis_active_task(repo_root: Path) -> Optional[Path]:
     """Best-effort resolve Trellis active task without importing Trellis modules."""
     task_py = repo_root / ".trellis" / "scripts" / "task.py"
@@ -424,6 +460,7 @@ def write_state(
     idle: bool = False,
     bind_only: bool = False,
 ) -> Dict[str, Any]:
+    ensure_onion_gitignored(repo_root)
     warnings: list = []
     cur_path = current_path(repo_root)
     current = load_json(cur_path) or {}
