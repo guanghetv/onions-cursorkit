@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/backend/onion-sdd-runtime.md", "reason": "校验 stale-task WARN 是否符合 finish_check 运行态契约与非致命 WARN 约定"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "插件资产质量与校验入口，check 阶段对齐"}
