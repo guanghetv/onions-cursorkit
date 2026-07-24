@@ -15,6 +15,12 @@
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-07-24
+
+### Added
+
+- `scripts/onion_state.py`：写入 `current.json` 时自动确保 `.onion-sdd/` 已在根 `.gitignore` 中（幂等；命中 `.onion-sdd/` 或 `.onion-sdd` 则跳过，追加时在 stderr 提示一行）。`.onion-sdd/current.json` 为本地运行态兜底指针，不应同步到仓库。
+
 ## [0.1.0] - 2026-07-17
 
 ### Added
