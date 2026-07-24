@@ -15,6 +15,13 @@
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-07-24
+
+### Added
+
+- `commands/onsf-finish.md`：Branch B（change 绑定 Trellis task）新增「Trellis 收尾待办」必选输出——OpenSpec 归档成功后必须输出一行点名 bound task 与 `/trellis:finish-work`，未输出不得宣称完成；仍不自动调用 `/trellis:finish-work`（保留其提交门禁）。
+- `scripts/finish_check.py`：归档预检新增非致命 WARN——扫描 `in_progress` Trellis task，若其 bound OpenSpec change 已归档/缺失则提示执行 `/trellis:finish-work` 清理。只读 `.trellis/tasks/**` 与 `openspec/changes/**`，不改 `.trellis/scripts/**`；WARN 不改变 exit code。
+
 ## [0.1.2] - 2026-07-24
 
 ### Added
