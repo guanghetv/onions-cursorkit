@@ -88,10 +88,13 @@ description: >-
    - `prd.v5.snapshot = snapshots/prd-v5-<date>.md`
    - `prd.stage = v5_confirmed`
 4. **不** 修改 `prd.status`（保持 `pending`）
+5. **飞书同步门控**：
+   - 若 `feishu.v9_synced != true`：执行或引导 `/prd-feishu-sync push --stage v5`
+   - 若 `feishu.v9_synced == true`：**跳过**默认同步，提示仅当产品强制时使用 `push --stage v5 --force`
 
 ### Step 7: 提示下一步
 
-- 产品内审 + 交互评审会；会中可**直接手工修改** `prd.md`
+- 产品内审 + 交互评审会；会中可改 `prd.md` 或飞书；契约变更须 sync/reconcile
 - 交互评审后 → `/pm-spec`（9稿定稿）
 
 ## 约束

@@ -1,6 +1,6 @@
 ---
 name: pm-spec
-description: 9稿 PRD 定稿（交互评审后）：结构化增强、消除待定项、严格 AI Review；确认后 prd.status=confirmed，解锁 qa-spec/dev-start。
+description: 9稿 PRD 定稿（交互评审后）：结构化增强、消除待定项、严格 AI Review；确认后 prd.status=confirmed，解锁 qa-spec 与代码仓库开发消费。
 ---
 
 # /pm-spec（9稿定稿）

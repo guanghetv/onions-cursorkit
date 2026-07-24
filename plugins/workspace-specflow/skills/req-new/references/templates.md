@@ -6,9 +6,30 @@
 name: <中文显示名>
 id: <english-keyword-slug>   # 稳定英文 kebab-case，创建后不变；供 openspec/脚本引用
 module: <业务模块>
-feishu_doc: <飞书文档链接>
+feishu_doc: <飞书文档链接>   # 兼容旧字段；与 feishu.doc_url 保持同步
 figma: null
 created_at: <YYYY-MM-DD>
+
+# 飞书绑定与同步状态（/prd-feishu-sync 维护）
+feishu:
+  doc_url: null              # 与 feishu_doc 同步
+  doc_token: null
+  created_at: null
+  last_synced_at: null
+  last_synced_stage: null    # skeleton | v5 | v9 | reconcile | force_v5
+  last_synced_commit: null
+  feishu_revision: null
+  v9_synced: false           # true 后默认不再 push v5，除非 --force
+  narrative_owned_by: feishu # 讲解层（narrative.*：背景/价值）归属飞书
+
+# 契约层一致性校验（/prd-consistency-check 维护；飞书 CONSISTENCY 区同步展示）
+# create 后 status=unknown，飞书显示「⏳ 未校验」；check 后覆盖为 pass|warn|fail
+consistency:
+  status: unknown            # unknown | pass | warn | fail
+  checked_at: null
+  report_path: null          # 如 prototypes/prd-consistency-check-YYYY-MM-DD.md
+  source_commit: null
+
 
 prd:
   stage: v5_pending          # v5_pending | v5_confirmed | v9_pending | confirmed
@@ -56,6 +77,8 @@ Agent 在 `/req-new` 时从飞书标题或用户输入补齐占位。对齐模�
 |  |  |  |  |  |
 
 ## 三、背景和价值
+
+> 下列小节标题含展示序号仅为飞书模板兼容；sync / 瘦身 / check **按标题关键词 + unit key** 定位（见 `prd-feishu-sync/references/chapter-map.md`）。9 稿确认时按语义删除「背景」「价值」整节。
 
 ### 3.1 背景
 

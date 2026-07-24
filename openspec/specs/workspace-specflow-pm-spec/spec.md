@@ -3,9 +3,7 @@
 ## Purpose
 
 定义 `/pm-spec` 9稿定稿流程：交互评审后结构化增强、严格 AI Review、`prd.status = confirmed` 门禁与 v9 快照。
-
 ## Requirements
-
 ### Requirement: `/pm-spec` 升级为 9稿定稿流程
 
 系统 SHALL 将 `/pm-spec` 定位为交互评审后的 9稿定稿技能，是 `prd.status = confirmed` 的唯一触发入口。
@@ -23,7 +21,7 @@
 #### Scenario: 9稿确认触发下游门禁
 
 - **WHEN** `/pm-spec` 9稿确认通过
-- **THEN** 系统设置 `prd.status = confirmed`，允许 `/qa-spec` 与 `/dev-start`
+- **THEN** 系统设置 `prd.status = confirmed`，允许 `/qa-spec` 与代码仓库开发消费
 
 ### Requirement: PRD 输出需具备高可读性（强规则门禁）
 
@@ -94,4 +92,37 @@
 #### Scenario: 向后兼容 confirmed 语义
 
 - **WHEN** 下游技能检查 `prd.status`
-- **THEN** `confirmed` 仍仅表示 9稿定稿，无需修改 `/qa-spec` 与 `/dev-start` 门禁逻辑
+- **THEN** `confirmed` 仍仅表示 9稿定稿；`/qa-spec` 与代码仓库开发流程以此为门禁（不再提供 `/dev-start`）
+
+### Requirement: 9 稿确认后同步飞书
+
+系统 SHALL 在 `/pm-spec` 9 稿用户确认通过后调用 `/prd-feishu-sync push --stage v9`。
+
+#### Scenario: 确认后必推送
+
+- **WHEN** 9 稿确认流程收口成功
+- **THEN** 系统执行 v9 同步；成功后 `feishu.v9_synced` 为 true
+
+#### Scenario: 同步失败不得假装完成
+
+- **WHEN** v9 同步失败
+- **THEN** 系统不得向用户宣称飞书已是最新；须明确失败并给出重试命令（`/prd-publish` 或 `push --stage v9`）
+
+### Requirement: 9 稿确认执行瘦身
+
+系统 SHALL 在 9 稿结构化收口时移除本地讲解层正文，保留契约层与原型引用。
+
+#### Scenario: 按语义移除讲解层
+
+- **WHEN** 9 稿确认前本地仍含背景/价值章节正文（`narrative.*`，按标题关键词识别）
+- **THEN** 系统将讲解内容保留在飞书侧（若不存在则提示补讲解），并从 `prd.md` 整节删除这些讲解小节（禁止「见飞书」指针；不得只靠展示序号判断）
+
+### Requirement: confirmed 前一致性校验
+
+系统 SHALL 在设置 `prd.status = confirmed` 之前执行 `/prd-consistency-check`（或等价经由 `/prd-publish`）。
+
+#### Scenario: critical 阻断 confirmed
+
+- **WHEN** 一致性校验存在 critical fail
+- **THEN** 系统不得将 `prd.status` 设为 `confirmed`
+

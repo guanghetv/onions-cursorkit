@@ -27,11 +27,11 @@ description: >-
 
 **9稿**为交互评审后的需求评审定稿；`prd.md` 确认后即为下游权威输入。
 
-- 模板见 `references/prd-template.md`（飞书一~七 + 3.3/3.4）
+- 模板见 `references/prd-template.md`（飞书一~七；关键关注/回归按语义定位）
 - **禁止**残留 `[待定]` / `[待交互确认]`（P0）
 - 飞书读取：`lark-cli` 优先；按 h2 **一~七** 映射；本地优先策略同 plan-b
 - AI Review 见 `references/ai-review-rubric.md`（9稿）
-- 确认后 `prd.status = confirmed` → 解锁 `/qa-spec`、`/dev-start`
+- 确认后 `prd.status = confirmed` → 解锁 `/qa-spec` 与代码仓库开发消费
 
 ## 流程
 
@@ -57,19 +57,21 @@ description: >-
 - 消除所有 `[待定]` 项（交互评审结论）
 - 确认 MODULE 拆分与验收标准
 - 需求类型、影响范围；迭代时**本轮变更 MODULE 清单**
-- 回归范围（`3.4`）：需回归项 + 不纳入项
+- 回归范围（`contract.regression`，标题含「回归」）：需回归项 + 不纳入项
 
 用户确认后进入 Step 4。
 
-### Step 4: 结构化增强 `prd.md`
+### Step 4: 结构化增强 `prd.md`（含瘦身）
 
 按 `references/prd-template.md` 输出：
 
 - **一、需求概述**：开发速览表含 `当前阶段: 9稿`；复杂流程 Mermaid 放本节末尾
 - **二、版本及进度跟踪**：PM 不覆盖；**本步不追加版本行**
-- **三、背景和价值**：`3.3` `3.4` 必填 callout
+- **三、背景和价值**：保留「关键关注」「回归范围」（`contract.critical` / `regression`）必填 callout；**按语义删除讲解层**（标题含「背景」「价值」的 `narrative.*` 整节删除，禁止「见飞书」指针）；**不得**为补洞改写契约小节展示序号或前移四～七
+
+
 - **四、Feature List**：含 `MODULE` 列
-- **五、需求详情说明**：每 MODULE 3 列表格 + 完整验收 checklist；**无待定**
+- **五、需求详情说明**：每 MODULE 3 列表格 + 完整验收 checklist；**无待定**；保留原型锚点
 - **六、设计图地址** / **七、埋点需求**
 
 ### Step 5: AI Review（9稿）
@@ -81,22 +83,28 @@ description: >-
 3. 五维评分 + P0/P1 问题项 → `prototypes/ai-review.md`
 4. `prd.md` **二、变更内容** 记结论摘要
 
-### Step 6: 确认、快照与状态
+### Step 6: 确认、同步、校验、快照与状态
 
-用户确认通过后：
+用户确认通过后，**按序**执行（任一步 critical 失败则**不得**将 `prd.status` 设为 `confirmed`）：
 
 1. **二、版本表** 追加：`9-n`、当天日期、`AI Review: 可开工`（等）、`snapshots/prd-v9-<date>.md`
 2. 复制 `prd.md` → `snapshots/prd-v9-<YYYY-MM-DD>.md`
-3. 更新 `metadata.yaml`：
+3. `/prd-feishu-sync push --stage v9`（失败则明确报错并停止 confirmed）
+4. `/prd-consistency-check`（进开发前）；存在 critical fail → 停止 confirmed
+5. 更新 `metadata.yaml`：
    - `prd.status = confirmed`
    - `prd.confirmed_at = <date>`
    - `prd.v9.status = confirmed`
    - `prd.v9.snapshot = snapshots/prd-v9-<date>.md`
    - `prd.stage = confirmed`
 
+也可在本步用 `/prd-publish --stage v9` 覆盖上述第 3–4 步（push + check）。
+
 ### Step 7: 提示下一步
 
-测试 → `/qa-spec`；开发 → `/dev-start`（不需等测试 spec）。
+- 测试 → `/qa-spec`（将检查 `consistency.status`）
+- 开发 → 代码仓库流程直接读瘦身后的 `prd.md`
+- 提交 specs 仓前若又改契约：先 `/prd-publish`（T4）
 
 ## 约束
 
