@@ -92,6 +92,23 @@ def current_path(repo_root: Path) -> Path:
     return repo_root / ".onion-sdd" / "current.json"
 
 
+def resolve_repo_root(start: Path) -> Path:
+    """Resolve repo root by walking up from `start` to the nearest dir with `.trellis/`.
+
+    Falls back to `start` when no ancestor (including `start` itself) has `.trellis/`,
+    preserving standalone-mode behavior. Used only when neither `--repo-root` nor
+    `ONION_SDD_ROOT` is provided, so monorepo subpackage cwd finds the outer root.
+    """
+    try:
+        start = start.resolve()
+    except OSError:
+        return start
+    for cand in (start, *start.parents):
+        if (cand / ".trellis").is_dir():
+            return cand
+    return start
+
+
 def ensure_onion_gitignored(repo_root: Path) -> None:
     """Ensure .onion-sdd/ is ignored by git (local runtime state, not for the repo).
 
@@ -657,8 +674,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--repo-root",
-        default=os.environ.get("ONION_SDD_ROOT") or ".",
-        help="Repository root (default: ONION_SDD_ROOT or .)",
+        default=None,
+        help="Repository root (default: ONION_SDD_ROOT, else auto-resolve upward to nearest .trellis/, else cwd)",
     )
 
     sub = parser.add_subparsers(dest="command", required=True)
@@ -711,6 +728,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Optional[list] = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.repo_root is None:
+        args.repo_root = os.environ.get("ONION_SDD_ROOT") or str(resolve_repo_root(Path.cwd()))
     repo_root = Path(args.repo_root).resolve()
     if not repo_root.is_dir():
         print(f"error: repo root not found: {repo_root}", file=sys.stderr)
