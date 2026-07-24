@@ -550,3 +550,38 @@ Integrated YApi contract support into onion-sdd with pull-yapi and re-check skil
 ### Next Steps
 
 - None - task complete
+
+
+## Session 17: onsf-finish Trellis 归档衔接补强（0.1.4）
+
+**Date**: 2026-07-24
+**Task**: onsf-finish Trellis 归档衔接补强（0.1.4）
+**Branch**: `feat/0.1.1版本迭代`
+
+### Summary
+
+0.1.4 返工 onsf-finish Branch B：从「建议跑 /trellis:finish-work」改为单命令自动归档 Trellis task + journal（commit 前置 + 工作区干净检查 + openspec 归档 scoped commit + 委托 trellis-finish-work skill）；补 USAGE 与飞书 wiki 4 处旧流程残留（§4/§6.6/§8.1/§8.5）；发版 0.1.4。stale-task 诊断保留为兜底。
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `70700b5` | (see git log) |
+| `d099440` | (see git log) |
+| `502ae91` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
