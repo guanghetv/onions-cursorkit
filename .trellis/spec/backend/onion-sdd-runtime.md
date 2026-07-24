@@ -27,7 +27,7 @@ python3 "$SCRIPTS/onion_state.py" --repo-root . clear-tier0pp-pending [--change-
 python3 "$SCRIPTS/finish_check.py" --repo-root . [--change-id ID] [--tier T] [--json]
 ```
 
-环境：`ONION_SDD_ROOT` 可替代默认 `--repo-root .`。
+环境：`ONION_SDD_ROOT` 可替代 `--repo-root`。未显式传 `--repo-root` 且未设 `ONION_SDD_ROOT` 时，`onion_state.py` 从 cwd 向上查找最近的含 `.trellis/` 的目录作为 repo-root，找不到回退 cwd（monorepo 子包 cwd 自动定位到外层根）。优先级：显式 `--repo-root` > `ONION_SDD_ROOT` > 自动解析。`finish_check.py` 的 `--repo-root` 默认仍为 `ONION_SDD_ROOT or .`，由调用方（command/skill）传入解析后的根。
 
 ### 3. 契约
 
@@ -59,12 +59,13 @@ python3 "$SCRIPTS/finish_check.py" --repo-root . [--change-id ID] [--tier T] [--
 | `mirrored_current` | 主写 trellis 时是否已镜像 current |
 | `warnings` | 如 meta 写失败已降级 |
 
-#### finish_check hard / soft
+#### finish_check hard / soft / warn
 
 | 级别 | 条件 |
 |------|------|
 | **Hard**（exit ≠ 0，禁止 archive） | 无 change-id/目录；`tasks.md` 未勾选且未命中豁免词；Tier 2+ 缺 `e2e-report.md` 或 `## 验收结论`；0++ `pending` 且已过 `deadline` 且 proposal 无 `## 带债项` |
 | **Soft** | `openspec validate`：CLI 不可用则 skip；失败不单独导致 hard fail |
+| **Warn**（非致命，不改 exit code） | `check_convention_in_docs`：change 在 `docs/**` 下新建/修改且文件名含 convention/guideline/standard/规范/约定，提示应迁入 `.trellis/spec/<package>/<layer>/`（Phase 3.3 spec update） |
 
 tasks 豁免词表（行内子串，大小写不敏感部分以实现为准）：`不做`、`won't do`、`cancelled`。
 
