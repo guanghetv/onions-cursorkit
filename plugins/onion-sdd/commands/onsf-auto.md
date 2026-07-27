@@ -97,6 +97,8 @@ description: 自动化执行 Onion SDD 流程，按当前状态推断 new/contin
 - 推送远程分支
 - 创建 PR/MR
 
+check 阶段的 `git add`（限本次 change 范围，禁止 `git add -A`）与 `/cr` 不在此限，可自动执行；前者可 `git reset` 撤销，后者只读。
+
 `/onsf-finish` 门禁通过后自动执行 `openspec archive <change-id>`；CLI 不可用时使用等效手工归档；失败时停止并报告。
 
 完成时只输出可执行建议，例如请求用户确认提交、继续 `/trellis:finish-work`，或补充 blocker 所需信息。
