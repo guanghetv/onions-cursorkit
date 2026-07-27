@@ -67,7 +67,9 @@
 - [ ] 已绑定 Trellis task → 主写 `meta.onion` 并镜像 `current.json`；否则只写 current
 - [ ] `/onsf-finish` 归档前必须先跑 `finish_check.py`
 - [ ] Tier 0++ 逾期仍 pending 时：补 mini OpenSpec 并清 pending，或在 proposal 落盘 `## 带债项`
-- [ ] 用户授权提交时：暂存 → `/cr`（aicr-local）→ 再 commit；勿用 AICR 替代 `trellis-check`
+- [ ] check 阶段四步（Agent 自动串联）：`trellis-check` → 暂存本次 change 改动 → `/cr`（aicr-local）审暂存区 → 修复复审；顺序不可调换
+- [ ] check 允许自动 `git add`（限本次 change，禁止 `git add -A` 与 `git reset`），仍禁止自动 `git commit` / push / PR
+- [ ] 用户授权提交时：暂存区自 CR 通过后未变化则直接 commit；有变化（含新增暂存文件）或无法判定则重新 `/cr`；勿用 AICR 替代 `trellis-check`
 
 → 阅读 [Onion SDD 运行态与 finish 预检](../backend/onion-sdd-runtime.md)
 

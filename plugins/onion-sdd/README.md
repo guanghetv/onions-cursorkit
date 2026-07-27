@@ -10,7 +10,7 @@ Onion SDD 是一个通用 SDD 插件，用 slash command 把变更按复杂度�
 - 通过 Tier 分级决定是否写 OpenSpec、写到什么粒度、何时升级到完整工作流。
 - 提供 Tier 0+/Tier 1 的 mini/light OpenSpec 模板与验证纪律。
 - Tier 2+ 使用 onion 自有完整 SDD skills，覆盖需求接入、完整 OpenSpec、任务规划、外部 spec 接入、E2E/验收和 finish 门禁。
-- Tier 2+ 的前端场景补充前端专项纪律：Figma/局部改版边界、前端灰区决策、workspace-native spec 拉取、YApi 契约对齐、Browser 自动化约束和提交前审查。
+- Tier 2+ 的前端场景补充前端专项纪律：Figma/局部改版边界、前端灰区决策、workspace-native spec 拉取、YApi 契约对齐、Browser 自动化约束和 check 阶段代码审查。
 - 按需读取与当前变更相关的需求、代码、OpenSpec、测试和验证材料，不设置全仓扫描硬约束。
 
 ## 目录
@@ -104,7 +104,7 @@ Tier 2+ 使用以下 onion 自有能力：
 - YApi 契约：飞书卡片/需求文档中出现 YApi 链接或 interfaceID 且需求涉及接口变更时，设计期使用 `pull-yapi` 只读提取字段、类型、必填、错误码和示例；T1 后 YApi 到达或用户说 re-check 时，使用 `re-check` 对齐 mock、类型、API 层和测试。
 - 飞书卡片开发分支：飞书项目卡片和需求文档可以作为需求来源；进入实现前如需要创建开发分支，可调用 Common 插件的 `create-feature-branch` 扩展能力。onion-sdd 只记录卡片 ID、需求文档来源和分支名，不复制分支创建逻辑。
 - Browser 自动化：`verify-change` 先输出 TDD/静态清单和验证依据摘要，再询问用户是否执行浏览器自动化；自动化优先使用产品内置浏览器能力，不把用户自配 DevTools MCP 作为默认执行通道。
-- Commit review：onion 不自动提交。`trellis-check` 负责实现后的静态检查、测试与 Spec 对齐；用户明确要求提交时，才暂存目标改动并审查最终暂存 diff。优先使用 `aicr-local` 的 `/cr`；slash command 不可用时按该 Skill 审查。未安装或不可用时由 Agent 自审暂存区。修复后重新暂存并复审，暂存 diff 未变化时不重复审查。
+- Code review：check 是四步复合阶段，由 Agent 自动串联，用户无需输入命令——`trellis-check`（静态检查、测试、`.trellis/spec/` 对齐）→ 暂存本次 change 改动 → `/cr` 审查暂存区 → 修复复审。顺序不可调换，因为 `trellis-check` 会改代码。check 阶段允许自动 `git add`（限本次 change 范围，禁止 `git add -A`）与 `/cr`，但仍禁止自动 `git commit`、push、PR/MR。用户授权提交时，暂存区自 CR 通过后未变化则直接 commit，有任何变化（含新增暂存文件）或无法判定则重新 `/cr`。`/cr` 不可用时按 `aicr-local` 的 Skill 审查，未安装时由 Agent 自审暂存区，均不阻塞 check。完整口径见 `rules/onion-sdd.mdc`「代码审查」。
 
 ### 实现纪律与需求调整同步
 
@@ -124,7 +124,7 @@ Tier 2+ 实现阶段补充以下纪律（权威定义见 `rules/onion-sdd.mdc` �
 | 扩展能力 | 来源 | 使用时机 |
 |----------|------|----------|
 | `create-feature-branch` | `plugins/common/skills/create-feature-branch` | 飞书项目卡片需求进入实现前，需要按卡片 ID、任务名称和规划迭代创建并推送 feature 分支 |
-| `aicr-local` | `plugins/common/skills/aicr-local` | 用户明确要求提交后，审查最终暂存 diff；不可用时降级为 Agent 自审暂存区 |
+| `aicr-local` | `plugins/common/skills/aicr-local` | check 阶段自动执行：审查本次 change 的暂存区 diff；提交时按暂存区是否变化决定复审。不可用时降级为 Agent 自审暂存区，不阻塞 check |
 
 若该扩展 skill 未安装或未同步，onion-sdd 应继续完成需求分析和 OpenSpec 产物，并提示用户安装 Common 插件、同步该 skill，或手动创建分支。
 
