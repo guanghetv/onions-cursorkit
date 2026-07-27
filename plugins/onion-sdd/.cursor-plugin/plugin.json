@@ -1,8 +1,8 @@
 {
   "name": "onion-sdd",
   "displayName": "Onion SDD 工作流",
-  "version": "0.1.4",
-  "description": "通用 SDD 工作流：slash command 触发、Tier 分级、mini/light 与完整 OpenSpec、Trellis adapter 恢复、E2E/验收门禁、提交前 AICR 审查。",
+  "version": "0.1.5",
+  "description": "通用 SDD 工作流：slash command 触发、Tier 分级、mini/light 与完整 OpenSpec、Trellis adapter 恢复、E2E/验收门禁、check 阶段自动 AICR 审查。",
   "author": {
     "name": "yangpeng"
   },
