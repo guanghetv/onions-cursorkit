@@ -23,6 +23,7 @@ globs:
 - OpenSpec 是变更正文唯一真相源；运行态通过 `scripts/onion_state.py` 统一读写。
 - **读优先级**：已绑定 Trellis `meta.onion` → `.onion-sdd/current.json` → OpenSpec 扫描。
 - **写优先级**：已绑定 Trellis task 时主写 `meta.onion` 并镜像 `current.json`；无 Trellis / 未绑定时只写 `current.json`。
+- **repo-root 解析**：未显式传 `--repo-root` 且未设 `ONION_SDD_ROOT` 时，`onion_state.py` 从 cwd 向上查找最近的含 `.trellis/` 的目录作为 repo-root，找不到回退 cwd。优先级：显式 `--repo-root` > `ONION_SDD_ROOT` > 自动解析。monorepo 子包 cwd 会自动定位到外层根；手动调用优先让脚本自动解析，避免硬编码 `--repo-root .`。
 - 阶段切换、0++ 标记/清 pending、finish 归档成功后置 idle：**必须**调用 `onion_state.py`（无 Hook；靠本规则与 command 硬纪律）。
 - `/onsf-finish` 归档前**必须**先跑 `scripts/finish_check.py`；exit ≠ 0 时禁止 `openspec archive` 与手工移动归档。
 

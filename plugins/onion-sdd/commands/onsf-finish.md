@@ -5,7 +5,7 @@ description: 检查 Onion SDD 变更的验证证据、任务状态与归档条�
 
 # /onsf-finish
 
-用于收束当前 Onion SDD 变更。它先检查产物、验证和风险是否满足归档条件，满足后自动执行 OpenSpec 归档并同步本地状态；不替代 Trellis 任务收尾，也不自动提交 git commit。
+用于收束当前 Onion SDD 变更。它先检查产物、验证和风险是否满足归档条件，满足后自动归档 OpenSpec change 并同步本地状态。**新流程（0.1.4 起）**：代码 commit 在 `/onsf-finish` **之前**完成（Phase 3.4）；`/onsf-finish` 对绑定 Trellis task 的 change **一并自动归档 Trellis task + journal**（单命令收尾，无需再跑 `/trellis:finish-work`）。仅自动提交 openspec 归档移动这一项 scoped chore；不自动 push/PR。纯 Trellis 任务（无 OpenSpec change）仍走 `/trellis:finish-work`。
 
 ## 执行顺序
 
@@ -17,20 +17,22 @@ description: 检查 Onion SDD 变更的验证证据、任务状态与归档条�
    - exit ≠ 0：**立即停止**。不得调用 `openspec archive`，不得手工移动归档目录。
    - Hard：找不到 change 目录；`tasks.md` 未完成项（未标「不做」/won't do/cancelled）；Tier 2+ 缺 `e2e-report.md` 或 `## 验收结论`；Tier 0++ `pending` 逾期且 `proposal.md` 无 `## 带债项`。
    - Soft：`openspec validate`（CLI 不可用则跳过，不单独导致失败）。
+   - Warn（非致命）：`docs/**` 下疑似规范文件、`in_progress` Trellis task 的 bound change 已归档/缺失——只提示，不阻塞。
 3. 读取 `proposal.md`、`tasks.md`、`specs/**/spec.md`、验证记录和 `e2e-report.md`，做人工可读补充检查（债项可接受性等）。
 4. 对 Tier 0+/1，确认 mini/light 目标、任务和定向验证闭合。
 5. 对 Tier 2+，对照 `skills/verify-change/SKILL.md` 与 `e2e-report.md` 的 `## 验收结论`。
 6. 检查「带债项」：逐条判断是否可接受；带债归档须用户本轮明确同意。
 7. 输出检查结论：是否可归档、仍需补哪些验证、已知风险、债项数。
-8. **仅当预检通过（且带债时已获同意）后自动归档**：
-   - 调用 `openspec archive <change-id>`。
-   - 若 `openspec` CLI 不可用，使用等效手工归档：将 `openspec/changes/<change-id>/` 移动到 `openspec/changes/archive/<YYYY-MM-DD>-<change-id>/`。
+8. **工作区干净检查（归档前）**：`git status --porcelain`，过滤 `.trellis/workspace/`、`.trellis/tasks/`；若仍有脏路径 → **bail**：「工作区有未提交的本任务代码，先回 Phase 3.4 commit 再跑 `/onsf-finish`」，**不归档任何东西**。
+9. **仅当预检通过（且带债时已获同意）+ 工作区干净后自动归档**：
+   - 调用 `openspec archive <change-id>`（CLI 不可用则手工移动到 `openspec/changes/archive/<YYYY-MM-DD>-<change-id>/`）。
+   - **自动提交 openspec 归档移动**（scoped chore）：`git add openspec/changes/ && git commit -m "chore: archive openspec change <change-id>"`（纯文件移动，非代码，不走 AICR）。
    - 归档失败时停止并报告，保留运行态中的 `active_change_id` 便于重试。
-9. 归档成功后调用：
-   ```bash
-   python3 <onion-sdd>/scripts/onion_state.py --repo-root . set --idle --last-action "OpenSpec change <change-id> 已自动归档"
-   ```
-10. 判断 Trellis 可用性与当前 change 是否绑定 Trellis task，按分支 A/B/C 执行对应的 Trellis 收尾动作（见下方"Trellis 收尾分工"）。
+10. 归档成功后调用：
+    ```bash
+    python3 <onion-sdd>/scripts/onion_state.py --repo-root . set --idle --last-action "OpenSpec change <change-id> 已自动归档"
+    ```
+11. 判断 Trellis 可用性与当前 change 是否绑定 Trellis task，按分支 A/B/C 执行对应的 Trellis 收尾动作（见下方"Trellis 收尾分工"）。
 
 ## 完成标准
 
@@ -87,11 +89,11 @@ description: 检查 Onion SDD 变更的验证证据、任务状态与归档条�
 }
 ```
 
-若绑定 Trellis task，`trellis_task` 保留引用以便 `/trellis:finish-work` 继续；`active_change_id` 必须置为 `null`。
+若绑定 Trellis task，分支 B 会自动归档该 task（0.1.4 起），归档后 `trellis_task` 引用随 task 一起进入 archive；`active_change_id` 必须置为 `null`。
 
 ## Trellis 收尾分工
 
-`/onsf-finish` 只负责 OpenSpec 归档，不替代 Trellis 任务收尾。OpenSpec 归档成功（正常通过或带债归档均算成功）后，按以下分支处理 Trellis 相关动作：
+`/onsf-finish` 归档 OpenSpec change 后，按以下分支处理 Trellis 相关动作。**分支 B（绑定 task）自 0.1.4 起自动归档 Trellis task + journal**，无需用户再跑 `/trellis:finish-work`；`/trellis:finish-work` 保留供纯 Trellis 任务（无 OpenSpec change）使用。
 
 ### 判断依据
 
@@ -104,12 +106,18 @@ description: 检查 Onion SDD 变更的验证证据、任务状态与归档条�
 
 ### 分支 B：Trellis 可用，且当前 change 绑定 Trellis task
 
-保持现状，输出中给出两段建议：
+**自动归档 Trellis task（0.1.4 起）**：OpenSpec 归档 + `onion_state set --idle` 之后，工作区已干净（步骤 8 已校验，步骤 9 已自动提交 openspec 移动），直接**加载并执行 `trellis-finish-work` skill** 完成 Trellis 收尾：
 
-1. OpenSpec：已自动归档完成；若失败，已在输出中说明原因。
-2. Trellis：若代码提交完成且工作区干净，提示继续执行 `/trellis:finish-work`，由 Trellis 负责 task archive 和 workspace journal。
+1. `trellis-finish-work` Step 2 工作区干净检查会通过（仅剩步骤 9 的 openspec 归档 commit，已提交）。
+2. `task.py archive <bound-task>`（auto-commit `chore(task): archive ...`）。
+3. `add_session.py --title <proposal 一级标题或 change-id> --commit <Phase 3.4 工作 commit hash> --summary <1-2 句摘要>`（auto-commit `chore: record journal`）。
+   - `--commit` 取 Phase 3.4 的代码工作 commit hash（不含本步骤 openspec 归档 commit 与 task archive commit）；可用 `git log --oneline` 取本会话工作提交。
+   - `--summary` 不得整段复制 `proposal.md`/`specs/**` 正文。
+4. 不额外加载 `trellis-update-spec`——绑定 task 时整体会话已遵循 Trellis workflow.md Phase 3.3，重复 spec 判断会记两次。
 
-不在 `/onsf-finish` 内直接调用 `add_session.py`，也不额外加载 `trellis-update-spec`——绑定 task 时，整体会话已经在遵循 Trellis workflow.md 的 Phase 3.3（`trellis-implement -> trellis-check -> trellis-update-spec -> commit`），重复记录会导致 journal/spec 判断被记两次。
+输出结论：OpenSpec change 与 Trellis task 均已归档、均已提交；给出最终 commit 序列（工作 commit → openspec 归档 commit → task archive commit → journal commit）。
+
+**不再需要用户手动跑 `/trellis:finish-work`**（该命令保留供纯 Trellis 任务使用）。若步骤 8 工作区不干净已 bail，则本分支不执行——用户需先 commit 再重跑 `/onsf-finish`。
 
 ### 分支 C（新增）：Trellis 可用，且当前 change 未绑定 Trellis task
 
@@ -159,9 +167,11 @@ description: 检查 Onion SDD 变更的验证证据、任务状态与归档条�
 ## 约束
 
 - **必须先跑 `finish_check.py`**；非 0 则停止，禁止 archive。
+- **归档前必须工作区干净**（过滤 `.trellis/workspace/`、`.trellis/tasks/`）；脏则 bail，不归档。代码 commit 须在 `/onsf-finish` 之前由 Phase 3.4 完成。
 - 门禁通过或用户明确同意带债归档时，自动执行 `openspec archive <change-id>`；CLI 不可用时使用等效手工归档；失败时停止并报告。
+- **自动提交 openspec 归档移动**这一项 scoped chore（`git add openspec/changes/ && git commit`，纯文件移动，非代码，不走 AICR）。
 - 归档成功后必须 `onion_state.py set --idle`。
-- 不自动提交 git commit。
-- 不自动 push、创建 PR/MR 或归档 Trellis task。
+- 分支 B 自动委托 `trellis-finish-work` skill 归档 bound Trellis task + journal（`task.py archive` / `add_session.py` 各自 scoped auto-commit）。
+- 不自动 push、创建 PR/MR。纯 Trellis 任务（无 OpenSpec change）不在 `/onsf-finish` 范围，仍走 `/trellis:finish-work`。
 - journal 只表示本次变更或会话摘要，不表示 Trellis 运行态。
 - 无 `--force` 绕过预检。

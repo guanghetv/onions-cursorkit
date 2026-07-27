@@ -15,6 +15,49 @@
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-07-24
+
+### Changed
+
+- `commands/onsf-finish.md` Branch B（绑定 Trellis task）从「建议跑 `/trellis:finish-work`」改为**自动归档 Trellis task + journal**：归档前新增工作区干净检查（脏则 bail），`openspec archive` 后自动提交 scoped chore（openspec 归档移动），再委托 `trellis-finish-work` skill 执行 `task.py archive` + `add_session.py`。单命令收尾，用户无需再跑 `/trellis:finish-work`。
+- 收尾流程顺序调整：代码 commit（Phase 3.4）**前置于** `/onsf-finish`；`/onsf-finish` 末尾工作区干净，可一并归档两边。
+- 「不自动提交 git commit」约束放宽为：仅自动提交 openspec 归档移动这一项 scoped chore（纯文件移动，非代码，不走 AICR）；代码 commit 仍前置；不自动 push/PR。
+- `USAGE.md`、`docs/feishu-wiki-onion-sdd-usage.md` 流程图与链路同步为新顺序。
+
+### Added
+
+- `commands/onsf-finish.md`：归档前工作区干净检查（过滤 `.trellis/workspace/`、`.trellis/tasks/`），脏则 bail 不归档。
+
+### Notes
+
+- `/trellis:finish-work` 保留供纯 Trellis 任务（无 OpenSpec change）使用；onion-sdd bound change 不再需要它。
+- `finish_check.py` 的 stale-task WARN（0.1.3）保留为兜底，防纯 Trellis 任务漏归档与历史遗留 task 被发现。
+
+## [0.1.3] - 2026-07-24
+
+### Added
+
+- `commands/onsf-finish.md`：Branch B（change 绑定 Trellis task）新增「Trellis 收尾待办」必选输出——OpenSpec 归档成功后必须输出一行点名 bound task 与 `/trellis:finish-work`，未输出不得宣称完成；仍不自动调用 `/trellis:finish-work`（保留其提交门禁）。
+- `scripts/finish_check.py`：归档预检新增非致命 WARN——扫描 `in_progress` Trellis task，若其 bound OpenSpec change 已归档/缺失则提示执行 `/trellis:finish-work` 清理。只读 `.trellis/tasks/**` 与 `openspec/changes/**`，不改 `.trellis/scripts/**`；WARN 不改变 exit code。
+
+## [0.1.2] - 2026-07-24
+
+### Added
+
+- `scripts/onion_state.py`：未显式传 `--repo-root` 且未设 `ONION_SDD_ROOT` 时，从 cwd 向上查找最近的含 `.trellis/` 的目录作为 repo-root，找不到回退 cwd。修复 pnpm monorepo 子包 cwd 看不到外层 `.trellis/` 导致状态/产物落错位置的回归。优先级不变：显式 `--repo-root` > `ONION_SDD_ROOT` > 自动解析。
+- `scripts/finish_check.py`：归档预检新增非致命 WARN——扫描 change 在 `docs/**` 下新建/修改且文件名含 convention/guideline/standard/规范/约定 的文件，提示应迁入 `.trellis/spec/<package>/<layer>/`（Phase 3.3 spec update）。WARN 不改变 exit code，不阻塞归档。
+- `skills/openspec-change/SKILL.md`：新增「规范/约定的归属」小节——`tasks.md` 只装产品/验收交付物；编码约定/规范属 Phase 3.3 spec 积累，落 `.trellis/spec/`，禁止进 `tasks.md` 与 `docs/`。
+
+### Changed
+
+- `rules/onion-sdd.mdc`：运行态段补充 repo-root 自动解析说明，建议手动调用优先让脚本自动解析，避免硬编码 `--repo-root .`。
+
+## [0.1.1] - 2026-07-24
+
+### Added
+
+- `scripts/onion_state.py`：写入 `current.json` 时自动确保 `.onion-sdd/` 已在根 `.gitignore` 中（幂等；命中 `.onion-sdd/` 或 `.onion-sdd` 则跳过，追加时在 stderr 提示一行）。`.onion-sdd/current.json` 为本地运行态兜底指针，不应同步到仓库。
+
 ## [0.1.0] - 2026-07-17
 
 ### Added
