@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/backend/onion-sdd-runtime.md", "reason": "onion_state.py 读写优先级与 AICR/trellis-check 分工约定；P3 加字段和 P5 回写都以此为准"}
+{"file": ".trellis/spec/backend/index.md", "reason": "后端脚本与插件资产的改动边界、质量检查命令"}
+{"file": ".trellis/spec/guides/doc-language-guide.md", "reason": "本任务几乎全是 Markdown 改动，正文中文、标识符保留英文"}
+{"file": ".trellis/spec/guides/index.md", "reason": "P5 需回写其中的 Onion SDD 触发器清单"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "校验、提交范围与同步产物要求"}
