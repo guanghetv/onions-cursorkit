@@ -9,7 +9,7 @@
 | 工作区有未提交变更 | `git status --porcelain` 有输出 | 停止流程，提示用户处理变更 |
 | 无法解析飞书链接 | 正则匹配失败或未找到任何ID | 提示链接格式错误 |
 | 多链接中有无效链接 | 部分链接无法提取ID | 警告提示，继续使用成功提取的ID |
-| 飞书API调用失败 | MCP工具返回错误 | 显示错误信息，提示检查权限 |
+| 飞书API调用失败 | Meegle CLI 与/或 MCP 返回错误 | 先排查 CLI 安装与 auth；再试 MCP；皆失败则停止 |
 | 规划迭代字段为空 | 规划迭代数组为空或无工作项ID | 使用 `unknown` 作为迭代标识，继续执行 |
 | 获取迭代名称失败 | 查询迭代工作项失败 | 警告提示，使用 `unknown` 作为迭代标识，继续执行 |
 | 分支已存在 | `git ls-remote` 或 `git checkout -b` 失败 | 提示分支已存在 |
@@ -163,39 +163,50 @@ https://project.feishu.cn/detail/          # 缺少 ID
 
 ---
 
-### 问题6：飞书MCP服务无响应
+### 问题6：无法获取飞书任务信息（CLI / MCP）
 
 **症状**：
 ```
 ❌ 无法获取飞书任务信息：[错误详情]
 ```
 
-**检查步骤**：
+**检查步骤（按优先级）：**
 
 ```bash
-# 1. 检查MCP服务状态
-# 在Cursor中查看MCP服务是否正常运行
+# 1. 首选：Meegle CLI 是否可用且已登录
+which meegle
+meegle auth status --format json
 
-# 2. 验证飞书API认证
-# 检查MCP配置文件中的认证信息
+# 未登录示例（host 以实际站点为准）
+# meegle auth login --host project.feishu.cn
 
-# 3. 测试网络连接
+# 2. 用 CLI 直接测查询
+meegle workitem get \
+  --work-item-id "<工作项ID>" \
+  --project-key "<空间>" \
+  --fields '["名称","规划迭代","ID"]' \
+  --format json
+
+# 3. 备选：在 Cursor 中确认飞书项目 MCP 已启用（FeishuProjectMcp）
+# 并可用 get_workitem_brief 拉同一工作项
+
+# 4. 网络
 ping project.feishu.cn
 ```
 
 **可能原因**：
-- MCP服务未启动
-- 飞书API认证失败
+- 未安装 `@lark-project/meegle` / `meegle` 不在 PATH
+- Meegle CLI 未登录或 token 过期
+- MCP 服务未启动或认证失败（仅备选路径）
 - 网络连接问题
-- 工作项ID无效
-- 无权限访问该工作项
+- 工作项ID无效或无权限
 
 **解决方案**：
-1. 重启MCP服务
-2. 检查并更新飞书API认证配置
+1. 安装/修复 Meegle CLI，完成 `meegle auth login`
+2. CLI 仍失败时，启用飞书项目 MCP 并重试（server 名称可能为 **`FeishuProjectMcp`**，与旧称 `feishu-project-mcp` 兼容）
 3. 验证工作项ID和访问权限
 4. 检查网络连接
-5. 在 Cursor MCP 设置中确认飞书项目服务已启用；server 名称可能为 **`FeishuProjectMcp`**（与旧称 `feishu-project-mcp` 兼容，以列表为准）
+5. CLI 与 MCP 均失败时停止流程，勿编造任务名或迭代
 
 ---
 
@@ -348,13 +359,16 @@ git branch -vv
 git ls-remote --heads origin
 ```
 
-### 3. 验证MCP工具
+### 3. 验证飞书查询通道
 
-在Cursor中测试MCP工具：
+```bash
+# 首选：Meegle CLI
+meegle auth status --format json
+meegle workitem get --work-item-id 6717631602 --project-key ruxiao \
+  --fields '["名称","规划迭代","ID"]' --format json
 ```
-使用飞书项目 MCP（FeishuProjectMcp，或配置中的 feishu-project-mcp）的 get_workitem_brief 工具
-测试工作项ID：6717631602
-```
+
+备选：在 Cursor 中测试飞书项目 MCP（`FeishuProjectMcp` / `feishu-project-mcp`）的 `get_workitem_brief`，同一工作项 ID。
 
 ### 4. 手动测试飞书链接解析
 

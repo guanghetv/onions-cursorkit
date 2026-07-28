@@ -33,3 +33,6 @@ temp/
 .codex/
 # Onion SDD 本地运行态（兜底指针，无需同步到仓库）
 .onion-sdd/
+
+__pycache__/
+*.pyc
