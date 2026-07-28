@@ -71,7 +71,7 @@ description: >-
 
 目录创建成功后 **必须** 执行 `/prd-feishu-sync create`（按该技能全文规程）：
 
-1. 使用 `lark-cli` **XML** 创建飞书文档（按 `prd-feishu-sync`：同步绑定 callout + 评审区 + 七章 + 一致性 callout「⏳ 未校验」；禁止裸 `[PRD-SYNC:BEGIN/END]`；章节按语义 unit 定位）
+1. 使用 `lark-cli` **XML** 创建飞书文档（按 `prd-feishu-sync`：同步绑定 + 评审区 + 七章 + 可读性告警占位 + 一致性「⏳ 未校验」；禁止裸 `[PRD-SYNC:BEGIN/END]`；章节按语义 unit 定位）
 2. 回写 `metadata.feishu.doc_url` / `doc_token`，并同步 `feishu_doc`
 3. `last_synced_stage=skeleton`，`v9_synced=false`，`consistency.status=unknown`
 

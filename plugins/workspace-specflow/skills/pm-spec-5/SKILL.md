@@ -74,6 +74,8 @@ description: >-
 
 - P0 阻断 → 结论「暂不建议进入交互评审」
 - 否则输出 P1/P2 与五维评分（可简化维度说明）
+- **必做可读性扫描**（长段落 / MODULE 说明墙）：明细写入 `prototypes/ai-review-v5.md` 的「## 可读性告警」；不因此 P0 阻断
+- 已绑定飞书时：按 `prd-feishu-sync` READABILITY 模板更新飞书摘要 callout（只写条数 + 报告路径，不列明细）
 - 详细记录 → `prototypes/ai-review-v5.md`
 
 ### Step 6: 确认与快照

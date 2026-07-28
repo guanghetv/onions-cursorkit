@@ -80,8 +80,10 @@ description: >-
 
 1. 按开发速览需求类型确定深审范围
 2. P0 阻断（含「残留待定」规则 6）
-3. 五维评分 + P0/P1 问题项 → `prototypes/ai-review.md`
-4. `prd.md` **二、变更内容** 记结论摘要
+3. **必做可读性扫描**（长段落 / MODULE 说明墙）：明细写入 `prototypes/ai-review.md`「## 可读性告警」；P1 不阻断 confirmed
+4. 已绑定飞书时：更新飞书 `prd-sync:readability:v1` **摘要**（条数 + `prototypes/ai-review.md` 路径），不列明细
+5. 五维评分 + P0/P1 问题项 → `prototypes/ai-review.md`
+6. `prd.md` **二、变更内容** 记结论摘要（可读性有告警时可附「含可读性告警，详见 ai-review」）
 
 ### Step 6: 确认、同步、校验、快照与状态
 

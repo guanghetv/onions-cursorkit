@@ -13,12 +13,17 @@
 #### Scenario: 受管区与禁覆盖
 
 - **WHEN** 对已有飞书文档执行 `push`
-- **THEN** 仅更新受管契约正文区（或等价 marker 圈定区域）；不得 `overwrite` 整篇；不得静默覆盖评审区与飞书讲解层
+- **THEN** 仅更新受管契约正文区（或等价 callout/心跳码/标题圈定区域）；不得 `overwrite` 整篇；不得静默覆盖评审区、飞书讲解层与已有 whiteboard
 
 #### Scenario: 增量粒度
 
 - **WHEN** MODULE 表格或契约章节有局部变更
-- **THEN** 优先章节文案精准替换 + MODULE 行级替换；变更单元与图片纳入 hash/manifest；远端手工改动与本地冲突时进入对账而非静默覆盖
+- **THEN** 优先章节文案精准替换 + MODULE 行级替换；变更单元与图片/画板纳入 hash/manifest；远端手工改动与本地冲突时进入对账而非静默覆盖
+
+#### Scenario: 增量失败不降级 overwrite（策略 A）
+
+- **WHEN** `push` 时目标 block 定位失败、revision 冲突或局部写入失败
+- **THEN** 系统 STOP 并询问用户（重试局部 / 指定 block / 确认整篇重建）；未获用户明确「整篇重建」确认前不得执行 `overwrite`
 
 #### Scenario: 发布确认与基线
 
@@ -72,6 +77,16 @@
 
 - **WHEN** 同步含关键关注 / 回归范围的契约内容
 - **THEN** 飞书侧为 callout（或同等高亮块），不得保留本地 `> [!IMPORTANT]` 原文形态
+
+#### Scenario: 流程图画板保活
+
+- **WHEN** 本地存在 Mermaid/主流程，或飞书已有 whiteboard
+- **THEN** 以 `<whiteboard type="mermaid">` 或 `docs +whiteboard-update` 维护；不得用 `<pre>`/文本箭头图顶替或删除已有画板后宣称成功
+
+#### Scenario: XML 不等于整篇覆盖
+
+- **WHEN** `push` 使用 `--doc-format xml`
+- **THEN** 写入仍须为局部 command（`str_replace` / `block_*` 等）；不得仅因使用 XML 而对已有文档执行 `overwrite`
 
 #### Scenario: lark-cli 不可用
 
@@ -153,13 +168,19 @@
 
 系统 SHALL 在 `push` 时对飞书契约区做可读性排版，避免大段连续正文。
 
-#### Scenario: 去大段
+#### Scenario: 去大段（告警不硬拦，飞书可见）
 
-- **WHEN** 待推送契约段落存在过长连续正文（与 `/pm-spec` 可读阈值对齐，如连续超过 6 行）
-- **THEN** 系统拆为列表/表格/callout 后再写入飞书，或阻断并提示先改本地
+- **WHEN** 待推送契约段落存在过长连续正文（与 `/pm-spec` 可读阈值对齐，如裸段落连续超过 6 行）
+- **THEN** 系统优先拆为列表/表格/callout 后再写入；若仍超标或未拆完，须在输出中 warning 点名位置，**不得**因此拒绝完成 push（文字墙不硬拦）
+- **AND** 飞书文档须更新「可读性告警」callout（心跳码 `prd-sync:readability:v1`）：有告警为橙色**摘要**（约 N 处 + 本地报告路径），无告警为绿色「暂无」；**不得**在飞书罗列全部位置明细（明细仅本地报告）
 
-#### Scenario: 复杂流程画板尽力而为
+#### Scenario: create 含可读性告警占位
 
-- **WHEN** 契约中含复杂流程 Mermaid
-- **THEN** 系统尽力转为飞书画板；失败时保留代码块并 warning，不假装成功转画板
+- **WHEN** `create` 成功
+- **THEN** 飞书文档含「可读性告警」callout（`prd-sync:readability:v1`），初始为暂无告警态
+
+#### Scenario: 复杂流程画板保活
+
+- **WHEN** 契约中含复杂流程 Mermaid，或飞书已有对应 whiteboard
+- **THEN** 系统尽力以 `<whiteboard type="mermaid">` 或 `docs +whiteboard-update` 维护；失败时保留已有画板并 warning，**不得**用 `<pre>`/文本箭头图顶替后宣称成功
 

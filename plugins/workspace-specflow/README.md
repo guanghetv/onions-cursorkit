@@ -35,8 +35,8 @@
 | 原型快速生成（可选） | `/pm-proto` | 生成或迭代 `prototypes/`、`assets/` |
 | 5稿结构化增强 | `/pm-spec-5` | 内审/交互评审前；允许 `[待定]`；未 v9 同步时可 push 飞书 |
 | 9稿定稿 | `/pm-spec` | 交互评审后；严格 AI Review；瘦身讲解层；`prd.status=confirmed` |
-| 飞书同步 | `/prd-feishu-sync` | create/push/reconcile；契约增量；**禁止默认整篇覆盖** |
-| 一致性校验 | `/prd-consistency-check` | 契约层结构+语义；飞书「一致性校验」callout：未跑「⏳ 未校验」，跑完覆盖 ✅/⚠️/❌（XML） |
+| 飞书同步 | `/prd-feishu-sync` | create/push/reconcile；XML 局部增量；**禁 overwrite**；失败 STOP（策略 A）；画板保活；文字墙告警写入飞书可读性区 |
+| 一致性校验 | `/prd-consistency-check` | 契约层结构+语义；飞书一致性 callout + 可读性告警 callout（文字墙仅 warn） |
 | 一键发布 | `/prd-publish` | sync → check |
 | 看进度 | `/req-status` | 5稿/9稿/测试状态 |
 

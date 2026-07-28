@@ -97,6 +97,11 @@
 - **WHEN** 校验完成且飞书可写
 - **THEN** 飞书「一致性校验」callout（心跳码 `prd-sync:consistency:v1`）覆盖为总体结论（✅/⚠️/❌）、日期、报告路径、对应 commit；不再显示「⏳ 未校验」；以 XML 局部写入，不得留下裸 `[PRD-SYNC:BEGIN/END]`
 
+#### Scenario: 文字墙告警飞书可见且不硬拦
+
+- **WHEN** 校验命中 W2（契约区文字墙）
+- **THEN** 飞书「可读性告警」callout（`prd-sync:readability:v1`）更新为橙色**摘要**（条数 + 报告路径）；完整位置写入本地一致性报告；`consistency.status` 可为 `warn` 而非因 W2 单独 `fail`；未命中 W2 时该区为绿色「暂无」
+
 #### Scenario: 未校验时飞书可见
 
 - **WHEN** 文档已 create 但尚未成功跑完一致性校验
