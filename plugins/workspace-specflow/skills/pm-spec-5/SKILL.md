@@ -74,6 +74,8 @@ description: >-
 
 - P0 阻断 → 结论「暂不建议进入交互评审」
 - 否则输出 P1/P2 与五维评分（可简化维度说明）
+- **必做可读性扫描**（长段落 / MODULE 说明墙）：明细写入 `prototypes/ai-review-v5.md` 的「## 可读性告警」；不因此 P0 阻断
+- 已绑定飞书时：按 `prd-feishu-sync` READABILITY 模板更新飞书摘要 callout（只写条数 + 报告路径，不列明细）
 - 详细记录 → `prototypes/ai-review-v5.md`
 
 ### Step 6: 确认与快照
@@ -88,10 +90,13 @@ description: >-
    - `prd.v5.snapshot = snapshots/prd-v5-<date>.md`
    - `prd.stage = v5_confirmed`
 4. **不** 修改 `prd.status`（保持 `pending`）
+5. **飞书同步门控**：
+   - 若 `feishu.v9_synced != true`：执行或引导 `/prd-feishu-sync push --stage v5`
+   - 若 `feishu.v9_synced == true`：**跳过**默认同步，提示仅当产品强制时使用 `push --stage v5 --force`
 
 ### Step 7: 提示下一步
 
-- 产品内审 + 交互评审会；会中可**直接手工修改** `prd.md`
+- 产品内审 + 交互评审会；会中可改 `prd.md` 或飞书；契约变更须 sync/reconcile
 - 交互评审后 → `/pm-spec`（9稿定稿）
 
 ## 约束

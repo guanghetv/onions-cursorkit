@@ -11,12 +11,21 @@ description: >-
 
 - `metadata.yaml` 中 `prd.status` 为 `confirmed`
 - `test_spec.status` 为 `pending`
+- **一致性**：`consistency.status` 不得为 `fail`（默认**阻断**）。若为 `unknown`/缺失，须先跑 `/prd-consistency-check` 或 `/prd-publish`；用户显式豁免时写入报告理由后再继续
 
 ## 流程
 
 ### Step 0: 确保 specs 仓库最新
 
 提示用户在 specs 仓库目录执行 `git pull`，确保 prd.md 是产品团队提交的最新版本。可通过 `git status` 检测是否 behind remote，若 behind 则**必须先提示 pull**。
+
+### Step 0.5: 一致性门禁
+
+读取 `metadata.consistency`：
+
+- `fail` → **停止**，提示修复后 `/prd-publish` 或 `/prd-consistency-check`
+- `unknown` / 缺失 → 先执行 check（进开发前），再继续
+- `pass` / `warn` → 可继续（warn 须在摘要中提示）
 
 ### Step 1: 定位需求
 
