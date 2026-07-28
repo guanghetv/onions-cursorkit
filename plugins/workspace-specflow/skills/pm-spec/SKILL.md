@@ -14,7 +14,7 @@ description: >-
 - 执行 AI Review 并更新 `metadata.yaml.prd.status`（Step 5–6）
 - 以「prd 已有内容 / 飞书已拉取」为由跳过澄清
 
-允许在 Step 1 将 `prd.stage` 写为 `v9_pending`（标记进入 9 稿流程；不等于 confirmed）。
+允许在 **Step 4 瘦身完成后** 将 `prd.stage` 写为 `v9_pending`（不等于 confirmed）。**禁止**在 Step 1–3（脑暴/瘦身前）写入 `v9_pending`，以免中途 auto-v9 / C6 误拦。
 
 必须 **Read 并遵循** `superpowers:brainstorming` 的 SKILL.md 全流程。
 </HARD-GATE>
@@ -41,7 +41,8 @@ description: >-
 
 扫描 `requirements/` 下目标需求，读取 `prd.md`。
 
-若 `prd.status != confirmed`：立即更新 `metadata.yaml` → `prd.stage = v9_pending`（进入 9 稿流程；使 `/prd-publish` / sync auto 解析为 v9，并启用 C6）。已是 `confirmed` 则停止并提示勿重复定稿。
+若 `prd.status` 已是 `confirmed`：停止并提示勿重复定稿。  
+本步**不**写 `v9_pending`（仍保持 `v5_confirmed` 或既有 stage，直至 Step 4 瘦身完成）。
 
 若 `snapshots/prd-v5-*.md` 存在：读取**最新** v5 快照，与当前 `prd.md` 对比，输出 **5→9 差异摘要**（待定项是否已决议、交互结论是否已写入）。
 
@@ -77,6 +78,8 @@ description: >-
 - **四、Feature List**：含 `MODULE` 列
 - **五、需求详情说明**：每 MODULE 3 列表格 + 完整验收 checklist；**无待定**；保留原型锚点
 - **六、设计图地址** / **七、埋点需求**
+
+**瘦身完成后（本步收口）**：确认本地已无 `narrative.*`，再更新 `metadata.yaml` → `prd.stage = v9_pending`（供 sync/publish auto→v9 与 C6 启用；仍不等于 `confirmed`）。若瘦身未完成（仍含讲解层）→ **不得**写 `v9_pending`，先补删再继续。
 
 ### Step 5: AI Review（9稿）
 

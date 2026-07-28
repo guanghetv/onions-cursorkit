@@ -135,6 +135,11 @@
 - **WHEN** `push --stage v9` 成功
 - **THEN** `feishu.v9_synced` 为 `true`，`last_synced_stage` 为 `v9`
 
+#### Scenario: 本地仍有讲解层时拒绝 v9
+
+- **WHEN** `push --stage v9`（或 auto 解析为 v9）且本地 `prd.md` 仍存在 `narrative.*`（标题含背景/价值的讲解小节，含空壳/指针）
+- **THEN** 系统 REJECT：不得写飞书、不得将 `v9_synced` 标为 true；须提示先完成 `/pm-spec` Step 4 瘦身
+
 #### Scenario: 已 v9 后默认拒绝 v5
 
 - **WHEN** `v9_synced` 为 `true` 且请求 `push --stage v5` 且未带 `--force`

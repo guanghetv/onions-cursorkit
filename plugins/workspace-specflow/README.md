@@ -34,7 +34,7 @@
 | 新建需求骨架 | `/req-new` | 中文目录 + `id`；本地骨架；目录创建后**必须** `/prd-feishu-sync create`（失败不得假装已绑定） |
 | 原型快速生成（可选） | `/pm-proto` | 生成或迭代 `prototypes/`、`assets/` |
 | 5稿结构化增强 | `/pm-spec-5` | 内审/交互评审前；允许 `[待定]`；未 v9 同步时可 push 飞书 |
-| 9稿定稿 | `/pm-spec` | 交互评审后；启动写 `v9_pending`；严格 AI Review；瘦身；**push v9 → check 通过后**才 `confirmed` |
+| 9稿定稿 | `/pm-spec` | 交互评审后；瘦身后写 `v9_pending`；严格 AI Review；**push v9 → check 通过后**才 `confirmed`（未瘦身拒 v9） |
 | 飞书同步 | `/prd-feishu-sync` | create/push/reconcile；XML 局部增量；**禁 overwrite**；失败 STOP（策略 A）；画板保活；文字墙告警写入飞书可读性区 |
 | 一致性校验 | `/prd-consistency-check` | 契约层结构+语义；飞书一致性 callout + 可读性告警 callout（文字墙仅 warn） |
 | 一键发布 | `/prd-publish` | sync → check |

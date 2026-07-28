@@ -70,7 +70,7 @@ globs:
 2. **原型（可选）**：`/pm-proto`
 3. **5稿**：`/pm-spec-5` → 内审；未 `v9_synced` 时 sync push v5
 4. **交互评审**：产品可手工改 `prd.md` / 飞书；契约变更须 sync 或 reconcile
-5. **9稿**：`/pm-spec` 启动即写 `prd.stage=v9_pending` → 瘦身 → push v9 → **consistency-check** → 成功后再快照与 `prd.status=confirmed`
+5. **9稿**：`/pm-spec` 脑暴 → 瘦身 → **写 `prd.stage=v9_pending`** → push v9 → **consistency-check** → 成功后再快照与 `prd.status=confirmed`（瘦身前不写 `v9_pending`；本地仍有讲解层时拒 v9）
 6. **一键发布（可选）**：`/prd-publish`
 7. **测试 spec**：`/qa-spec`（与开发并行；启动前读 consistency）
 8. **Case Flow 执行（可选）**：`/qa-execute`

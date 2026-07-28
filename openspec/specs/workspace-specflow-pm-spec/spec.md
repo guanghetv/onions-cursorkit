@@ -13,10 +13,15 @@
 - **WHEN** 执行 `/pm-spec`（9稿）且存在 `snapshots/prd-v5-*.md`
 - **THEN** 系统读取最新 v5 快照与当前 `prd.md`，输出 5→9 差异摘要供 brainstorming 确认
 
-#### Scenario: 启动写入 v9_pending
+#### Scenario: 瘦身后写入 v9_pending
 
-- **WHEN** 执行 `/pm-spec` 且 `prd.status` 尚未为 `confirmed`
-- **THEN** 系统在定位需求后将 `prd.stage` 设为 `v9_pending`（不等于 confirmed；供 sync/publish auto 与 C6 启用）
+- **WHEN** `/pm-spec` Step 4 已完成结构化增强与讲解层瘦身，且本地已无 `narrative.*`，且 `prd.status` 尚未为 `confirmed`
+- **THEN** 系统将 `prd.stage` 设为 `v9_pending`（不等于 confirmed；供 sync/publish auto 与 C6 启用）
+
+#### Scenario: 瘦身前不得写 v9_pending
+
+- **WHEN** `/pm-spec` 仍处于 Step 1–3（定位/原型/脑暴），或 Step 4 尚未删净 `narrative.*`
+- **THEN** 系统不得将 `prd.stage` 设为 `v9_pending`；中途 `/prd-publish` auto 仍按 v5（除非已 `v9_synced`）
 
 #### Scenario: 禁止残留待定标记
 

@@ -213,6 +213,13 @@ push --stage v5:
   if feishu.v9_synced and not --force → REJECT
      （提示：/prd-feishu-sync push --stage v5 --force）
   if --force → 展示 diff → STOP 确认 → last_synced_stage=force_v5
+
+push --stage v9（含 auto 解析为 v9）:
+  if 本地仍存在 narrative.*（标题含「背景」「价值」的讲解小节，含空壳/指针）
+     → REJECT（不得写入飞书、不得标 v9_synced）
+     提示：先完成 /pm-spec Step 4 瘦身（删讲解层）后再 push v9；
+           草稿期请用 --stage v5 或等瘦身完成
+  else → 允许继续增量 push
 push --stage v9 成功 → v9_synced=true, last_synced_stage=v9
 ```
 
@@ -301,8 +308,8 @@ push --stage v9 成功 → v9_synced=true, last_synced_stage=v9
 ### push
 
 1. 解析 stage：显式参数优先；否则若 `v9_synced` 或 `prd.stage` ∈ {`v9_pending`, `confirmed`} → `v9`，否则 `v5`。
-2. 执行 5/9 门控。
-3. 读本地 prd；`+fetch` 飞书（with-ids）；若仍有旧裸 marker → **先迁移**再改契约（迁移也用局部替换，禁止整篇 overwrite）。
+2. 读本地 `prd.md`，执行 5/9 门控（含 **v9 + 仍有 narrative → REJECT**）。
+3. `+fetch` 飞书（with-ids）；若仍有旧裸 marker → **先迁移**再改契约（迁移也用局部替换，禁止整篇 overwrite）。
 4. 按 chapter-map **语义 unit** 与 MODULE 算 diff；顺带扫描文字墙位置清单；展示变更清单，声明不改 `narrative.*` / REVIEW / **CONSISTENCY** / 未变更 whiteboard → **STOP 确认**。
 5. 按「XML 片段 + 排版规程 + 增量策略」**局部**写入；本地无讲解层时**不得**清空飞书 `narrative.*`；**不得**改写 CONSISTENCY；**不得** `overwrite`。
 6. 流程/Mermaid：按「画板保活」表执行；写入失败 → **STOP**（策略 A），不得文本顶替后继续。

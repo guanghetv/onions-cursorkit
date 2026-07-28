@@ -32,7 +32,7 @@ consistency:
 
 
 prd:
-  stage: v5_pending          # v5_pending | v5_confirmed | v9_pending（/pm-spec 启动时写入）| confirmed
+  stage: v5_pending          # v5_pending | v5_confirmed | v9_pending（/pm-spec Step4 瘦身后写入）| confirmed
   status: pending            # 仅 9稿 confirmed 后 = confirmed
   confirmed_at: null
   v5:
