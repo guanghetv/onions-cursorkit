@@ -31,7 +31,7 @@ temp/
 .cursor/
 .claude/
 .codex/
-# Onion SDD 本地运行态（勿提交）
+# Onion SDD 本地运行态（兜底指针，无需同步到仓库）
 .onion-sdd/
 
 __pycache__/

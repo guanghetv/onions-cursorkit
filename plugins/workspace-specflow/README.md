@@ -27,23 +27,28 @@
 
 ### 产品（PM）
 
-**你在流程中的位置**：发起需求目录 → 原型（可选）→ **5稿** `/pm-spec-5` → 交互评审 → **9稿** `/pm-spec` 定稿 → 流转开发和测试。
+**你在流程中的位置**：发起需求目录（含创建飞书文档）→ 原型（可选）→ **5稿** → 交互评审（人看飞书）→ **9稿**瘦身定稿 → sync/check → 流转开发和测试。
 
 | 能力 | 命令 | 说明 |
 |------|------|------|
-| 新建需求骨架 | `/req-new` | 飞书链接或一句话；**中文目录名** + 英文 `id` slug；飞书七章 `prd.md` 骨架 |
+| 新建需求骨架 | `/req-new` | 中文目录 + `id`；本地骨架；目录创建后**必须** `/prd-feishu-sync create`（失败不得假装已绑定） |
 | 原型快速生成（可选） | `/pm-proto` | 生成或迭代 `prototypes/`、`assets/` |
-| 5稿结构化增强 | `/pm-spec-5` | 内审/交互评审前；允许 `[待定]`；快照 `snapshots/prd-v5-*.md` |
-| 9稿定稿 | `/pm-spec` | 交互评审后；严格 AI Review；`prd.status=confirmed`；快照 `snapshots/prd-v9-*.md` |
+| 5稿结构化增强 | `/pm-spec-5` | 内审/交互评审前；允许 `[待定]`；未 v9 同步时可 push 飞书 |
+| 9稿定稿 | `/pm-spec` | 交互评审后；瘦身后写 `v9_pending`；严格 AI Review；**push v9 → check 通过后**才 `confirmed`（未瘦身拒 v9） |
+| 飞书同步 | `/prd-feishu-sync` | create/push/reconcile；XML 局部增量；**禁 overwrite**；失败 STOP（策略 A）；画板保活；文字墙告警写入飞书可读性区 |
+| 一致性校验 | `/prd-consistency-check` | 契约层结构+语义；飞书一致性 callout + 可读性告警 callout（文字墙仅 warn） |
+| 一键发布 | `/prd-publish` | sync → check |
 | 看进度 | `/req-status` | 5稿/9稿/测试状态 |
 
-**典型顺序**：`/req-new` → `/pm-proto`（可选）→ `/pm-spec-5` → 交互评审（可改 `prd.md`）→ `/pm-spec` → 通知测试与开发。
+**典型顺序**：`/req-new` → `/pm-proto`（可选）→ `/pm-spec-5` → 交互评审 → `/pm-spec`（或 `/prd-publish`）→ 通知测试与开发。
 
-**PRD 模板**：[飞书标准模板](https://guanghe.feishu.cn/docx/S38Id4fxAofdz8xsWCVcRkHjnHg) 一~七章节 + `3.3 关键关注` / `3.4 回归范围`。
+**双文档角色**：飞书 = 讲解/评审（背景/价值）；本地 9 稿 = Agent 契约（无讲解小节，**展示序号不重排**）。章节按 **语义 unit + 标题关键词** 定位。飞书七章产品模板不废。
 
-**权限与边界**（需求目录内）：可读写 `prd.md`、`metadata.yaml`、`prototypes/`、`assets/`；对代码仓库仅 **只读扫描**（用于业务影响分析，不写实现细节到 PRD）。**禁止**改业务代码仓库文件。
+**PRD 模板**：[飞书标准模板](https://guanghe.feishu.cn/docx/S38Id4fxAofdz8xsWCVcRkHjnHg) + 「关键关注」/「回归范围」与 MODULE。
 
-**依赖提示**：`/req-new`、`/pm-spec-5`、`/pm-spec` 读飞书时优先 **lark-cli**。**`/pm-proto`、`/pm-spec-5`、`/pm-spec` 须先 brainstorming 并获用户放行**。
+**权限与边界**（需求目录内）：可读写 `prd.md`、`metadata.yaml`、`prototypes/`、`assets/`；对代码仓库仅 **只读扫描**。**禁止**改业务代码仓库文件。
+
+**依赖提示**：飞书读写优先 **lark-cli**。**`/pm-proto`、`/pm-spec-5`、`/pm-spec` 须先 brainstorming 并获用户放行**。
 
 ---
 
@@ -70,20 +75,18 @@
 
 ### 开发（前端 / 后端）
 
-**你在流程中的位置**：在产品 PRD 已确认后，从需求层进入目标代码仓库开发流程。**不需要**等待测试 spec 才能开始开发（验证阶段会再汇合）。
+**你在流程中的位置**：在产品 PRD 已确认（`prd.status = confirmed`）后，在目标代码仓库按 **fe-specflow / be-specflow / onion-sdd** 启动开发。**不需要**等待测试 spec 才能开始开发（验证阶段会再汇合）。本插件**不再提供** `/dev-start`。
 
-| 能力 | 命令 | 说明 |
+| 能力 | 做法 | 说明 |
 |------|------|------|
-| 从需求进入编码流程 | `/dev-start` | 选择需求、扫描可能涉及的仓库、用自然语言对齐 MODULE，检测工作区是否包含目标仓库，然后在同一会话中进入开发流程。**本命令不写需求层文件**。 |
-| 看进度 | `/req-status` | 查看需求层 PRD / 测试状态。 |
+| 进入编码流程 | 代码仓库既有 SDD 命令 | 直接读取 specs 仓已确认的 `prd.md` / MODULE；可用 `/req-status` 定位需求 |
+| 看进度 | `/req-status` | 查看需求层 PRD / 测试状态 |
 
-**典型顺序**：specs 仓库 `git pull` → `/dev-start` → 进入目标仓库上下文后的 **brainstorming → tasks → TDD** → 按需同步测试 spec / 对方 API 契约。
+**典型顺序**：specs 仓库 `git pull` → 确认 `prd.md` → 在目标仓库会话执行开发流程（brainstorming → tasks → TDD）→ 按需同步测试 spec / 对方 API 契约。
 
-**多仓库**：若同一需求要改多个仓库，推荐 **「对齐单窗 + 实现分会话（或分阶段单窗）」**（见下文同名章节）：对齐阶段可单会话通览；**实现阶段**在 **不同会话** 中分别 `/dev-start`，每会话尽量只盯一个仓，避免混仓暂存区。
+**多仓库**：推荐 **「对齐单窗 + 实现分会话（或分阶段单窗）」**（见下文同名章节）：对齐阶段可单会话通览；实现阶段每会话尽量只盯一个仓。
 
-**权限与边界**：**禁止**随意改 `requirements/` 下文件。可读取 `prd.md` 与 `test/test-spec.md`（用于理解与验证）。代码仓库内按 fe-specflow / be-specflow 规范执行。
-
-**代码仓库流程说明**：具体命令以目标仓库现有流程为准（前端与后端可能不同）。
+**权限与边界**：**禁止**随意改 `requirements/` 下文件。可读取 `prd.md` 与 `test/test-spec.md`（用于理解与验证）。
 
 ---
 
@@ -96,7 +99,7 @@
 - 在团队环境安装 **workspace-specflow**，并确保成员安装 **Superpowers**；建议优先安装 **lark-cli**，并按需配置 **feishu-mcp**、**mcp-xmind**。
 - 与 **fe-specflow / be-specflow** 的版本配套关系在团队内约定一致。
 
-**`workspace-repos.json`**：登记各仓库逻辑名到路径，供 `/pm-spec`、`/qa-spec`、`/dev-start` 扫描与解析，避免硬编码绝对路径。
+**`workspace-repos.json`**：登记各仓库逻辑名到路径，供 `/pm-spec`、`/qa-spec` 等扫描与解析，避免硬编码绝对路径。
 
 ---
 
@@ -135,7 +138,7 @@
 
 ### 与现有命令的配合
 
-- 每仓进入实现前，可在该仓会话执行 **`/dev-start`**，避免重复追问来源。
+- 每仓进入实现前，在该仓会话直接引用已确认的 `prd.md` / MODULE，避免重复追问来源。
 - 跨仓契约与测试 spec 在代码仓库流程内处理。
 - 进度用 **`/req-status`** 汇总需求层状态。
 
@@ -153,10 +156,12 @@
 | `/pm-proto` | 产品 | 原型（可选） |
 | `/pm-spec-5` | 产品 | 5稿（交互评审前） |
 | `/pm-spec` | 产品 | 9稿定稿 |
+| `/prd-feishu-sync` | 产品 | PRD ↔ 飞书同步 |
+| `/prd-consistency-check` | 产品 | 契约层一致性校验 |
+| `/prd-publish` | 产品 | sync → check 一键发布 |
 | `/qa-spec` | 测试 | PRD → 测试 spec |
 | `/qa-sync-xmind` | 测试 | test-spec.md ↔ XMind |
 | `/qa-execute` | 测试 | test/*.md → Case Flow 快速模式 |
-| `/dev-start` | 开发 | 需求层资料导入当前仓库开发流程 |
 | `/req-status` | 全员 | 进度总览 |
 
 ---

@@ -60,17 +60,12 @@
 
 ### Requirement: 命令列表优先显示中文名
 
-系统 SHALL 在 `req-status` 与 `dev-start` 的需求列表中优先展示中文目录名，并附带 `id` slug。
+系统 SHALL 在 `req-status` 等需求列表中优先展示中文目录名，并附带 `id` slug。
 
 #### Scenario: req-status 展示格式
 
 - **WHEN** 执行 `/req-status`
 - **THEN** 每行显示 `订单退款流程优化（id: order-refund-flow-opt）` 及 PRD/测试状态
-
-#### Scenario: dev-start 选择列表
-
-- **WHEN** 执行 `/dev-start` 自动扫描需求
-- **THEN** 列表项以中文目录名为主标识，`id` 为辅助标识
 
 ### Requirement: 与既有英文目录共存
 

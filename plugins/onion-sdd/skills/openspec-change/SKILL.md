@@ -120,6 +120,16 @@ OpenSpec change 目录由 Agent 根据当前环境创建：如 CLI 可用，执�
       验证点: <测试命令、静态检查、手动步骤或 E2E 场景>
 ```
 
+## 规范/约定的归属
+
+`tasks.md` 只装**产品与验收交付物**（对应 README 分工表：功能、接口、数据、验收场景）。编码约定/规范（命名、分层、目录、错误处理等）不属于 change 交付物，而是 Phase 3.3 spec 积累动作：
+
+- 有 Trellis：落 `.trellis/spec/<package>/<layer>/`，由 `trellis-update-spec` 在 finish 阶段沉淀。
+- 无 Trellis：才退回项目 `docs/`。
+- **禁止**把规范写进 `tasks.md`，也**禁止**在 change 内新建 `docs/**` 下的 convention/guideline/standard/规范/约定 类文件。
+
+`tasks.md` 出现「落规范/落约定到 `docs/`」类条目视为规划缺陷，应改为 Phase 3.3 spec update。归档期 `finish_check.py` 会对 `docs/**` 下疑似规范文件输出 WARN（非致命，不阻塞归档）。
+
 ## 已落盘产物的更新协议
 
 实现过程中，**当用户明确表达**需求或验收口径调整（新增、修改、废弃目标、范围或验收场景）时，必须先同步 OpenSpec 产物再继续实现，不得把调整直接塞进代码导致产物与实现脱节。用户澄清已有需求、补充细节或回答提问不视为调整，不触发本协议。

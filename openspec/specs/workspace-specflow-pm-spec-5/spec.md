@@ -3,9 +3,7 @@
 ## Purpose
 
 定义 `/pm-spec-5` 5稿流程：内审与交互评审前的 PRD 结构化增强、轻量 AI Review 与 v5 快照。
-
 ## Requirements
-
 ### Requirement: `/pm-spec-5` 5稿结构化增强
 
 系统 SHALL 提供 `/pm-spec-5` 技能，用于内审与交互评审会前的 PRD 结构化增强。
@@ -52,7 +50,7 @@
 #### Scenario: 5稿不触发下游开工门禁
 
 - **WHEN** 仅 `/pm-spec-5` 确认通过
-- **THEN** `prd.status` 保持 `pending`；`/qa-spec` 与 `/dev-start` 仍被阻断
+- **THEN** `prd.status` 保持 `pending`；`/qa-spec` 与代码仓库开发消费仍被阻断
 
 ### Requirement: 5稿确认状态与快照
 
@@ -67,3 +65,18 @@
 
 - **WHEN** 5稿确认
 - **THEN** 系统在第二章版本表追加 `5-n` 版本行，含快照路径引用
+
+### Requirement: 5 稿确认后按门控同步
+
+系统 SHALL 在 `/pm-spec-5` 确认后，仅当尚未完成 9 稿飞书同步时自动/引导同步飞书。
+
+#### Scenario: 未 v9 时同步
+
+- **WHEN** `/pm-spec-5` 确认通过且 `feishu.v9_synced` 为 false
+- **THEN** 系统调用或明确引导 `/prd-feishu-sync push --stage v5`
+
+#### Scenario: 已 v9 时跳过
+
+- **WHEN** `/pm-spec-5` 确认通过且 `feishu.v9_synced` 为 true
+- **THEN** 系统跳过默认同步，并提示仅在产品强制时使用 `push --stage v5 --force`
+

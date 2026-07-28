@@ -26,10 +26,12 @@ globs:
 | `/pm-proto` | 产品 | 原型快速生成或迭代（可选） |
 | `/pm-spec-5` | 产品 | 5稿结构化增强（内审/交互评审前；允许待定项） |
 | `/pm-spec` | 产品 | **9稿定稿**（交互评审后；严格 AI Review；`prd.status=confirmed`） |
+| `/prd-feishu-sync` | 产品 | PRD ↔ 飞书同步（create/push/reconcile；禁止默认整篇覆盖） |
+| `/prd-consistency-check` | 产品 | 契约层一致性校验（结构 A + 语义 B）；结果回写飞书 |
+| `/prd-publish` | 产品 | 一键：sync → consistency-check |
 | `/qa-spec` | 测试 | prd.md → 测试 spec + 可选 XMind 导出（禁止读取开发产出） |
 | `/qa-sync-xmind` | 测试 | test-spec.md ↔ XMind |
 | `/qa-execute` | 测试 | test/*.md → Case Flow 快速模式上传 |
-| `/dev-start` | 开发 | 读取需求层 → 确定目标仓库和 MODULE → 启动开发流程 |
 | `/req-status` | 任何人 | 查看 PRD 5稿/9稿 与测试 spec 状态 |
 
 ## 需求目录命名
@@ -54,32 +56,34 @@ globs:
 ## 关键约束
 
 - 需求层文件只在 `requirements/` 下操作
-- `/dev-start` 只准备上下文，不写入任何文件
 - `/qa-spec` 禁止读取 `openspec/changes/`
-- prd.md 对齐飞书模板（https://guanghe.feishu.cn/docx/S38Id4fxAofdz8xsWCVcRkHjnHg）+ 3.3/3.4
+- prd.md 对齐飞书模板（https://guanghe.feishu.cn/docx/S38Id4fxAofdz8xsWCVcRkHjnHg）；契约补充「关键关注」「回归」（语义定位，序号仅兼容）
 - **开发禁止修改 requirements/ 下的文件**
 - 5稿快照：`snapshots/prd-v5-*.md`；9稿快照：`snapshots/prd-v9-*.md`
 - 版本表（第二章）仅在 `/pm-spec-5` 或 `/pm-spec` **确认时**追加行
+- 开发在代码仓库按 fe-specflow / be-specflow / onion-sdd 启动；直接读取已 `confirmed` 的 `prd.md`，不再提供 `/dev-start`
+- 飞书同步禁止默认整篇 overwrite；9 稿按语义删背景/价值且不重排关键关注/回归与四～七；`v9_synced` 后默认不再推 5 稿
 
 ## 流程阶段
 
-1. **需求发起**：`/req-new` → 中文目录 + 飞书七章骨架
+1. **需求发起**：`/req-new` → 中文目录 + 飞书七章骨架 + **`/prd-feishu-sync create`**
 2. **原型（可选）**：`/pm-proto`
-3. **5稿**：`/pm-spec-5` → 内审 + 交互评审材料；`prd.v5.status=confirmed`
-4. **交互评审**：产品可手工改 `prd.md`
-5. **9稿**：`/pm-spec` → 定稿；`prd.status=confirmed`
-6. **测试 spec**：`/qa-spec`（与开发并行）
-7. **Case Flow 执行（可选）**：`/qa-execute` — 将 `test/test-spec.md` 上传 Case Flow 快速模式
-8. **开发启动**：`/dev-start`
-9. **进度追踪**：`/req-status`
+3. **5稿**：`/pm-spec-5` → 内审；未 `v9_synced` 时 sync push v5
+4. **交互评审**：产品可手工改 `prd.md` / 飞书；契约变更须 sync 或 reconcile
+5. **9稿**：`/pm-spec` 脑暴 → 瘦身 → **写 `prd.stage=v9_pending`** → push v9 → **consistency-check** → 成功后再快照与 `prd.status=confirmed`（瘦身前不写 `v9_pending`；本地仍有讲解层时拒 v9）
+6. **一键发布（可选）**：`/prd-publish`
+7. **测试 spec**：`/qa-spec`（与开发并行；启动前读 consistency）
+8. **Case Flow 执行（可选）**：`/qa-execute`
+9. **开发**：代码仓库流程读取 `prd.md`（要求 `prd.status = confirmed`）
+10. **进度追踪**：`/req-status`
 
 ## 需求定位
 
 - 扫描 `requirements/` 下子目录的 `metadata.yaml`
 - 列表显示：`name（id: slug）` 或中文目录名
 - `/pm-spec-5` 过滤 `prd.stage` 为 v5_pending / v5_confirmed 且 9稿未完成的需求
-- `/pm-spec` 过滤待 9稿定稿的需求
-- `/qa-spec`、`/dev-start` 要求 `prd.status = confirmed`
+- `/pm-spec` 过滤 `prd.stage` 为 v5_confirmed / v9_pending（或 9稿未 confirmed）的需求
+- `/qa-spec` 与代码仓库开发流程要求 `prd.status = confirmed`
 
 ## 权限模型
 

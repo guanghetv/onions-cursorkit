@@ -129,7 +129,7 @@ openspec validate   # 可选：确认与项目配置兼容
 - 用 slash command 触发，不要指望 Agent 自动猜流程。
 - 希望 Agent 自动跑完整 SDD 流程时，用 `/onsf-auto`；它会在高风险或不可逆节点停止。
 - Agent 在 `/onsf-finish` 门禁通过后会**自动** `openspec archive <change-id>`；CLI 不可用时使用等效手工归档。
-- Agent **不会**自动 git commit。
+- Agent 不会自动提交代码 commit（Phase 3.4 前置）；`/onsf-finish` 仅自动提交 openspec 归档移动这一项 scoped chore，不自动 push/PR。
 
 ---
 
@@ -285,7 +285,7 @@ recover → infer → triage → materialize → spec-review
 
 检查任务闭合、验证证据、带债项；通过后自动执行 `openspec archive <change-id>`（CLI 不可用时使用等效手工归档）。
 
-若绑定了 Trellis task 且工作区已提交干净，再执行 `/trellis:finish-work` 做 task 归档。
+`/onsf-finish` 对绑定 Trellis task 的 change 一并自动归档 task + journal（委托 `trellis-finish-work` skill），无需再跑 `/trellis:finish-work`；纯 Trellis 任务（无 OpenSpec change）仍走 `/trellis:finish-work`。
 
 ---
 
@@ -318,7 +318,7 @@ Trellis 负责**任务生命周期、工程计划、分支、journal 和跨会�
 | 工程执行计划、验证命令、回滚点    | —                                           | ✅ `implement.md`                           |
 | feature 分支、PR 目标分支         | 记录摘要                                    | ✅ `task.json.branch` / `base_branch`       |
 | 跨会话恢复 change-id              | ✅ `.onion-sdd/current.json`                | ✅ `task.json.meta.onion`                   |
-| 开发者 journal、会话摘要          | 未绑定 Trellis task 时，`/onsf-finish` 归档成功后自动写入 | ✅ 绑定 task 时，`/trellis:finish-work` 或 workflow.md Phase 3.3 写入 `.trellis/workspace/<name>/journal-*.md` |
+| 开发者 journal、会话摘要          | 未绑定 Trellis task 时，`/onsf-finish` 归档成功后自动写入 | ✅ 绑定 task 时，`/onsf-finish` 委托 `trellis-finish-work` skill 写入 `.trellis/workspace/<name>/journal-*.md`（无需用户手动跑 `/trellis:finish-work`） |
 | spec 经验积累（`.trellis/spec/`） | 未绑定 Trellis task 时，`/onsf-finish` 归档成功后加载 `trellis-update-spec` 判断并按需写入 | ✅ 绑定 task 时，走 workflow.md Phase 3.3（`trellis-update-spec`）写入 |
 | parent/child 大任务拆分（Tier 3） | OpenSpec parent/child change                | ✅ Trellis parent/child task tree           |
 | OpenSpec 归档                     | ✅ Agent 在 `/onsf-finish` 中自动执行          | —                                           |
@@ -476,7 +476,7 @@ Onion 侧同步写入 `task.json.meta.onion`（由 Agent 通过 `trellis-adapter
 | 恢复 Trellis task 阶段（plan/implement/check） | —                           | **`/trellis:continue`**    |
 | 新会话加载项目上下文                           | —                           | `/trellis:start`           |
 | 检查并自动归档 OpenSpec change                 | `/onsf-finish`              | —                          |
-| 归档 Trellis task + 写 journal                 | —                           | **`/trellis:finish-work`** |
+| 归档 Trellis task + 写 journal                 | `/onsf-finish`（绑定 task 时自动委托） | **`/trellis:finish-work`**（纯 Trellis 任务） |
 | 实现前读规范                                   | —                           | `trellis-before-dev`       |
 | 实现后质量审查                                 | —                           | `trellis-check`            |
 | 需求探索（Tier 2+ discover）                   | 编排内调用                  | `trellis-brainstorm`       |
@@ -513,13 +513,12 @@ Onion 侧同步写入 `task.json.meta.onion`（由 Agent 通过 `trellis-adapter
    └─ verify-change → e2e-report.md
    └─ /onsf-finish                   # 检查 OpenSpec 归档条件并自动归档
 
-5. 收尾（顺序重要）
-   └─ /onsf-finish                     # 自动归档 OpenSpec change
+5. 收尾（顺序重要，0.1.4 起）
    └─ 用户确认提交 → 暂存目标文件 → `/cr` 审查（不可用时按 `aicr-local` Skill）→ git commit（Phase 3.4，工作区须干净）
-   └─ /trellis:finish-work             # Trellis task 归档 + journal
+   └─ /onsf-finish                     # 自动归档 OpenSpec change +（绑定 task 时）自动归档 Trellis task + journal
 ```
 
-**双归档顺序**：先 OpenSpec 验收通过 → `/onsf-finish` 自动归档 → 用户确认提交 → 暂存目标文件 → 优先 `/cr` 审查（slash command 不可用时按 `aicr-local` Skill）→ 代码 commit → `/trellis:finish-work`。未安装或无法使用 `aicr-local` 时，降级为 Agent 自审暂存区；修复后必须重新暂存并复审。OpenSpec 未通过时，**不要**执行 `/trellis:finish-work`。
+**单命令收尾（0.1.4 起）**：先 OpenSpec 验收通过 → 用户确认提交 → 暂存目标文件 → 优先 `/cr` 审查（slash command 不可用时按 `aicr-local` Skill）→ 代码 commit（Phase 3.4，工作区须干净）→ `/onsf-finish`（自动归档 OpenSpec change；绑定 Trellis task 时一并自动归档 task + journal，无需再跑 `/trellis:finish-work`）。未安装或无法使用 `aicr-local` 时，降级为 Agent 自审暂存区；修复后必须重新暂存并复审。OpenSpec 未通过时，**不要**执行 `/onsf-finish`。纯 Trellis 任务（无 OpenSpec change）仍走 `/trellis:finish-work`。
 
 ### 8.7 Tier 3：父子任务
 
@@ -607,14 +606,14 @@ A：粘贴接口文档即可；Agent 按 `pull-yapi` 模板整理，并在输出
                     └────────┬────────┘
                              │
               自动执行: openspec archive <change-id>
-              (有 Trellis task 时) /trellis:finish-work
+              (绑定 Trellis task 时) 一并 task.py archive + add_session（自动）
 ```
 
-有 Trellis 时，完整链路：
+有 Trellis 时，完整链路（0.1.4 起，commit 前置于 /onsf-finish）：
 
 ```text
 /onsf-plan → Trellis task 创建 → OpenSpec 落盘 → 实现 → trellis-check
-  → 外部 spec → verify-change → /onsf-finish（自动归档）→ commit → /trellis:finish-work
+  → 外部 spec → verify-change → commit（Phase 3.4）→ /onsf-finish（自动归档 OpenSpec + 绑定 task + journal）
 ```
 
 ---
