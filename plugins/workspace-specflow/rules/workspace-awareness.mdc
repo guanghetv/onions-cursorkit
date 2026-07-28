@@ -70,7 +70,7 @@ globs:
 2. **原型（可选）**：`/pm-proto`
 3. **5稿**：`/pm-spec-5` → 内审；未 `v9_synced` 时 sync push v5
 4. **交互评审**：产品可手工改 `prd.md` / 飞书；契约变更须 sync 或 reconcile
-5. **9稿**：`/pm-spec` 瘦身 → push v9 → **consistency-check** → `prd.status=confirmed`
+5. **9稿**：`/pm-spec` 启动即写 `prd.stage=v9_pending` → 瘦身 → push v9 → **consistency-check** → 成功后再快照与 `prd.status=confirmed`
 6. **一键发布（可选）**：`/prd-publish`
 7. **测试 spec**：`/qa-spec`（与开发并行；启动前读 consistency）
 8. **Case Flow 执行（可选）**：`/qa-execute`
@@ -82,7 +82,7 @@ globs:
 - 扫描 `requirements/` 下子目录的 `metadata.yaml`
 - 列表显示：`name（id: slug）` 或中文目录名
 - `/pm-spec-5` 过滤 `prd.stage` 为 v5_pending / v5_confirmed 且 9稿未完成的需求
-- `/pm-spec` 过滤待 9稿定稿的需求
+- `/pm-spec` 过滤 `prd.stage` 为 v5_confirmed / v9_pending（或 9稿未 confirmed）的需求
 - `/qa-spec` 与代码仓库开发流程要求 `prd.status = confirmed`
 
 ## 权限模型

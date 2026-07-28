@@ -14,6 +14,8 @@ description: >-
 - 执行 AI Review 并更新 `metadata.yaml.prd.status`（Step 5–6）
 - 以「prd 已有内容 / 飞书已拉取」为由跳过澄清
 
+允许在 Step 1 将 `prd.stage` 写为 `v9_pending`（标记进入 9 稿流程；不等于 confirmed）。
+
 必须 **Read 并遵循** `superpowers:brainstorming` 的 SKILL.md 全流程。
 </HARD-GATE>
 
@@ -27,9 +29,9 @@ description: >-
 
 **9稿**为交互评审后的需求评审定稿；`prd.md` 确认后即为下游权威输入。
 
-- 模板见 `references/prd-template.md`（飞书一~七；关键关注/回归按语义定位）
+- 模板见 `references/prd-template.md`（飞书一~七；关键关注/回归按语义定位，见 `prd-feishu-sync/references/chapter-map.md`）
 - **禁止**残留 `[待定]` / `[待交互确认]`（P0）
-- 飞书读取：`lark-cli` 优先；按 h2 **一~七** 映射；本地优先策略同 plan-b
+- 飞书读取：`lark-cli` 优先；按 **语义 unit + 标题关键词** 定位章节（序号仅兼容）；**本地优先**：本地有实质内容时用本地，空模板 + 已绑定飞书时再拉取回填
 - AI Review 见 `references/ai-review-rubric.md`（9稿）
 - 确认后 `prd.status = confirmed` → 解锁 `/qa-spec` 与代码仓库开发消费
 
@@ -39,10 +41,12 @@ description: >-
 
 扫描 `requirements/` 下目标需求，读取 `prd.md`。
 
+若 `prd.status != confirmed`：立即更新 `metadata.yaml` → `prd.stage = v9_pending`（进入 9 稿流程；使 `/prd-publish` / sync auto 解析为 v9，并启用 C6）。已是 `confirmed` 则停止并提示勿重复定稿。
+
 若 `snapshots/prd-v5-*.md` 存在：读取**最新** v5 快照，与当前 `prd.md` 对比，输出 **5→9 差异摘要**（待定项是否已决议、交互结论是否已写入）。
 
 - 本地有内容：直接使用（含会中手工修改）
-- 空模板 + `feishu_doc`：拉取飞书按章节映射回填
+- 空模板 + `feishu_doc`：拉取飞书按语义章节映射回填
 
 ### Step 2: 读取原型与引用（可选）
 
@@ -83,16 +87,16 @@ description: >-
 3. **必做可读性扫描**（长段落 / MODULE 说明墙）：明细写入 `prototypes/ai-review.md`「## 可读性告警」；P1 不阻断 confirmed
 4. 已绑定飞书时：更新飞书 `prd-sync:readability:v1` **摘要**（条数 + `prototypes/ai-review.md` 路径），不列明细
 5. 五维评分 + P0/P1 问题项 → `prototypes/ai-review.md`
-6. `prd.md` **二、变更内容** 记结论摘要（可读性有告警时可附「含可读性告警，详见 ai-review」）
+6. **不在本步追加版本表行**；结论摘要留在 `ai-review.md`，待 Step 6 同步/校验成功后再写入版本表「变更内容」
 
 ### Step 6: 确认、同步、校验、快照与状态
 
-用户确认通过后，**按序**执行（任一步 critical 失败则**不得**将 `prd.status` 设为 `confirmed`）：
+用户确认通过后，**按序**执行（任一步 critical 失败则**不得**将 `prd.status` 设为 `confirmed`，**不得**追加「可开工」版本行 / 落 v9 快照）：
 
-1. **二、版本表** 追加：`9-n`、当天日期、`AI Review: 可开工`（等）、`snapshots/prd-v9-<date>.md`
-2. 复制 `prd.md` → `snapshots/prd-v9-<YYYY-MM-DD>.md`
-3. `/prd-feishu-sync push --stage v9`（失败则明确报错并停止 confirmed）
-4. `/prd-consistency-check`（进开发前）；存在 critical fail → 停止 confirmed
+1. `/prd-feishu-sync push --stage v9`（失败则明确报错、保持 `prd.stage = v9_pending`，停止）
+2. `/prd-consistency-check`（进开发前）；存在 critical fail → 保持 `v9_pending`，停止 confirmed
+3. **二、版本表** 追加：`9-n`、当天日期、`AI Review: 可开工`（等，可附可读性告警提示）、`snapshots/prd-v9-<date>.md`
+4. 复制 `prd.md` → `snapshots/prd-v9-<YYYY-MM-DD>.md`
 5. 更新 `metadata.yaml`：
    - `prd.status = confirmed`
    - `prd.confirmed_at = <date>`
@@ -100,16 +104,18 @@ description: >-
    - `prd.v9.snapshot = snapshots/prd-v9-<date>.md`
    - `prd.stage = confirmed`
 
-也可在本步用 `/prd-publish --stage v9` 覆盖上述第 3–4 步（push + check）。
+也可在本步用 `/prd-publish --stage v9` 覆盖上述第 1–2 步（push + check）；成功后再做第 3–5 步。
+
+失败时须向用户标明：`push_failed` 或 `check_failed`，并给出重试命令（`/prd-publish --stage v9` 或分步 sync/check）；**禁止**留下暗示已可开工的 v9 快照。
 
 ### Step 7: 提示下一步
 
 - 测试 → `/qa-spec`（将检查 `consistency.status`）
 - 开发 → 代码仓库流程直接读瘦身后的 `prd.md`
-- 提交 specs 仓前若又改契约：先 `/prd-publish`（T4）
+- 提交 specs 仓前若又改契约：先 `/prd-publish`（提交前门禁）
 
 ## 约束
 
 - 增强而非覆盖产品原始决策
 - 产品 spec 只描述需求本质，不涉及技术实现
-- MODULE ID 稳定锚点；版本表仅在 Step 6 确认时追加
+- MODULE ID 稳定锚点；版本表仅在 Step 6 **同步与校验均成功后**追加

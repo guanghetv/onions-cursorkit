@@ -32,7 +32,7 @@ consistency:
 
 
 prd:
-  stage: v5_pending          # v5_pending | v5_confirmed | v9_pending | confirmed
+  stage: v5_pending          # v5_pending | v5_confirmed | v9_pending（/pm-spec 启动时写入）| confirmed
   status: pending            # 仅 9稿 confirmed 后 = confirmed
   confirmed_at: null
   v5:
@@ -154,7 +154,7 @@ Agent 在 `/req-new` 时从飞书标题或用户输入补齐占位。对齐模�
 
 ## MODULE-1: <待定>
 
-### 场景 1.1: <待定>
+### 场景: <描述性标题>
 **测试类型**: 功能测试
 **覆盖端**: 待定
 **前置条件**:

@@ -13,6 +13,11 @@
 - **WHEN** 执行 `/pm-spec`（9稿）且存在 `snapshots/prd-v5-*.md`
 - **THEN** 系统读取最新 v5 快照与当前 `prd.md`，输出 5→9 差异摘要供 brainstorming 确认
 
+#### Scenario: 启动写入 v9_pending
+
+- **WHEN** 执行 `/pm-spec` 且 `prd.status` 尚未为 `confirmed`
+- **THEN** 系统在定位需求后将 `prd.stage` 设为 `v9_pending`（不等于 confirmed；供 sync/publish auto 与 C6 启用）
+
 #### Scenario: 禁止残留待定标记
 
 - **WHEN** 9稿结构化增强或 AI Review
@@ -68,17 +73,22 @@
 
 ### Requirement: 9稿确认快照与版本表
 
-系统 SHALL 在 9稿确认时生成 v9 快照并追加版本行。
+系统 SHALL 在 9稿 **push v9 与 consistency-check 均成功之后** 才生成 v9 快照并追加版本行。
 
 #### Scenario: v9 快照与 metadata
 
-- **WHEN** 9稿确认通过
+- **WHEN** 9稿确认流程中 sync 与 check 均已成功
 - **THEN** 系统复制 `prd.md` 至 `snapshots/prd-v9-<YYYY-MM-DD>.md`，更新 `prd.v9.status`、`prd.v9.snapshot`、`prd.stage = confirmed`
 
 #### Scenario: 版本表记录 9-n
 
-- **WHEN** 9稿确认
-- **THEN** 系统在第二章版本表追加 `9-n` 版本行
+- **WHEN** 9稿 sync 与 check 均成功
+- **THEN** 系统在第二章版本表追加 `9-n` 版本行（含 AI Review 结论摘要）
+
+#### Scenario: 失败不落可开工快照
+
+- **WHEN** v9 push 失败或 consistency-check 存在 critical
+- **THEN** 系统不得追加暗示可开工的版本行、不得落 v9 快照、不得将 `prd.status` 设为 `confirmed`；`prd.stage` 保持 `v9_pending` 并标明 `push_failed` 或 `check_failed`
 
 ### Requirement: 轻量 metadata 扩展
 
@@ -94,19 +104,19 @@
 - **WHEN** 下游技能检查 `prd.status`
 - **THEN** `confirmed` 仍仅表示 9稿定稿；`/qa-spec` 与代码仓库开发流程以此为门禁（不再提供 `/dev-start`）
 
-### Requirement: 9 稿确认后同步飞书
+### Requirement: 9 稿确认时先同步飞书再落状态
 
-系统 SHALL 在 `/pm-spec` 9 稿用户确认通过后调用 `/prd-feishu-sync push --stage v9`。
+系统 SHALL 在 `/pm-spec` 9 稿用户确认通过后、写入 `confirmed` / v9 快照之前，调用 `/prd-feishu-sync push --stage v9`。
 
 #### Scenario: 确认后必推送
 
-- **WHEN** 9 稿确认流程收口成功
-- **THEN** 系统执行 v9 同步；成功后 `feishu.v9_synced` 为 true
+- **WHEN** 9 稿用户确认通过并进入收口
+- **THEN** 系统先执行 v9 同步；成功后 `feishu.v9_synced` 为 true，再落快照与 `confirmed`
 
 #### Scenario: 同步失败不得假装完成
 
 - **WHEN** v9 同步失败
-- **THEN** 系统不得向用户宣称飞书已是最新；须明确失败并给出重试命令（`/prd-publish` 或 `push --stage v9`）
+- **THEN** 系统不得向用户宣称飞书已是最新；不得 `confirmed`；须明确失败并给出重试命令（`/prd-publish` 或 `push --stage v9`）
 
 ### Requirement: 9 稿确认执行瘦身
 
