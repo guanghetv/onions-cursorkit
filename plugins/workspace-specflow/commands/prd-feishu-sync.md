@@ -1,11 +1,13 @@
 ---
 name: prd-feishu-sync
-description: PRD 与飞书文档同步（create/push/reconcile/status/rebind）。增量契约推送；禁止默认整篇覆盖；不做一致性结论。
+description: PRD 与飞书文档同步（create/push/reconcile/status/rebind）。默认 XML 富格式写入；禁止裸 BEGIN/END 与默认 markdown；不做一致性结论。
 ---
 
 # /prd-feishu-sync
 
 将当前需求目录的 `prd.md` 与绑定的飞书文档同步。
+
+**硬规则**：`create` / `push` 一律 `--doc-format xml`；人读用 callout + 短心跳码（`prd-sync:status:v1` 等），禁止裸 `[PRD-SYNC:BEGIN/END]`。
 
 常用：
 

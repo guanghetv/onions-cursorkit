@@ -79,26 +79,30 @@ description: >-
 3. 按 chapter-map **语义定位**后跑 C/W；`narrative.*` diff 跳过
 4. 语义 B：逐 MODULE 意图比对
 
-飞书回写时：定位 `[PRD-SYNC:CONSISTENCY:v1:BEGIN]…END`（或历史「一致性校验结果」行），局部替换；禁止整篇 overwrite。若区缺失则在文档末尾插入整段再写入结论。
+飞书回写时：定位「一致性校验」callout 或心跳码 `prd-sync:consistency:v1`（兼容旧裸 `[PRD-SYNC:CONSISTENCY:…]`：先迁移为 callout 再写）。用 **XML** `block_replace` / 局部替换；禁止整篇 overwrite。若区缺失则在文档末尾 **XML 插入** callout 再写入结论。
 
 ### Step 3：输出
 
 1. 写入 `prototypes/prd-consistency-check-YYYY-MM-DD.md`（同日覆盖）
 2. 更新 `metadata.consistency`：`status`（`pass`/`warn`/`fail`）/ `checked_at` / `report_path` / `source_commit`
-3. **覆盖**飞书 CONSISTENCY 区（替换 create 时的「⏳ 未校验」占位）为最新结论：
+3. **覆盖**飞书一致性 callout（替换 create 时的「⏳ 未校验」）为最新结论（**`--doc-format xml`**）：
 
-```text
-[PRD-SYNC:CONSISTENCY:v1:BEGIN]
-一致性校验结果：✅|⚠️|❌ · YYYY-MM-DD
-报告：<路径>
-对应 commit：<sha 或 工作区未提交>
-说明：由 /prd-consistency-check 机器维护；请勿手改
-[PRD-SYNC:CONSISTENCY:v1:END]
+```xml
+<callout emoji="✅" background-color="light-green" border-color="green">
+  <p><b>一致性校验</b>（机器维护，请勿手改）</p>
+  <p><code>prd-sync:consistency:v1</code></p>
+  <p>一致性校验结果：✅|⚠️|❌ · YYYY-MM-DD</p>
+  <p>报告：&lt;路径&gt;</p>
+  <p>对应 commit：&lt;sha 或 工作区未提交&gt;</p>
+  <p>说明：由 /prd-consistency-check 机器维护</p>
+</callout>
 ```
+
+（fail 用红 callout / warn 用橙；未校验占位用蓝 + ⏳。）
 
 映射：无 critical 且无未跳过 warning → ✅ + `pass`；仅 warning → ⚠️ + `warn`；有 critical → ❌ + `fail`。
 
-4. 回读确认飞书已不再显示「⏳ 未校验」（除非本次未能写入飞书，则对话标明失败且本地 status 不得伪造成 pass）。
+4. 回读：已不再显示「⏳ 未校验」（除非写飞书失败，则标明且本地不得伪造成 pass）；**不得**残留裸 `[PRD-SYNC:`。
 5. 对话紧凑摘要；critical → 明确阻断 confirmed / 提交 / qa-spec
 
 ### Step 4：warning 跳过

@@ -22,8 +22,8 @@ feishu:
   v9_synced: false           # true 后默认不再 push v5，除非 --force
   narrative_owned_by: feishu # 讲解层（narrative.*：背景/价值）归属飞书
 
-# 契约层一致性校验（/prd-consistency-check 维护；飞书 CONSISTENCY 区同步展示）
-# create 后 status=unknown，飞书显示「⏳ 未校验」；check 后覆盖为 pass|warn|fail
+# 契约层一致性校验（/prd-consistency-check 维护；飞书「一致性校验」callout 同步展示）
+# create 后 status=unknown，飞书显示「⏳ 未校验」；check 后覆盖为 pass|warn|fail（XML）
 consistency:
   status: unknown            # unknown | pass | warn | fail
   checked_at: null

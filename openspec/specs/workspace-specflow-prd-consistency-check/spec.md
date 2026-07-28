@@ -95,7 +95,7 @@
 #### Scenario: 飞书展示最新结论
 
 - **WHEN** 校验完成且飞书可写
-- **THEN** 飞书 CONSISTENCY 机器区覆盖为总体结论（✅/⚠️/❌）、日期、报告路径、对应 commit；不再显示「⏳ 未校验」
+- **THEN** 飞书「一致性校验」callout（心跳码 `prd-sync:consistency:v1`）覆盖为总体结论（✅/⚠️/❌）、日期、报告路径、对应 commit；不再显示「⏳ 未校验」；以 XML 局部写入，不得留下裸 `[PRD-SYNC:BEGIN/END]`
 
 #### Scenario: 未校验时飞书可见
 

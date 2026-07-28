@@ -56,7 +56,22 @@
 #### Scenario: create 写入未校验占位
 
 - **WHEN** `create` 成功
-- **THEN** 飞书文档含 `[PRD-SYNC:CONSISTENCY:v1]` 机器区，文案含「⏳ 未校验」；本地 `consistency.status` 为 `unknown`；后续普通 `push` 不得改写该区结论
+- **THEN** 飞书文档含「一致性校验」callout（心跳码 `prd-sync:consistency:v1`），文案含「⏳ 未校验」；本地 `consistency.status` 为 `unknown`；后续普通 `push` 不得改写该区结论
+- **AND** 文档不得出现裸文本 `[PRD-SYNC:…:BEGIN/END]`
+
+### Requirement: 飞书写入使用 XML 且人读优先
+
+系统 SHALL 在创建与推送飞书可读内容时默认使用 XML 富格式，机器维护区以 callout/短心跳码呈现，不以裸 BEGIN/END 标记污染正文。
+
+#### Scenario: 默认 XML 写入
+
+- **WHEN** 执行 `create` 或 `push` 写入飞书
+- **THEN** 使用 `--doc-format xml`（或等价 XML 内容）；不得默认 markdown 整篇创建/推送
+
+#### Scenario: 关键关注为真 callout
+
+- **WHEN** 同步含关键关注 / 回归范围的契约内容
+- **THEN** 飞书侧为 callout（或同等高亮块），不得保留本地 `> [!IMPORTANT]` 原文形态
 
 #### Scenario: lark-cli 不可用
 
