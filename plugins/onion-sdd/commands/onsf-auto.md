@@ -97,7 +97,7 @@ description: 自动化执行 Onion SDD 流程，按当前状态推断 new/contin
 - 推送远程分支
 - 创建 PR/MR
 
-check 阶段的 `git add`（限本次 change 范围，禁止 `git add -A`）与 `/cr` 不在此限，可自动执行；前者可 `git reset` 撤销，后者只读。
+check 阶段的 `git add`（限本次 change 范围，禁止 `git add -A`）与 `/cr` 不在此限，可自动执行；前者仅允许撤回 Agent 本次 check 阶段 `git add` 的路径（如 `git reset HEAD -- <paths>`），禁止笼统 `git reset` 或移除用户既有暂存（见 `rules/onion-sdd.mdc`「只增不减」）；后者只读。
 
 `/onsf-finish` 门禁通过后自动执行 `openspec archive <change-id>`；CLI 不可用时使用等效手工归档；失败时停止并报告。
 
