@@ -12,7 +12,7 @@
   "assignee": "yangpeng",
   "createdAt": "2026-07-27",
   "completedAt": null,
-  "branch": null,
+  "branch": "feat/0.2.0版本迭代",
   "base_branch": "feat/0.1.4版本迭代",
   "worktree_path": null,
   "commit": null,
@@ -28,9 +28,9 @@
       "change_id": "move-aicr-to-check-phase",
       "change_path": "openspec/changes/move-aicr-to-check-phase",
       "tier": "2",
-      "phase": "check",
-      "last_action": "check four-step done: trellis-check + staged + CR (degraded to SKILL.md), 3 findings fixed",
-      "last_action_at": "2026-07-27T14:56:50+08:00"
+      "phase": "finish",
+      "last_action": "用户确认人工验证通过；修复 meta.onion 误绑；准备 0.2.0 发版与 /onsf-finish",
+      "last_action_at": "2026-08-12T18:03:00+08:00"
     }
   }
 }
