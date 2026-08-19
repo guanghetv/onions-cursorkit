@@ -32,7 +32,7 @@ description: >-
 
 1. 当前为 specs 仓；定位 `requirements/<目录>/`（含 `prd.md`、`metadata.yaml`）。
 2. `lark-cli` 可用；优先 `--as user`。执行前：`lark-cli auth status`；缺 scope 时用 `lark-cli auth login --scope "..." --no-wait --json`，展示 `verification_url` 与二维码，等用户完成后再继续。
-3. 文档操作使用当前 CLI 支持的 `docs +fetch` / `+create` / `+update` / `+media-insert` 与 drive 上传能力；参数以本机 `lark-cli docs --help` 为准。
+3. 文档操作使用当前 CLI 支持的 `docs +fetch` / `+create` / `+update` 与 drive 上传能力；正文**独立配图**可用 `+media-insert`；**MODULE「图示」列 / 表格单元格 / callout 内禁止** `media-insert`（见「图片」硬规则）。参数以本机 `lark-cli docs --help` 为准。
 4. 除 `create`/`rebind` 外，必须已有 `metadata.feishu.doc_token`（可从 `feishu_doc` URL 解析后写回自愈）。
 
 ## 写入格式硬规则（XML）
@@ -65,7 +65,7 @@ description: >-
 **读写步骤**
 
 1. 改前：对目标范围 `docs +fetch`，需要定位时用 `--detail with-ids`；优先局部 scope。
-2. 改时：仅 `str_replace` / `block_replace` / `block_insert_after` / `block_delete` /（画板）`docs +whiteboard-update`；内容用 **XML**。
+2. 改时：仅 `str_replace` / `block_replace` / `block_insert_after` / `block_delete` /（画板）`docs +whiteboard-update`；内容用 **XML**。表格/callout 内图片**不得**用 `media-insert`（见「图片」硬规则）。
 3. 结构写尽量带精确 `revision`；冲突 → **STOP**（策略 A），重新 fetch 对账后等用户决定；**禁止**改用 `latest` 盲重试，**禁止**静默 `overwrite`。
 4. 改后：再 fetch；确认目标存在、邻接未误删、表格/画板/callout 结构正常；并跑「写后自检」。
 5. 输出必须列出本次实际使用的 `docs +update --command …` 清单；若含 `overwrite` 且非用户刚确认的重建模式 → **判定失败**。
@@ -228,7 +228,7 @@ push --stage v9 成功 → v9_synced=true, last_synced_stage=v9
 - 首次 `create`：允许整篇创建骨架（**XML**）并生成 manifest（此为新建，不是对已有文档的 overwrite）。
 - 已有文档：比较「当前飞书」与「本地最新 prd」，manifest 只作 block/图片/画板缓存，不作唯一真相。
 - 普通契约章节：优先最小段落 `block_replace` / `str_replace`，写入内容为 **XML 片段**（局部内容仍用 xml，不是整篇覆盖）。
-- MODULE：说明拆成列表/分节；表格行级增删改；图示列走图片规程。
+- MODULE：说明拆成列表/分节；表格行级增删改；图示列走下方「图片」硬规则（**禁止**用 `media-insert` 填单元格）。
 - 单元 hash 须含图片文件 sha256，不只比路径。
 - 远端手工改动与本地同 unit 均变 → 报告冲突，不静默覆盖。
 - **定位不到目标 block / revision 冲突 / 局部写入失败** → **STOP**，展示失败 unit 与可选方案（重试 fetch / 用户手工指定 block / 用户确认整篇重建）；**默认不 overwrite**。
@@ -244,13 +244,37 @@ push --stage v9 成功 → v9_synced=true, last_synced_stage=v9
 
 保护白名单（普通 `push` 永不碰）：讲解层、REVIEW、CONSISTENCY、已有 whiteboard、人工插图/评论锚点块。
 
-## 图片
+## 图片（硬规则）
 
-1. 飞书不能使用本地路径或 Drive `/file/` 页 URL 当图片直链。
-2. 表格「图示」列：优先 `drive +upload` 到需求同名文件夹，得 `file_token`，XML 中写 `<img …/>`（以本机 CLI 支持的属性为准）。
-3. 独立图片块：可用 `docs +media-insert --file`；默认追加末尾。
-4. 需要转换引用时用临时同步稿，**默认不把**飞书 token 写回正式 `prd.md`。
-5. manifest 记录 folderToken 与图片 sha256→fileToken 映射，未变化则复用。
+> 事故根因备忘：`docs +media-insert --selection-with-ellipsis` 命中表格/callout 内文本时，图片会落到**顶层祖先块外**；上传成功 ≠ 位置正确。MODULE「图示」列不得用该命令「凑合插入」。
+
+### 决策树
+
+| 目标位置 | 唯一首选 | 禁止 |
+|---|---|---|
+| MODULE「图示」列 / 任意表格单元格 / callout 内 | `docs +update --command block_replace`（或单元格内可接受的 `block_insert_after`）写入 `<img …/>` | `docs +media-insert`（含 `--selection-with-ellipsis` / `--before`） |
+| 正文独立配图（非表格、非 callout） | `docs +media-insert --file`（默认可追加末尾） | 用独立块冒充「已进入图示列」 |
+
+### 表格「图示」列写法
+
+1. 在需求目录为 cwd，用相对路径（**推荐** `path="@./…"`；勿写本机绝对路径）：
+
+   ```bash
+   # cwd = requirements/<需求目录>/
+   lark-cli docs +update --doc <doc_token> --as user --doc-format xml \
+     --command block_replace --block-id <图示单元格内段落/块 id> \
+     --content '<img path="@./images/xxx.png" width="320" caption="说明"/>'
+   ```
+
+2. 多图可同一单元格连续多个 `<img …/>`。
+3. `path` 报 `2127` / Invalid local resource path 时的 fallback（按序，**不得跳到表格外**）：
+   1. 确认 cwd 正确，改用 `@./相对路径`
+   2. 若已有上传 token：`<img src="<file_token>" …/>` 回填**同一单元格**
+   3. 仍失败 → **STOP**，报告失败 unit；**禁止**降级为「先 `media-insert` 到表格外再口头说明」
+4. 可选：先 `drive +upload` 到需求同名文件夹拿 `file_token`，再以 `src` 写入单元格（与上式等价，仍须落在格内）。
+5. 需要转换引用时用临时同步稿，**默认不把**飞书 token 写回正式 `prd.md`。
+6. manifest 记录 folderToken 与图片 sha256→fileToken / block_id 映射；未变化则复用。
+7. 飞书不能把 Drive `/file/` 页 URL、需 SSO 的 pages 链接当图片直链 `href`（易 302/鉴权失败）。
 
 ## Manifest
 
@@ -283,6 +307,7 @@ push --stage v9 成功 → v9_synced=true, last_synced_stage=v9
 4. `create`/`push` 使用了 **XML** 写入路径；且本次 command 清单中**无未授权** `overwrite`。
 5. 若本地/基线存在流程画板：飞书对应位置仍为 whiteboard（不得只剩文本箭头 `<pre>`）。
 6. 本次若扫描到文字墙：飞书 READABILITY 区已更新为**橙色摘要**（含条数 + 报告路径，无明细列表）；若无文字墙：绿色「暂无」。**区缺失或未回写 → 同步失败**（告警本身仍不阻断业务 confirmed）。明细须落在本地报告。
+7. 若本次同步含 MODULE「图示」/表格配图：目标表格片段内 `<img>` 数量 = 预期；**同名图不得残留在表格外**（有则 `block_delete` 后复读）；仅表格外有图、格内无图 → **同步失败**。
 
 **告警项（不阻断同步成功）**
 
@@ -311,11 +336,11 @@ push --stage v9 成功 → v9_synced=true, last_synced_stage=v9
 2. 读本地 `prd.md`，执行 5/9 门控（含 **v9 + 仍有 narrative → REJECT**）。
 3. `+fetch` 飞书（with-ids）；若仍有旧裸 marker → **先迁移**再改契约（迁移也用局部替换，禁止整篇 overwrite）。
 4. 按 chapter-map **语义 unit** 与 MODULE 算 diff；顺带扫描文字墙位置清单；展示变更清单，声明不改 `narrative.*` / REVIEW / **CONSISTENCY** / 未变更 whiteboard → **STOP 确认**。
-5. 按「XML 片段 + 排版规程 + 增量策略」**局部**写入；本地无讲解层时**不得**清空飞书 `narrative.*`；**不得**改写 CONSISTENCY；**不得** `overwrite`。
+5. 按「XML 片段 + 排版规程 + 增量策略」**局部**写入；MODULE「图示」列必须走「图片」硬规则（`block_replace` + `<img …/>`，**禁止** `media-insert`）；本地无讲解层时**不得**清空飞书 `narrative.*`；**不得**改写 CONSISTENCY；**不得** `overwrite`。
 6. 流程/Mermaid：按「画板保活」表执行；写入失败 → **STOP**（策略 A），不得文本顶替后继续。
 7. 任 unit 定位失败 / revision 冲突 → **立即 STOP**，询问用户；未获「整篇重建」确认前不得覆盖。
 8. **更新 READABILITY callout**（有告警 → 橙**摘要**：约 N 处 + 本地报告路径，禁止飞书罗列明细；无 → 绿「暂无」）；区缺失则在一致性 callout **之前** XML 插入。此步失败 → 同步失败（但告警内容本身从不构成业务硬拦）。
-9. 回读 + 写后自检（含 command 清单与飞书可读性区）；更新 `last_synced_*`、`feishu_revision`、manifest；v9 成功则 `v9_synced=true`。  
+9. 回读 + 写后自检（含 command 清单、飞书可读性区、以及图示位置第 7 条）；更新 `last_synced_*`、`feishu_revision`、manifest；v9 成功则 `v9_synced=true`。  
    若缺少一致性 callout：用 XML **插入**「⏳ 未校验」占位，不假装已通过。
 
 ### pull / reconcile
