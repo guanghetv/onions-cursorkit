@@ -26,7 +26,7 @@ description: 从已有 OpenSpec 变更产物恢复 Onion SDD 上下文并继续�
 | 有 `proposal.md` + `specs/`，无 `tasks.md` | tasks | 使用 `openspec-change` 补 `tasks.md` |
 | 存在 `research/**`，且未形成最终设计决策 | design | 读取调研结论，回到 `full-change` 的 design 阶段 |
 | `tasks.md` 有未完成项 | implement | 继续当前任务并记录验证点 |
-| `tasks.md` 全部完成，未见外部 spec 或报告 | check | 使用 `trellis-check` 做工程质量审查；Trellis 不可用时执行可用静态检查、测试和 OpenSpec 对照并记录结果 |
+| `tasks.md` 全部完成，未见外部 spec 或报告 | check | 按 `rules/onion-sdd.mdc`「代码审查」执行四步：`trellis-check` → 暂存本次 change 改动 → `/cr` 审查暂存区 → 修复复审；Trellis 不可用时第 1 步降级为可用静态检查、测试和 OpenSpec 对照并记录结果 |
 | check 已通过，未见外部 spec 或报告 | integrate / verify | 等待外部 spec，或使用 `verify-change` |
 | 用户表达 YApi 到了 / re-check / 对齐 YApi | integrate | 使用 `re-check` 先落盘 YApi 契约，再对齐当前范围内的 mock、类型、API 层和测试 |
 | 用户表达需求或验收口径调整 / 需求变了 / spec 改了 | design / implement | 暂停实现，按 `openspec-change` 的「已落盘产物的更新协议」同步 `proposal.md`、`specs/**/spec.md`、`tasks.md`，再继续 |
@@ -44,8 +44,8 @@ description: 从已有 OpenSpec 变更产物恢复 Onion SDD 上下文并继续�
 - Tier 2+ 读取 `full-change` 作为阶段编排依据。
 - 缺完整 OpenSpec 产物时，使用 `openspec-change` 补齐。
 - 存在 `research/**` 时，先读取每个主题的调研结论；如仍有未决技术问题，调用或派发 `trellis-research`，Trellis 不可用时主会话补调研并写入文件。
-- 实现完成后，进入外部 spec 或验证前先执行 `trellis-check`；Trellis 不可用时执行可用静态检查、测试和 OpenSpec 对照并记录结果。
-- 用户明确要求提交时，才按 `rules/onion-sdd.mdc` 暂存目标文件并使用 `aicr-local` 审查最终暂存 diff；`/onsf-continue` 不自动触发该步骤。
+- 实现完成后，进入外部 spec 或验证前先完成 check 四步（`trellis-check` → 暂存本次 change 改动 → `/cr` 审查暂存区 → 修复复审），顺序不可调换；Trellis 不可用时第 1 步降级为可用静态检查、测试和 OpenSpec 对照并记录结果，`/cr` 不可用时按规则的降级路径处理。
+- check 阶段的暂存与 `/cr` 由 Agent 自动执行，用户无需输入命令；`git commit` 仍需用户明确授权，且按规则的提交门禁判断是否需要复审。
 - 后端/API/QA 文档到达时，使用 `external-spec` 写入当前 change 并做差异分析。
 - YApi 链接或 interfaceID 到达时，默认使用 `re-check`；用户明确只要求拉取/落盘时使用 `pull-yapi`。
 - 验证阶段使用 `verify-change` 生成或更新 `e2e-report.md`。

@@ -585,3 +585,40 @@ Integrated YApi contract support into onion-sdd with pull-yapi and re-check skil
 ### Next Steps
 
 - None - task complete
+
+
+## Session 18: AICR 接入 check 阶段
+
+**Date**: 2026-08-12
+**Task**: AICR 接入 check 阶段
+**Branch**: `feat/0.2.0版本迭代`
+
+### Summary
+
+将 AICR 前移到 check 四步复合审查，完成 0.2.0 发版与 OpenSpec 归档。
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ec0daf6` | (see git log) |
+| `49c1d99` | (see git log) |
+| `c68e8df` | (see git log) |
+| `376e097` | (see git log) |
+| `40da4c2` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

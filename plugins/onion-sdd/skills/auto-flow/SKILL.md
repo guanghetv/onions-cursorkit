@@ -104,6 +104,7 @@ python3 <onion-sdd>/scripts/onion_state.py --repo-root . get
 - 局部组件行为可通过现有测试或手动步骤验证。
 - 缺少 `.onion-sdd/current.json` 但 OpenSpec 产物唯一且完整。
 - 没有 active Trellis task，但 OpenSpec-only 流程可继续。
+- check 阶段暂存本次 change 范围内的改动（`git add`，禁止 `git add -A`）与调用 `/cr`：前者可 `git reset` 撤销，后者只读，均不停止。
 
 ### 必须停止
 
@@ -174,11 +175,33 @@ python3 <onion-sdd>/scripts/onion_state.py --repo-root . get
 
 发现问题时，低风险问题自动修复并重跑相关检查；高风险问题停止并报告 blocker。
 
-本阶段仅核对当前 change 的范围、产物与验证证据，不暂存文件，也不调用 `aicr-local` 或 `/cr`。用户后续明确要求提交时，再按 `rules/onion-sdd.mdc` 的提交前 AICR 门禁审查最终暂存 diff。
+### 与 check 阶段 CR 的关系
+
+两者职责与触发时机不同，不是重复动作：
+
+| 维度 | `diff-review`（本阶段） | check 阶段 CR |
+|------|-------------------------|---------------|
+| 审查对象 | 工作区 diff（`git diff`） | 暂存区（`git diff --cached`） |
+| 关注点 | 范围是否越界、产物与 `proposal.md`/`specs/`/`tasks.md` 是否一致、验证证据是否齐 | 团队前后端规范、安全风险、影响范围、业务需求对齐 |
+| 执行者 | Agent 自审，不调用 `/cr` | `/cr`（`aicr-local`） |
+| 触发时机 | 实现完成后、进入验证前 | check 阶段第 3 步 |
+
+`diff-review` 通过后进入「验证收束」，其中的 check 段按 `rules/onion-sdd.mdc`「代码审查」执行四步：`trellis-check` → 暂存本次 change 改动 → `/cr` 审查暂存区 → 修复复审。本阶段自身不暂存文件、不调用 `/cr`，暂存与 CR 由 check 段完成。
 
 ## 验证收束
 
-- 运行项目中可发现且与改动相关的 lint、typecheck、unit/component 测试。
+check 段按 `rules/onion-sdd.mdc`「代码审查」执行四步复合审查，`/onsf-auto` 下全部自动执行、不停止：
+
+1. `trellis-check`（Trellis 不可用时降级为项目可用的 lint、typecheck、测试与 OpenSpec 对照），含其自身的修复。
+2. 暂存本次 change 范围内的改动；禁止 `git add -A`，归属存疑的文件不纳入并在最终输出中列出。
+3. `/cr` 审查暂存区；slash command 不可用时按 `aicr-local` 的 `SKILL.md` 审查，未安装时 Agent 自审暂存区并注明团队规范维度未覆盖。
+4. 修复 → 回跑受影响的门禁 → 重新暂存 → 复审，循环至通过；纯格式修复可直接重新暂存，不要求全量重跑 `trellis-check`。
+
+顺序不可调换：`trellis-check` 会修改代码，先暂存会导致审查对象与最终产物脱节。暂存区已含本次 change 之外的内容时只提示，不执行 `git reset`。
+
+其余收束动作：
+
+- 上述第 1 步未覆盖到的部分，补跑项目中可发现且与改动相关的 lint、typecheck、unit/component 测试。
 - 无测试工具时记录“未配置 / 未执行”和替代验证步骤，不得虚构。
 - Tier 2+ 使用 `verify-change` 生成或更新 `e2e-report.md`。
 - 浏览器自动化需要环境、账号或权限时，不自动绕过；缺少条件则记录 blocker。
@@ -188,10 +211,11 @@ python3 <onion-sdd>/scripts/onion_state.py --repo-root . get
   - 验证命令和结果
   - spec 自审结果
   - diff 自审结果
+  - check 段结果（`trellis-check` 结论、已暂存文件清单、CR 结论、归属存疑未纳入的文件）
   - blockers
   - 是否 ready for user review / commit / finish-check
 
-若 ready for commit，应提示：用户明确授权后，先暂存目标文件，再使用 `aicr-local` 审查暂存区；未安装或不可用时，降级为 Agent 对暂存区自审。
+若 ready for commit，应提示：check 阶段的 CR 已通过，暂存区未变化时用户授权后可直接 commit；若此后暂存区发生任何变化（含新增暂存文件）或无法判定，提交前须重新 `/cr`。`/onsf-auto` 自身不执行 `git commit`。
 
 ## 运行态同步（必须）
 
@@ -210,7 +234,7 @@ python3 <onion-sdd>/scripts/onion_state.py --repo-root . get
 
 `auto-flow` 的终点是“完成实现、验证和归档，但不替用户完成代码提交或远程同步”：
 
-- 不自动 `git commit`。
+- 不自动 `git commit`。check 阶段的 `git add`（限本次 change 范围）与 `/cr` 不在此限，可自动执行。
 - 不自动 Trellis archive。
 - 不自动 push / PR / MR。
 - `finish-check` 或准备归档前必须跑 `finish_check.py`；非 0 则 blocked。

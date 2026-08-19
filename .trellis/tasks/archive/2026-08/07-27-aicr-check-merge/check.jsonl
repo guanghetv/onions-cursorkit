@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/backend/onion-sdd-runtime.md", "reason": "核对 AICR/trellis-check 分工与 onion_state.py 契约描述是否已同步为新口径"}
+{"file": ".trellis/spec/backend/index.md", "reason": "按其中的质量检查命令验证脚本改动"}
+{"file": ".trellis/spec/guides/doc-language-guide.md", "reason": "核对改动文档的中文正文与英文标识符规范"}
+{"file": ".trellis/spec/guides/index.md", "reason": "核对 Onion SDD 触发器清单是否残留旧口径"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "核对同步产物是否回源修改、提交范围是否被扩大"}

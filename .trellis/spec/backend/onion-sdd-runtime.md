@@ -126,13 +126,15 @@ python3 plugins/onion-sdd/scripts/onion_state.py --repo-root . set --idle \
 
 `/onsf-*` 与 `trellis-adapter` / `auto-flow` / `full-change` / `mini-change` 将阶段切换写成硬纪律；无 Cursor Hook。归档前必须 `finish_check.py`。
 
-## 约定：提交前 AICR 与 trellis-check 分工
+## 约定：check 阶段 AICR 与 trellis-check 分工
 
-**What**：用户明确授权 `git commit` 后，先暂存目标文件，再审查最终暂存 diff。优先 `/cr`（`aicr-local`）；slash command 不可用时按该 Skill；未安装则 Agent 自审暂存区。修复后重新暂存并复审；暂存 diff 未变不重复审。
+**What**：check 是四步复合阶段，由 Agent 自动串联，用户无需输入命令——`trellis-check`（含其修复）→ 暂存本次 change 改动 → `/cr`（`aicr-local`）审查暂存区 → 修复、回跑受影响门禁、重新暂存、复审。顺序不可调换：`trellis-check` 会改代码，先暂存会导致审查对象与最终产物脱节。暂存限本次 change（禁止 `git add -A`），只增不减（禁止 `git reset`）；归属存疑的文件请用户确认。
 
-**Why**：`trellis-check` 负责实现后的 lint/typecheck/测试/Spec 与跨层；`aicr-local` 只审提交物。二者不互相替代。`/onsf-auto` 的 `diff-review` 不暂存、不调用 `/cr`。
+**授权**：check 阶段允许自动 `git add` 与 `/cr`；仍禁止自动 `git commit`、push、创建 PR/MR。用户授权提交后按条件化门禁判断——暂存区自 CR 通过后未变化则直接 commit，有任何变化（含新增暂存文件）或无法判定则重新 `/cr`。判定由 Agent 依据会话上下文完成，不引入指纹机制，不改 `onion_state.py`。
 
-**Related**：`plugins/onion-sdd/rules/onion-sdd.mdc`「提交前审查」；`plugins/common/skills/aicr-local/`。
+**Why**：`trellis-check` 负责 lint / typecheck / 测试 / `.trellis/spec/` 对齐 / spec 回写；`aicr-local` 负责团队前后端规范、安全风险、影响范围与 `openspec/specs/` 业务需求对齐。二者不互相替代，切分为弱约束，结论重叠时去重即可。`/onsf-auto` 的 `diff-review` 只核对工作区范围与产物，暂存与 `/cr` 在其后的 check 段执行。
+
+**Related**：`plugins/onion-sdd/rules/onion-sdd.mdc`「代码审查」；`plugins/common/skills/aicr-local/`。
 
 ## 陷阱
 

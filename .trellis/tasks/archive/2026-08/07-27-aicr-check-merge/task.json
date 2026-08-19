@@ -1,0 +1,39 @@
+{
+  "id": "aicr-check-merge",
+  "name": "aicr-check-merge",
+  "title": "AICR 接入 check 阶段并与 trellis-check 职责切分",
+  "description": "",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "yangpeng",
+  "assignee": "yangpeng",
+  "createdAt": "2026-07-27",
+  "completedAt": "2026-08-12",
+  "branch": "feat/0.2.0版本迭代",
+  "base_branch": "feat/0.1.4版本迭代",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "onion": {
+      "version": 1,
+      "change_id": null,
+      "change_path": null,
+      "tier": null,
+      "phase": "idle",
+      "last_action": "OpenSpec change move-aicr-to-check-phase 已自动归档",
+      "last_action_at": "2026-08-12T18:05:14+08:00",
+      "upgrade_risk": false,
+      "tier0pp_openspec_pending": false,
+      "tier0pp_deadline": null
+    }
+  }
+}

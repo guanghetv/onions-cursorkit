@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 17
-- **Last Active**: 2026-07-24
+- **Total Sessions**: 18
+- **Last Active**: 2026-08-12
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~587 | Active |
+| `journal-1.md` | ~624 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 18 | 2026-08-12 | AICR 接入 check 阶段 | `ec0daf6`, `49c1d99`, `c68e8df`, `376e097`, `40da4c2` | `feat/0.2.0版本迭代` |
 | 17 | 2026-07-24 | onsf-finish Trellis 归档衔接补强（0.1.4） | `70700b5`, `d099440`, `502ae91` | `feat/0.1.1版本迭代` |
 | 16 | 2026-07-24 | onion-sdd monorepo repo-root 解析与规范交付物门禁 | `7ac29d3`, `3d3bb6a`, `bcc73e2`, `9d5e360`, `75864ee` | `feat/0.1.1版本迭代` |
 | 15 | 2026-07-17 | 接入 Onion SDD AICR 提交门禁 | `de47690` | `feat/0.1.0版本迭代` |
