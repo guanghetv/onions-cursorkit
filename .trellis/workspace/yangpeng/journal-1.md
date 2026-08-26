@@ -622,3 +622,36 @@ Integrated YApi contract support into onion-sdd with pull-yapi and re-check skil
 ### Next Steps
 
 - None - task complete
+
+
+## Session 19: onion-sdd 0.2.1 去掉升级推荐并成对归档遗留变更
+
+**Date**: 2026-08-26
+**Task**: onion-sdd 0.2.1 去掉升级推荐并成对归档遗留变更
+**Branch**: `feat/0.2.1-drop-trellis-upgrade-prearchive`
+
+### Summary
+
+移除 trellis upgrade 推荐；开新任务前成对归档 OpenSpec 与 Trellis，无 Trellis 时仍归档上一轮 OpenSpec；onion_state 解除 .onion-sdd Git 跟踪。插件版本 0.2.1。
+
+### Main Changes
+
+- Detailed change bullets were not supplied; see the summary above.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a482aa9` | (see git log) |
+
+### Testing
+
+- Validation was not recorded for this session.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
