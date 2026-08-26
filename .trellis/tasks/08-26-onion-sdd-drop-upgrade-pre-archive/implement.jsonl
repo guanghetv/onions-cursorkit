@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/backend/onion-sdd-runtime.md", "reason": "onion-sdd 运行态、finish 预检与不改 Trellis scripts 的边界"}
+{"file": ".trellis/spec/guides/doc-language-guide.md", "reason": "文档正文中文、命令与路径保留英文"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "插件文档与提交范围，避免改无关 Trellis 脚本"}

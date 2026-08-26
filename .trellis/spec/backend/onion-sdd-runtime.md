@@ -6,8 +6,9 @@
 
 ### 1. 范围 / 触发
 
-- 触发：改动 Onion SDD 跨会话恢复、阶段状态写入、`/onsf-finish` 归档门禁，或 `tier0pp_*` 字段。
+- 触发：改动 Onion SDD 跨会话恢复、阶段状态写入、`/onsf-finish` 归档门禁、`tier0pp_*` 字段，或 `.onion-sdd/` 的 gitignore / Git index 治理。
 - 本仓库无业务 DB；状态落在 JSON 文件。不修改 Trellis 源码 / `.trellis/scripts/**`。
+- 每次 `onion_state.py` 写状态前调用 `ensure_onion_gitignored` 与 `clear_tracked_onion_state`。
 
 ### 2. 签名
 
@@ -68,6 +69,19 @@ python3 "$SCRIPTS/finish_check.py" --repo-root . [--change-id ID] [--tier T] [--
 | **Warn**（非致命，不改 exit code） | `check_convention_in_docs`：change 在 `docs/**` 下新建/修改且文件名含 convention/guideline/standard/规范/约定，提示应迁入 `.trellis/spec/<package>/<layer>/`（Phase 3.3 spec update） |
 | **Warn**（非致命，不改 exit code） | `check_stale_trellis_tasks`：扫描 `in_progress` Trellis task，若其 `meta.onion.change_id` 指向的 OpenSpec change 已归档/缺失，提示执行 `/trellis:finish-work` 清理。只读 `.trellis/tasks/**` 与 `openspec/changes/**`，不改 `.trellis/scripts/**` |
 
+#### `.onion-sdd/` Git 治理（写状态前）
+
+| 步骤 | 行为 |
+|------|------|
+| ignore | 根 `.gitignore` 无 `.onion-sdd/` 或 `.onion-sdd` 时幂等追加 |
+| 仓库根校验 | `git rev-parse --show-toplevel` 与 `--repo-root` 不一致则跳过 index 清理并警告 |
+| untrack | `git ls-files -- .onion-sdd` 有命中时 `git rm -r --cached --ignore-unmatch -- .onion-sdd`；不删工作区文件 |
+| 失败 | Git 不可用或命令失败：stderr 警告，状态写入继续 |
+
+#### 手动入口遗留变更（skill 协议，非 helper）
+
+`full-change` 新开任务前确认归档上一轮变更：有 Trellis 则 OpenSpec 与 task 成对；无 Trellis 只归档上一轮 OpenSpec。不在 `onion_state.py` 内实现扫描。
+
 tasks 豁免词表（行内子串，大小写不敏感部分以实现为准）：`不做`、`won't do`、`cancelled`。
 
 ### 4. 校验与错误矩阵
@@ -92,6 +106,7 @@ tasks 豁免词表（行内子串，大小写不敏感部分以实现为准）�
 - Fixture：仅 current 读写；bind + meta 主写镜像；meta 不可写降级。
 - Fixture：finish pass；未完成 tasks fail；Tier2 缺 e2e fail；0++ 逾期 fail；有 `## 带债项` 放行。
 - 无活跃 change 时 finish_check 明确报错，不误删文件。
+- Fixture：忽略规则幂等；已跟踪 `current.json` 被 untrack 且文件仍在；非 Git / nested `--repo-root` 不阻断、不误清父仓库。
 - Assertion：`primary_write` / `source` / exit code / hard failure 文案。
 
 ### 7. 错误 vs 正确

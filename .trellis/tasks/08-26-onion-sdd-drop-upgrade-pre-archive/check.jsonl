@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/backend/onion-sdd-runtime.md", "reason": "核对未改 finish 门禁硬规则、未改 scripts"}
+{"file": ".trellis/spec/guides/doc-language-guide.md", "reason": "检查文档语言规范"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "检查提交范围与文档一致性"}

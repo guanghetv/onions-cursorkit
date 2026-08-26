@@ -141,7 +141,7 @@ Phase 1 的 adapter 采用 onion 插件内 skill + 文档协议，不改造 Trel
 边界如下：
 
 - OpenSpec 是变更正文唯一真相源。
-- `.onion-sdd/current.json` 保存轻量恢复状态和 Trellis task 引用。
+- `.onion-sdd/current.json` 保存轻量恢复状态和 Trellis task 引用；`.onion-sdd/` 是 per-user 本地状态，helper 会确保根 `.gitignore` 忽略该目录，并在发现已有跟踪文件时只清理 Git index、保留本地文件。
 - Trellis task 保存 task runtime：status、`branch`、`base_branch`、parent/children、`task.json.meta.onion` 和 journal 摘要。
 - `task.json.meta.onion` 只保存 onion/OpenSpec 专有引用，例如 `change_id`、`change_path`、tier、phase 和 source hashes；不要重复保存 Trellis 标准字段。
 - 不复制 OpenSpec 正文到 `.trellis/tasks/**/prd.md`、`task.json` 或 journal。
@@ -167,7 +167,7 @@ OpenSpec 与 Trellis 的推荐分工：
 | 开发者 journal、会话摘要 | 绑定 Trellis task → `/trellis:finish-work` 或 workflow.md Phase 3.3 写入；未绑定但 Trellis 可用 → `/onsf-finish` 归档成功后自动调用 `add_session.py` 写入 |
 | spec 经验积累（`.trellis/spec/`） | 绑定 Trellis task → workflow.md Phase 3.3（`trellis-update-spec`）写入；未绑定但 Trellis 可用 → `/onsf-finish` 归档成功后加载 `trellis-update-spec` 判断并按需写入 |
 
-Trellis 检查（Tier 2+/3 进入 `full-change` 时，仅手动入口）：未安装时会询问是否安装并初始化（先探测 `trellis --version`，未装 CLI 才 `npm install -g`，再 `trellis init` 并追加 `.gitignore`）；已安装但检测到 `Trellis update available` 时会询问是否执行 `trellis upgrade` + `trellis update`。拒绝或失败不阻塞，`/onsf-auto` 不触发。
+Trellis 检查（Tier 2+/3 进入 `full-change` 时，仅手动入口）：未安装时会询问是否安装并初始化（先探测 `trellis --version`，未装 CLI 才 `npm install -g`，再 `trellis init` 并追加本次初始化平台的 `.gitignore`）；无论是否安装 Trellis，开新任务前都会扫描上一轮遗留变更并仅归档用户确认的集合（有 Trellis 则 OpenSpec 与 task 成对；无 Trellis 则只归档上一轮 OpenSpec）。拒绝或失败不阻塞；mini、light 与 `/onsf-auto` 不触发遗留扫描。
 
 ## 自动化边界
 
@@ -206,6 +206,8 @@ python3 "$SCRIPTS/finish_check.py" --repo-root . [--change-id <id>]
 | **写** | 已绑定 Trellis task：**主写** `meta.onion` 并**镜像** `current.json`；否则**只写** `current.json` |
 
 `current.json` 在有 Trellis 时是镜像与降级兜底，不是主状态源。OpenSpec 仍是变更正文唯一真相源。
+
+每次写状态前，helper 都会幂等确保仓库根 `.gitignore` 包含 `.onion-sdd/`。若该目录已有 Git 跟踪文件，会使用只移除 index 的方式解除跟踪并保留本地文件；非 Git 仓库或 Git 命令失败时仅输出警告，不阻断状态写入。
 
 ```jsonc
 {

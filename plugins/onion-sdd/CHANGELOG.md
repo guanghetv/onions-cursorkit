@@ -15,6 +15,17 @@
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-08-26
+
+### Added
+
+- 手动 Tier 2+/3 开新任务前扫描遗留变更：有 Trellis 则 OpenSpec 与 task 成对归档；未装 Trellis 时仍确认归档上一轮 OpenSpec。拒绝或失败不阻塞。mini、light 与 `/onsf-auto` 不触发。
+- `onion_state.py` 写状态前会清理 `.onion-sdd/` 下已有的 Git 跟踪记录，仅移除 index 并保留本地文件；Git 失败只警告。
+
+### Removed
+
+- 移除 Onion SDD 对 Trellis CLI 与项目模板版本的检查、升级询问和执行建议；版本维护不再属于 Onion SDD 使用流程。使用者无需关心 Trellis 项目版本。
+
 ## [0.2.0] - 2026-08-12
 
 ### Changed

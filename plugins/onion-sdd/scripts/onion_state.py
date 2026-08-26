@@ -145,6 +145,80 @@ def ensure_onion_gitignored(repo_root: Path) -> None:
     )
 
 
+def _run_git(repo_root: Path, git_args: list) -> Optional[subprocess.CompletedProcess]:
+    try:
+        return subprocess.run(
+            ["git", *git_args],
+            cwd=str(repo_root),
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        print(f"[onion_state] 警告：Git 命令失败: {exc}", file=sys.stderr)
+        return None
+
+
+def _git_warn(action: str, proc: subprocess.CompletedProcess) -> None:
+    detail = (proc.stderr or proc.stdout or "").strip()
+    suffix = f": {detail}" if detail else ""
+    print(f"[onion_state] 警告：无法{action}{suffix}", file=sys.stderr)
+
+
+def clear_tracked_onion_state(repo_root: Path) -> None:
+    """Remove tracked .onion-sdd files from the Git index, preserving local files."""
+    toplevel = _run_git(repo_root, ["rev-parse", "--show-toplevel"])
+    if toplevel is None:
+        return
+    if toplevel.returncode != 0:
+        _git_warn("检测 .onion-sdd/ Git 跟踪状态", toplevel)
+        return
+    try:
+        git_root = Path(toplevel.stdout.strip()).resolve()
+        if git_root != repo_root.resolve():
+            print(
+                "[onion_state] 警告：--repo-root 不是 Git 仓库根，跳过 .onion-sdd/ index 清理",
+                file=sys.stderr,
+            )
+            return
+    except OSError as exc:
+        print(f"[onion_state] 警告：无法解析 Git 仓库根: {exc}", file=sys.stderr)
+        return
+
+    tracked = _run_git(repo_root, ["ls-files", "--", ".onion-sdd"])
+    if tracked is None:
+        return
+    if tracked.returncode != 0:
+        _git_warn("检测 .onion-sdd/ Git 跟踪状态", tracked)
+        return
+
+    tracked_files = [line for line in tracked.stdout.splitlines() if line.strip()]
+    if not tracked_files:
+        return
+
+    removed = _run_git(
+        repo_root,
+        ["rm", "-r", "--cached", "--ignore-unmatch", "--", ".onion-sdd"],
+    )
+    if removed is None:
+        return
+    if removed.returncode != 0:
+        _git_warn("清理 .onion-sdd/ Git index", removed)
+        return
+
+    print(
+        f"[onion_state] 已从 Git index 移除 .onion-sdd/ 下 {len(tracked_files)} 个已跟踪文件，本地文件保留",
+        file=sys.stderr,
+    )
+
+
+def ensure_onion_local_state(repo_root: Path) -> None:
+    """Keep .onion-sdd ignored and untracked before writing runtime state."""
+    ensure_onion_gitignored(repo_root)
+    clear_tracked_onion_state(repo_root)
+
+
 def resolve_trellis_active_task(repo_root: Path) -> Optional[Path]:
     """Best-effort resolve Trellis active task without importing Trellis modules."""
     task_py = repo_root / ".trellis" / "scripts" / "task.py"
@@ -477,7 +551,7 @@ def write_state(
     idle: bool = False,
     bind_only: bool = False,
 ) -> Dict[str, Any]:
-    ensure_onion_gitignored(repo_root)
+    ensure_onion_local_state(repo_root)
     warnings: list = []
     cur_path = current_path(repo_root)
     current = load_json(cur_path) or {}

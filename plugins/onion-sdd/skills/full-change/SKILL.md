@@ -36,7 +36,7 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
 进入需求接入前，先做一次性检测（仅本技能被触发，即 Tier 2+/3 时执行；`/onsf-auto` 无交互场景不触发，见 `onsf-auto.md` 的「Trellis 边界」）：
 
 1. 检测 `.trellis/scripts/add_session.py` 是否存在。
-   - 存在 → Trellis 可用，跳过下述安装流程；先执行下方「更新检查」，再按「task 绑定询问」处理，最后进入需求接入。
+   - 存在 → Trellis 可用，跳过下述安装流程；先执行下方「遗留变更扫描与确认归档」，再按「task 绑定询问」处理，最后进入需求接入。
    - 不存在 → 进入第 2 步。
 2. 向用户说明"当前项目未安装 Trellis，其 journal/spec 积累/task 能力可以增强 onion-sdd 的记忆能力"，询问是否现在安装并初始化。每次触发 Tier 2+/3 且 Trellis 仍不可用时都重新询问，不记忆此前的拒绝。
 3. 用户同意时：
@@ -46,22 +46,25 @@ Full change 适用于 Tier 2+：跨模块、接口契约、状态流、数据结
       - 成功（CLI 已全局安装，只是本项目未 `trellis init`）→ 跳过安装，直接执行 `trellis init -u <name> <平台 flag>`。
       - 失败/命令不存在 → 执行 `npm install -g @mindfoldhq/trellis`（需要 `full_network` 权限）→ `trellis --version` 确认安装成功 → `trellis init -u <name> <平台 flag>`。
    d. 安装/初始化成功后，按下方「gitignore 追加」更新根 `.gitignore`。
-   e. 完成后视为 Trellis 已可用，继续本技能后续阶段。
-4. 用户拒绝，或安装/初始化过程报错：说明失败原因（网络、权限、CLI 报错内容），不阻塞——按本技能各阶段已有的"如果 Trellis 不可用，回退到 XXX"分支继续 Tier 2+/3 流程。
+   e. 完成后视为 Trellis 已可用，先执行下方「遗留变更扫描与确认归档」（无候选则不问），再按「task 绑定询问」处理。
+4. 用户拒绝，或安装/初始化过程报错：说明失败原因（网络、权限、CLI 报错内容），**仍执行「遗留变更扫描与确认归档」**（此时只扫 OpenSpec），再按本技能各阶段已有的"如果 Trellis 不可用，回退到 XXX"分支继续 Tier 2+/3 流程。不因未装 Trellis 而跳过上一轮 OpenSpec 归档确认。
 
-### 更新检查
+### 遗留变更扫描与确认归档
 
-Trellis 已可用（第 1 步命中「存在」）时，进入「task 绑定询问」前先做一次轻量版本检查。仅在本技能被触发时执行；`/onsf-auto` 无交互场景不触发。
+手动 Tier 2+/3 **新任务**入口、进入需求接入之前执行。Trellis 与 OpenSpec 视为一对变更单元：有 Trellis 就必须同步归档对应 OpenSpec；未装 Trellis 时只确认归档上一轮 OpenSpec。本次会话要**继续**的那条 change / task 排除在外。mini、light 与 `/onsf-auto` 不执行。
 
-1. 读取项目模板版本：`.trellis/.version`。
-2. 执行 `trellis --version`，从输出中查找 `Trellis update available: <current> -> <latest>`；若无该行，也可对比 CLI 版本与 `.version` 是否明显不一致。
-3. **无更新** → 直接进入「task 绑定询问」。
-4. **有更新** → 向用户说明「Trellis 可从 {current} 升级到 {latest}，是否现在执行？」每次 Tier 2+/3 检测到更新时都重新询问，不记忆此前的拒绝。
-5. 用户同意时，按顺序执行：
-   a. `trellis upgrade`（升级全局 CLI；需要 `full_network` 权限）。
-   b. `trellis update`（同步项目 bundled skills、脚本模板与平台命令；不覆盖用户已改过的文件）。
-   c. 若 `trellis update` 提示「modified by user」冲突，列出冲突文件并请用户选择 keep / overwrite；**不得擅自 `--force`**。
-6. 用户拒绝，或任一步失败：说明原因，不阻塞——继续「task 绑定询问」及后续 Tier 2+/3 流程。
+1. 收集候选并按 `change_id` 去重（无 `change_id` 的 Trellis task 单独成项）：
+   - **OpenSpec**：优先 `.onion-sdd/current.json` 的 `active_change_id`（目录仍在则列入）。无 Trellis 且 idle 时，再列出 `openspec/changes/` 下未归档目录（跳过 `archive/`）。有 Trellis 时不要把未绑定 onion 的其它 OpenSpec 目录一律当成遗留。
+   - **Trellis**（仅 Trellis 可用时）：`.trellis/tasks/*/task.json`（跳过 `archive`、非目录、读失败）。纳入 `completed` 未入库；以及 `planning` / `in_progress` / `review` 且 bound OpenSpec 目录已不存在的 stale task。有 bound `change_id` 时与对应 OpenSpec 合成一项。
+2. 排除：用户本轮明确要继续的 change/task（`/onsf-continue` 或本会话已绑定且继续同一需求）。**新开 `/onsf-plan` 时**，`.onion-sdd/current.json` 里的上一轮 `active_change_id` **算遗留**，要列入确认，不当成「继续」。
+3. 无候选 → 不问，进入下一步（有 Trellis 则 task 绑定，否则需求接入）。
+4. 有候选 → 一次列出：OpenSpec `change_id`（无则「仅 Trellis」）、task 目录与 status（无则「仅 OpenSpec」）。请用户确认集合；全选 / 多选 / 全否。未经确认不得归档。
+5. 对确认项保持 **成对归档**，不得把本轮将要新建或继续的 change/task 收进去：
+   a. OpenSpec 目录仍在：对该 leftover 跑 `finish_check.py --change-id <id>`，通过后 `openspec archive <id>`（CLI 不可用则按 `/onsf-finish` 等效移动）。这是上一轮收尾，不是本轮 finish。
+   b. 有对应 Trellis task：再 `python3 ./.trellis/scripts/task.py archive <name>`。
+   c. OpenSpec 预检失败：报告后 **整项跳过**（不单独归档 Trellis，避免 task 与 spec 分裂）。用户明确说「只归档 Trellis / 只归档 OpenSpec」时除外。
+   d. leftover 若等于当前 `active_change_id`，OpenSpec 归档成功后 `onion_state.py set --idle`（不要把尚未开始的新任务置 idle）。
+6. 单条失败继续其余项；全部拒绝或失败不阻塞新任务。提示稍后对 leftover 跑 `/onsf-finish` 或 `/trellis:finish-work`。
 
 ### gitignore 追加
 
