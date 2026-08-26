@@ -1,0 +1,22 @@
+{
+  "name": "agent-context",
+  "displayName": "Agent Context 排障",
+  "version": "0.1.0",
+  "description": "洋葱排障 skills：全链路排查（GitNexus 优先）以及 metrics / logs / Archery 域查询；配套运行时 MCP。",
+  "author": {
+    "name": "洋葱学园",
+    "email": "lihui@guanghe.tv"
+  },
+  "keywords": [
+    "observability",
+    "debugging",
+    "mcp-metrics",
+    "mcp-logs",
+    "mcp-archery",
+    "gitnexus",
+    "onion"
+  ],
+  "skills": "./skills/",
+  "commands": "./commands/",
+  "mcpServers": "./mcp.json"
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Metrics Query"
+  short_description: "查询指标：意图地图 + mcp-metrics 三刀（与 Domain MCP 一对一）"
+  default_prompt: "使用 metrics-query：先读意图地图选标准指标，再经 mcp-metrics 查询，只陈述观测事实。"

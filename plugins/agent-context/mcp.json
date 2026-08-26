@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "mcp-metrics": {
+      "url": "https://agent-context.yc345.tv/mcp-metrics/mcp"
+    },
+    "mcp-trace": {
+      "url": "https://agent-context.yc345.tv/mcp-trace/mcp"
+    },
+    "mcp-logs": {
+      "url": "https://agent-context.yc345.tv/mcp-logs/mcp"
+    },
+    "mcp-archery": {
+      "url": "https://agent-context.yc345.tv/mcp-archery/mcp",
+      "headers": {
+        "X-Archery-Username": "${env:ARCHERY_USERNAME}",
+        "X-Archery-Password": "${env:ARCHERY_PASSWORD}"
+      }
+    }
+  }
+}

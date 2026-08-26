@@ -1,0 +1,4 @@
+interface:
+  display_name: "Logs Query"
+  short_description: "查询日志：补齐 namespace/service + 火山 TLS 四刀（与 mcp-logs 一对一）"
+  default_prompt: "使用 logs-query：先补齐 env、namespace、service_name，精确查 topic 并抄 topic_id，再经 mcp-logs 查询；多候选先问我，只陈述观测事实。"

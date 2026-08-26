@@ -29,6 +29,7 @@
 - **前端 Figma 还原 / 响应式开发**：建议安装 **fe-figma-flow**（可叠加 **fe-onion-stack**）
 - **洋葱内部前端技术栈（onion-ui / onion-utils / 视频）**：安装 **fe-onion-stack**
 - **前端/后端 Spec-Driven（OpenSpec 变更目录）**：按需安装 **fe-specflow** / **be-specflow**（可与 Common 同装）
+- **线上/预发排障（指标、日志、库表、全链路）**：安装 **agent-context**（另需本机已配置 GitNexus MCP）
 
 ## 当前插件
 
@@ -41,6 +42,7 @@
 | **fe-onion-stack** | 前端洋葱内部技术栈（同步自 ai-guardrails）：onion-ui、onion-utils、洋葱视频、API 层规范 |
 | **fe-specflow** | 前端 Specflow：OpenSpec + Superpowers 编排，`/fe-sdd`、pull-spec、e2e-verify 等 |
 | **be-specflow** | 后端 Specflow：同上后端视角，`/be-sdd`、前端契约/QA spec 拉取、交叉验证与归档 |
+| **agent-context** | 排障 skills（源：agent-context 仓库）：`onion-systematic-debugging`、`metrics-query`、`logs-query`、`archery-query`，slash command `/onion-systematic-debugging`，配套运行时 MCP |
 
 ## 与 ai-guardrails 的同步
 

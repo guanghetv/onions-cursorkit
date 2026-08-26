@@ -1,0 +1,4 @@
+interface:
+  display_name: "Onion Systematic Debugging"
+  short_description: "洋葱全链路排查：GitNexus 定位仓与代码为核心，运行时 MCP 按需且单 env，非洋葱跳过"
+  default_prompt: "使用 onion-systematic-debugging：先过洋葱门禁，用 GitNexus 定位仓库和代码逻辑并交付 GN-* 证据卡；证据后给出代码侧置信度与初步结论，high + stop 可收束。仅在 need_runtime 或用户明确验证现网时，钉死唯一 env 按需加载一个运行时域，禁止跨环境采证。不写现网「根因是」、不改代码。"

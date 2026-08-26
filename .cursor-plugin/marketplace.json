@@ -59,6 +59,11 @@
       "name": "onion-sdd",
       "source": "onion-sdd",
       "description": "通用 Onion SDD 工作流：slash command 触发、Tier 分级、OpenSpec 正文、Trellis adapter 恢复、E2E/验收门禁、check 阶段自动 AICR 审查"
+    },
+    {
+      "name": "agent-context",
+      "source": "agent-context",
+      "description": "洋葱排障 skills：全链路排查（GitNexus 优先）以及 metrics / logs / Archery 域查询；配套运行时 MCP"
     }
   ]
 }
