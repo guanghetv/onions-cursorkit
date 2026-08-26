@@ -66,6 +66,9 @@
 - [ ] 阶段切换必须调用 `onion_state.py`（不要手写 JSON 绕过写优先级）
 - [ ] 已绑定 Trellis task → 主写 `meta.onion` 并镜像 `current.json`；否则只写 current
 - [ ] `/onsf-finish` 归档前必须先跑 `finish_check.py`
+- [ ] 写状态前确保 `.onion-sdd/` 被忽略；已跟踪文件只 `git rm --cached`，不删本地文件
+- [ ] 手动新开任务前确认遗留变更：有 Trellis 则 OpenSpec 与 task 成对归档；无 Trellis 只归档上一轮 OpenSpec
+- [ ] 不要推荐 `trellis upgrade` / `trellis update`；未安装时才询问 `trellis init`（能力增强）
 - [ ] Tier 0++ 逾期仍 pending 时：补 mini OpenSpec 并清 pending，或在 proposal 落盘 `## 带债项`
 - [ ] check 阶段四步（Agent 自动串联）：`trellis-check` → 暂存本次 change 改动 → `/cr`（aicr-local）审暂存区 → 修复复审；顺序不可调换
 - [ ] check 允许自动 `git add`（限本次 change，禁止 `git add -A` 与 `git reset`），仍禁止自动 `git commit` / push / PR

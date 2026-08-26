@@ -54,7 +54,7 @@ openspec/changes/            # 活跃变更目录
 | **纪律** | 阶段切换必须调用 `onion_state.py`（无 Hook；靠 `/onsf-*` 硬纪律） |
 | **finish** | 必须先跑 `finish_check.py`；失败不得 archive；成功后 `set --idle` |
 
-**真相源始终是 OpenSpec** `openspec/changes/<change-id>/`。`current.json` 在有 Trellis 时是镜像与降级兜底，不是主状态源。
+**真相源始终是 OpenSpec** `openspec/changes/<change-id>/`。`current.json` 在有 Trellis 时是镜像与降级兜底，不是主状态源。`.onion-sdd/` 是 per-user 本地状态；每次写入时 helper 会幂等确保根 `.gitignore` 忽略该目录，已被 Git 跟踪时只清 index 并保留本地文件，Git 失败仅警告且不阻断写入。
 
 ### 2.3 可选增强
 
@@ -397,15 +397,15 @@ which openspec
 # 业务仓库应有 openspec/changes/ 目录（与 OpenSpec CLI 配置一致）
 ```
 
-#### 保持同步
+#### 自动询问安装与遗留变更清理（Tier 2+/3）
 
-```bash
-trellis update    # 升级 bundled skills、脚本模板（不覆盖你已改过的文件）
-```
+Tier 2+/3 进入 `full-change` 时，Agent 会做一次 Trellis 检查，仅在手动入口（`/onsf-plan` 等）生效：
 
-#### 自动询问安装（Tier 2+/3）
+- **未安装**：询问是否现在安装并初始化。同意后先探测 `trellis --version`——CLI 已全局安装（只是本项目未 `trellis init`）则跳过安装步骤，否则先 `npm install -g @mindfoldhq/trellis`——再执行 `trellis init -u <name> --<当前平台>`，并把该平台的整目录忽略规则（如 `.cursor/`）追加到根 `.gitignore`。
+- **已可用**：开新任务前扫描遗留变更。Trellis task 与对应 OpenSpec 成对列出、确认后先归档 OpenSpec 再归档 Trellis。新 `/onsf-plan` 会把 `current.json` 里上一轮 change 当作遗留，而不是自动当成「继续」。
+- **未安装且拒绝/失败**：仍扫描上一轮 OpenSpec（优先 `current.json`；idle 则列出未归档 `openspec/changes/`），确认后只归档 spec。
 
-以上步骤也可以不用手动跑：**Tier 2+/3 首次触发且检测到 Trellis 未安装时**，Agent 会主动询问是否现在安装并初始化。同意后先探测 `trellis --version`——CLI 已全局安装（只是本项目未 `trellis init`）则跳过安装步骤，否则先 `npm install -g @mindfoldhq/trellis`——再执行 `trellis init -u <name> --<当前平台>`，并把该平台的整目录忽略规则（如 `.cursor/`）追加到根 `.gitignore`（与本仓库现状写法一致）。拒绝或安装失败不会阻塞流程，会按现状"Trellis 不可用"路径继续。该询问只在手动入口（`/onsf-plan` 等）生效，`/onsf-auto` 无交互场景不触发。
+拒绝安装、拒绝归档或任一操作失败均不阻塞流程。mini、light 与 `/onsf-auto` 不安装、不扫描或归档遗留变更。
 
 ### 8.3 前期准备清单
 

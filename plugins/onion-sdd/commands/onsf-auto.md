@@ -87,6 +87,7 @@ description: 自动化执行 Onion SDD 流程，按当前状态推断 new/contin
 - 不复制 OpenSpec 正文到 Trellis task 或 journal。
 - 记录 journal（调用 `add_session.py`）和 spec 积累判断（加载 `trellis-update-spec`）都不算 task 生命周期操作——它们不创建、不启动、不归档 Trellis task。`/onsf-finish` 门禁通过且当前 change 未绑定 Trellis task 时，可按分支 C 规则自动执行，不在下方"停止条件"之列。
 - `full-change/SKILL.md` 新增的"Trellis 缺失时询问是否安装并初始化"仅适用于手动入口（`/onsf-plan` 等触发的 `full-change`）；`/onsf-auto` 无交互场景不触发该询问，Trellis 不可用时继续按现状静默降级，不在「停止条件」中新增"是否安装 Trellis"。
+- `full-change/SKILL.md` 的开新任务前遗留扫描与确认归档也仅适用于手动 Tier 2+/3 入口；`/onsf-auto` 不扫描、不询问、不归档遗留 Trellis task 或 leftover OpenSpec。
 
 ## 收束边界
 

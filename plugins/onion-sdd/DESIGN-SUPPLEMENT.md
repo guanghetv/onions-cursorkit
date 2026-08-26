@@ -163,6 +163,7 @@ Tier 0++ 触发条件（全部满足）：
 - `.onion-sdd/current.json`：无 Trellis 时的主写落点；有 Trellis 时为镜像/兜底。
 - `task.json.meta.onion`：有绑定 Trellis task 时的主写落点。
 - 统一入口：`scripts/onion_state.py`（读/写优先级见 README / trellis-adapter）。
+- 本地状态治理：每次写入前幂等确保根 `.gitignore` 忽略 `.onion-sdd/`；若已有跟踪文件，只从 Git index 移除并保留本地文件，Git 失败只警告。
 - 归档前置：`scripts/finish_check.py`。
 
 **未做**：Cursor Hook 自动写状态；一周超 2 次 0++ 强制审计。
@@ -548,6 +549,7 @@ Phase 1 的 Trellis adapter 采用 **onion 插件内 skill + 文档协议**，�
 | Onion 事件 | OpenSpec | Trellis |
 |------------|----------|---------|
 | Tier 判断完成，进入 `full-change`（Tier 2+/3）且 Trellis 不可用 | 无 | 询问用户是否安装并初始化 Trellis；同意则先探测 `trellis --version`（已装跳过 npm install），再 `trellis init` + 追加该平台的整目录 gitignore 规则，完成后转入下一行正常流程；拒绝或失败则维持不可用状态继续 |
+| 手动 Tier 2+/3 开新任务 | 无 | 遗留变更扫描：有 Trellis 则 OpenSpec 与 task 成对归档；无 Trellis 仍确认上一轮 OpenSpec。新 `/onsf-plan` 把 `current.json` 上一轮 change 视为遗留。拒绝或失败不阻塞。mini、light、`/onsf-auto` 不执行 |
 | Tier 判断完成，进入 `full-change`（Tier 2+/3）且 Trellis 可用但未绑定 task | 无 | 询问用户是否创建 Trellis task；同意则 `task.py create` 并通过 `trellis-adapter` 写入新 task 的 `meta.onion.change_id`；拒绝则维持未绑定状态，本次 change 生命周期内不再重复询问 |
 | Tier 判断完成 | change 策略确定 | 写 `meta.onion.tier` |
 | OpenSpec 落盘 | proposal/specs/tasks | 写 `change_id`、`change_path`、phase |
