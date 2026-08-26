@@ -3,7 +3,7 @@
   "name": "onion-sdd-drop-upgrade-pre-archive",
   "title": "优化 onion-sdd：去掉 Trellis 升级推荐并在开任务前确认归档",
   "description": "",
-  "status": "in_progress",
+  "status": "completed",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -11,7 +11,7 @@
   "creator": "yangpeng",
   "assignee": "yangpeng",
   "createdAt": "2026-08-26",
-  "completedAt": null,
+  "completedAt": "2026-08-26",
   "branch": "feat/0.2.1-drop-trellis-upgrade-prearchive",
   "base_branch": "feat/0.2.0版本迭代",
   "worktree_path": null,
@@ -25,12 +25,15 @@
   "meta": {
     "onion": {
       "version": 1,
-      "tier": "2",
-      "phase": "finish",
-      "last_action": "定向验收与 finish 预检通过，待主会话 check",
-      "last_action_at": "2026-08-26T11:34:15+08:00",
-      "change_id": "drop-trellis-upgrade-prearchive",
-      "change_path": "openspec/changes/drop-trellis-upgrade-prearchive"
+      "tier": null,
+      "phase": "idle",
+      "last_action": "OpenSpec change drop-trellis-upgrade-prearchive 已自动归档",
+      "last_action_at": "2026-08-26T12:17:07+08:00",
+      "change_id": null,
+      "change_path": null,
+      "upgrade_risk": false,
+      "tier0pp_openspec_pending": false,
+      "tier0pp_deadline": null
     }
   }
 }
