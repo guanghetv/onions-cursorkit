@@ -1,0 +1,25 @@
+{
+  "name": "workspace-specflow",
+  "version": "0.1.0",
+  "description": "面向 Codex 的多角色需求工作流，支持通过 CodeWiki 获取 workspace registry 关联仓库的代码上下文。",
+  "author": {
+    "name": "wenli"
+  },
+  "license": "MIT",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Workspace Specflow 多角色协作工作流",
+    "shortDescription": "在 specs 仓中串联 PRD、产品 spec、测试 spec，并通过 CodeWiki 获取关联代码上下文。",
+    "longDescription": "面向 Codex 的 workspace-specflow 分发。复用 Cursor 工作区插件的业务 skills，新增 workspace-code-context：按 workspace-repos.json 的 Git remote 映射 GitNexus 规范仓名，优先 CodeWiki 检索，失败时本地只读降级。",
+    "developerName": "wenli",
+    "category": "Productivity",
+    "capabilities": [
+      "Skills"
+    ],
+    "defaultPrompt": [
+      "帮我创建一份需求 PRD",
+      "检查当前 PRD 与原型的一致性",
+      "读取 workspace-repos.json，用 CodeWiki 查看关联仓代码上下文"
+    ]
+  }
+}

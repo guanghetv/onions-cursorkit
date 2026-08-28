@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/backend/index.md", "reason": "核对本仓插件和工具脚本的质量检查入口"}
+{"file": ".trellis/spec/backend/directory-structure.md", "reason": "检查新增目录职责和 Cursor/Codex 隔离是否合规"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "检查插件资产、同步漂移、验证和提交范围"}
+{"file": ".trellis/tasks/08-26-workspace-specflow-codex-plugin/research/codex-plugin-format-and-codewiki.md", "reason": "对照外部规范和 registry 映射事实审查实现"}

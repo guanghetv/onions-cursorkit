@@ -1,0 +1,36 @@
+{
+  "id": "workspace-specflow-codex-plugin",
+  "name": "workspace-specflow-codex-plugin",
+  "title": "封装 workspace-specflow Codex 插件",
+  "description": "",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "wenli",
+  "assignee": "wenli",
+  "createdAt": "2026-08-26",
+  "completedAt": null,
+  "branch": "feat/138-产研SDD工作区插件支持codex-m-7100930454",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "onion": {
+      "version": 1,
+      "tier": "2",
+      "phase": "finish",
+      "last_action": "Codex 插件实现与等价验收完成，真实 Codex 安装冒烟待外部环境补跑",
+      "last_action_at": "2026-08-28T14:38:20+08:00",
+      "change_id": "add-workspace-specflow-codex-plugin",
+      "change_path": "openspec/changes/add-workspace-specflow-codex-plugin"
+    }
+  }
+}
