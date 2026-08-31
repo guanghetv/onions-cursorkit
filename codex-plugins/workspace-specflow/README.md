@@ -1,6 +1,6 @@
 # workspace-specflow for Codex
 
-这是 `plugins/workspace-specflow/` 的 Codex 分发适配。业务 skill 正文仍只在原目录维护；本目录保存 Codex manifest、跨仓适配和插件内打包工具。
+与 Cursor 工作区插件 `plugins/workspace-specflow/` 是同一套能力，不是另写的新插件。本目录只做 Codex 侧的分发适配：业务 skill 正文仍只在原目录维护；此处保存 Codex manifest、跨仓适配（如 `workspace-code-context`）和插件内打包工具。Cursor 与 Codex 可并存安装，互不影响。
 
 ## 构建
 
