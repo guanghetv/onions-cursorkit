@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "source": "plugins/workspace-specflow/skills",
+  "files": {
+    "plugins/workspace-specflow/skills/pm-proto/SKILL.md": "c6c8f7e212f2f7e4c40a149b362456a2a6a0cda4aea6bfae69a0d3cfbf5883eb",
+    "plugins/workspace-specflow/skills/pm-spec/SKILL.md": "dc5949f13de98c155884fe0a5494cf6bb47d5fc41514a3bf5faecfff3f7a3c7b",
+    "plugins/workspace-specflow/skills/pm-spec/references/ai-review-rubric.md": "d7a2fb26dc1b1003f6838bb390fca4476af0522ee4456022a23df3018b62bddd",
+    "plugins/workspace-specflow/skills/pm-spec/references/prd-template.md": "c0a5f19c34eada4c2aa0d29f6b9addf17b52b95b1fcf8f5b5d7a7d28287ad4ef",
+    "plugins/workspace-specflow/skills/pm-spec-5/SKILL.md": "b3a53bfef687c1ecb5706174ce9b4cf49427f8781fd91188da55e00e105c6ca2",
+    "plugins/workspace-specflow/skills/pm-spec-5/references/ai-review-rubric-v5.md": "ca8ced5ff25c5349ba167f7a974f56a4f92291152d79bbca7bb39da404ae5cb5",
+    "plugins/workspace-specflow/skills/pm-spec-5/references/prd-template-v5.md": "1f2ecca9ec0bb84bee4af2e694a93373641530bb97efa69525e6ed585e8c2834",
+    "plugins/workspace-specflow/skills/prd-consistency-check/SKILL.md": "9784922c4287f9bfde652693a17d4f84ec024eadc29d2cc95ae5aa0a4a4f8134",
+    "plugins/workspace-specflow/skills/prd-feishu-sync/SKILL.md": "c6bf2173fe4cdb21eb2fb26a66d36a2899036bdf2d2732a03ac76a65b784360e",
+    "plugins/workspace-specflow/skills/prd-feishu-sync/references/chapter-map.md": "f08f51779cc7e8c506f7d26636790236d0402d196cb2485dbdcf694df5d6cef5",
+    "plugins/workspace-specflow/skills/prd-publish/SKILL.md": "f81492d1f8babc326b4eb49b2385457924c48fe877f48385ed5691bb57457c01",
+    "plugins/workspace-specflow/skills/qa-execute/SKILL.md": "486f2b990288119052cbaf3939ecf3602b77d20ec249bb4d185920ec07b98a3b",
+    "plugins/workspace-specflow/skills/qa-execute/references/case-flow-mapping.md": "0fed60be43c0b4b669732252ecc050abc6b4dbd037d37bcb4fa9e648dfdd5bde",
+    "plugins/workspace-specflow/skills/qa-execute/scripts/convert_and_upload.py": "0d3102249d2084db0163160fcac7900c8c1dab8d5e12de8b96b0ec26ad83a1b5",
+    "plugins/workspace-specflow/skills/qa-spec/SKILL.md": "e0e6deb86270199f729e1572fea9065f75463bf6ed2901dfb57fb301474ee7b3",
+    "plugins/workspace-specflow/skills/qa-spec/references/test-writing-guide.md": "71ed01c300fe21b98509af5f8f68347a3822726480ce4e4ce389a2ee46e4926a",
+    "plugins/workspace-specflow/skills/qa-sync-xmind/SKILL.md": "049a52bab41146c6d06c6c837b7f9ae4f080d1a60324a5e2d0e33623d7c9f239",
+    "plugins/workspace-specflow/skills/qa-sync-xmind/references/xmind-mapping.md": "9716a5027c0112a3fbaa14f328b51f06b4a5485caae47acc889950416ed3f4f7",
+    "plugins/workspace-specflow/skills/req-new/SKILL.md": "b4c0e8cb60b25480beb7a818d3cd98cbc254211b4bbc59e7d74bd1c93517d973",
+    "plugins/workspace-specflow/skills/req-new/references/templates.md": "7116538666d68083a93e41254fa9ba0b77dd1be072b5998b4c142b097c041606",
+    "plugins/workspace-specflow/skills/req-status/SKILL.md": "e14729981d8923865db277c111aff09fe89a9bdad0381c2ddd177453eef9df40"
+  }
+}

@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/backend/index.md", "reason": "读取本仓工具脚本与插件资产的开发前检查和验证入口"}
+{"file": ".trellis/spec/backend/directory-structure.md", "reason": "约束 Codex 旁路目录、脚本和 Cursor marketplace 的边界"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "约束 JSON manifest、文件型状态与敏感信息处理"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "执行插件资产、同步产物和提交范围质量要求"}
+{"file": ".trellis/tasks/08-26-workspace-specflow-codex-plugin/research/codex-plugin-format-and-codewiki.md", "reason": "使用已核验的 Agent Plugins、Agent Skills 与 CodeWiki 映射事实"}
