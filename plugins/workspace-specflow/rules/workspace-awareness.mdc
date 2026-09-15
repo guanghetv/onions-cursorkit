@@ -24,7 +24,8 @@ globs:
 |------|------|------|
 | `/req-new` | 任何人 | 初始化需求目录（中文目录名 + 英文 id slug；飞书七章骨架） |
 | `/pm-proto` | 产品 | 原型快速生成或迭代（可选） |
-| `/pm-spec-5` | 产品 | 5稿结构化增强（内审/交互评审前；允许待定项） |
+| `/pm-spec-5` | 产品 | 5稿结构化增强（内审/交互评审前；允许待定项；确认前 `/prd-risk` 硬门禁） |
+| `/prd-risk` | 产品 | 产品需求风险预检（独立报告；可手动重跑） |
 | `/pm-spec` | 产品 | **9稿定稿**（交互评审后；严格 AI Review；`prd.status=confirmed`） |
 | `/prd-feishu-sync` | 产品 | PRD ↔ 飞书同步（create/push/reconcile；禁止默认整篇覆盖） |
 | `/prd-consistency-check` | 产品 | 契约层一致性校验（结构 A + 语义 B）；结果回写飞书 |
@@ -68,7 +69,7 @@ globs:
 
 1. **需求发起**：`/req-new` → 中文目录 + 飞书七章骨架 + **`/prd-feishu-sync create`**
 2. **原型（可选）**：`/pm-proto`
-3. **5稿**：`/pm-spec-5` → 内审；未 `v9_synced` 时 sync push v5
+3. **5稿**：`/pm-spec-5` → 确认前 `/prd-risk` 通过 → 内审；未 `v9_synced` 时 sync push v5
 4. **交互评审**：产品可手工改 `prd.md` / 飞书；契约变更须 sync 或 reconcile
 5. **9稿**：`/pm-spec` 脑暴 → 瘦身 → **写 `prd.stage=v9_pending`** → push v9 → **consistency-check** → 成功后再快照与 `prd.status=confirmed`（瘦身前不写 `v9_pending`；本地仍有讲解层时拒 v9）
 6. **一键发布（可选）**：`/prd-publish`

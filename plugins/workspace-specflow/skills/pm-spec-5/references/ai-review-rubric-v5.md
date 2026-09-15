@@ -52,6 +52,7 @@
 
 ## 五、5稿确认后 Agent 动作
 
+0. **产品需求风险预检（硬门禁）**：执行 `prd-risk`，报告 `prototypes/prd-risk-precheck.md`。需调整或待补 → **停止确认**，不写快照、不改 `prd.v5.status`。
 1. **二、版本表** 追加行：`5-n`、当天日期、变更摘要、待定项计数、`snapshots/prd-v5-*.md` 路径
 2. 复制 `prd.md` → `snapshots/prd-v5-<YYYY-MM-DD>.md`
 3. 更新 metadata：`prd.v5.status = confirmed`，`prd.stage = v5_confirmed`，`prd.v5.snapshot`

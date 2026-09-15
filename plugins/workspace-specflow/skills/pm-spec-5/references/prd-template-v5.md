@@ -16,6 +16,7 @@
 
 ## 5稿确认时 Agent 动作
 
+0. 执行 `/prd-risk`；需调整或待补则 **停止**，不写快照、不改 `prd.v5`
 1. 在 **二、版本及进度跟踪** 追加一行：`版本号 = 5-x`，`日期 = 确认当天`，`变更内容` 含摘要与待定项计数
 2. 复制 `prd.md` → `snapshots/prd-v5-YYYY-MM-DD.md`
 3. 更新 `metadata.yaml`：`prd.v5.status = confirmed`，`prd.stage = v5_confirmed`

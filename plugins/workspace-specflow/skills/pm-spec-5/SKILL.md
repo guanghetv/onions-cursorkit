@@ -80,8 +80,11 @@ description: >-
 
 ### Step 6: 确认与快照
 
-用户确认通过后：
+用户确认通过后，**先做产品需求风险预检，再写快照**：
 
+0. **风险预检硬门禁**：Read 并执行 `prd-risk`（与 `/prd-risk` 同一套）。报告写入 `prototypes/prd-risk-precheck.md`。
+   - 结论为「需调整」或「待补信息」→ **停止**：不得追加版本表、不得写 `snapshots/prd-v5-*.md`、不得设置 `prd.v5.status = confirmed`。展示报告路径与下一步（补信息 / 调整后复检 / 例外申请包）。
+   - 结论为「规则预检通过」→ 继续下列步骤。
 1. **二、版本表** 追加一行：`5-n`、当天 `YYYY-MM-DD`、`变更内容`（含待定项计数）、`snapshots/prd-v5-<date>.md`
 2. 复制 `prd.md` → `snapshots/prd-v5-<YYYY-MM-DD>.md`
 3. 更新 `metadata.yaml`：

@@ -21,4 +21,4 @@ description: 9稿 PRD 定稿（交互评审后）：结构化增强、消除待�
 
 完整规程见技能 `pm-spec`。
 
-典型顺序：`/pm-spec-5` → 交互评审 → `/pm-spec`。
+典型顺序：`/pm-spec-5`（确认前 `/prd-risk`）→ 交互评审 → `/pm-spec`。
