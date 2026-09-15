@@ -94,14 +94,50 @@ Trellis 可用时，进入「需求接入」前检查本次 Tier 2+/3 变更是�
    - 用户拒绝 → 不创建，继续走 `.onion-sdd/current.json` + OpenSpec 独立运行；本次 change 生命周期内不再重复询问。
 3. 后续阶段写 `meta.onion.tier`/`change_path` 等字段（见 `DESIGN-SUPPLEMENT.md`「同步时机」表）的前提都是本步骤已产生绑定或用户已明确拒绝。
 
+## 无 Trellis 全流程兜底（硬约束）
+
+Onion SDD **不依赖** Trellis 才能跑完 Tier 2+。用户拒绝安装/未做 Trellis 能力增强时，必须走本兜底，不得卡死或空转重问。
+
+| 能力 | 有 Trellis | 无 Trellis（兜底） |
+|------|------------|-------------------|
+| 运行态 | `meta.onion` + 镜像 `current.json` | 只写 `.onion-sdd/current.json` |
+| 脑暴工作记忆 | task 的 `prd.md` → `## 已确认决策` | `openspec/changes/<change-id>/brainstorm.md` → `## 已确认决策` |
+| 变更正文 | OpenSpec | 同左（唯一真相源） |
+| 调研 / check | 可派 `trellis-research` / `trellis-check` | 主会话内完成并落盘；check 降级为可用 lint/测试/OpenSpec 对照 |
+| 恢复 | `/onsf-continue` 读 task + OpenSpec | `/onsf-continue` 读 `current.json` + `brainstorm.md` / OpenSpec |
+
+无 Trellis 时开脑暴：先确定 `change-id`，创建 `openspec/changes/<change-id>/brainstorm.md`（可只有已确认决策空表），**仍不写** `proposal.md` 直到脑暴收敛。全程用 `onion_state.py set` 维护 phase。
+
 ## 需求接入
 
-加载 `trellis-brainstorm` 技能并按以下协议探索需求：
+按上方模式选择脑暴入口：
+- **有 Trellis**：加载 `trellis-brainstorm`，工作记忆 = `prd.md`。
+- **无 Trellis**：不阻塞；主会话按同一问答协议执行「简单脑暴」，工作记忆 = `brainstorm.md`。
+
+协议（两种模式共用）：
 - 一次只问用户一个问题，优先给选项而非让用户填空。
 - 优先通过代码、文档、API 自己查，尽量不打断用户。
-- 用户每回答一个问题，立刻回写到 `proposal.md` 对应章节。
+- **脑暴工作记忆（硬约束）**：真相源是当前模式的已确认决策表（`prd.md` 或 `brainstorm.md`）。**禁止**在脑暴期为了「防忘」去写或依赖 `proposal.md`。
+- **先写记忆再提问（硬约束）**：用户每回答一个问题（含 AskQuestion 选项、自由文本、或你复述后的确认），必须先把结论写入当前工作记忆的 `## 已确认决策`，**然后**才能提出下一个问题。禁止答完未写入就再次提问（流程卡死主因）。
+- **已决禁重问（硬约束）**：提问前先读工作记忆；语义等价问题一律跳过并沿用结论。`Interview relentlessly` 只适用于**未决**分支。
+- **阶段边界**：脑暴收敛、用户同意进入 OpenSpec 后，才由 `openspec-change` 把工作记忆中的已确认决策整理进 `proposal.md`。未收敛前不要提前正式落盘。
 - 探索过程中保持需求聚焦，不提前进入技术设计。
-- 如果 Trellis 环境不可用（`trellis-brainstorm` 无法加载），回退到本技能的「澄清纪律」收敛问答模式。
+
+无 Trellis 时 `brainstorm.md` 最小模板：
+
+```markdown
+# Brainstorm: <change-id>
+
+## 已确认决策
+
+| 决策点 | 结论 | 来源 |
+|--------|------|------|
+| | | |
+
+## 开放问题
+
+- <仍未决的问题>
+```
 
 需求来源可以组合使用：
 
@@ -210,6 +246,18 @@ Trellis 可用时，进入「需求接入」前检查本次 Tier 2+/3 变更是�
 - 风险：升级红线、兼容性、回滚或带债可能性。
 
 若这些信息不能从证据中得到，按最高价值问题逐个向用户确认。
+
+澄清/脑暴过程必须遵守「需求接入」与「无 Trellis 全流程兜底」：工作记忆在 `prd.md`（有 Trellis）或 `brainstorm.md`（无 Trellis）、先写再问、已决禁重问。推荐已确认决策行格式：
+
+```markdown
+## 已确认决策
+
+| 决策点 | 结论 | 来源 |
+|--------|------|------|
+| <问题摘要> | <用户选项或一句话结论> | 用户确认 / AskQuestion |
+```
+
+使用 AskQuestion / 选项卡片时：下一轮消息须用一句话复述用户选项后再写入当前工作记忆文件，不得只依赖卡片工具结果作为唯一记忆。脑暴未收敛前不要写入 `proposal.md`。
 
 ## 任务规划纪律
 

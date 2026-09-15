@@ -12,7 +12,14 @@ description: 从已有 OpenSpec 变更产物恢复 Onion SDD 上下文并继续�
 1. **运行态恢复（必须）**：调用 `python3 <onion-sdd>/scripts/onion_state.py --repo-root . get`，按 `source: trellis|current|idle` 恢复；再按需 OpenSpec 扫描。详见 `skills/trellis-adapter/SKILL.md`。
 2. **Tier 0++ 逾期扫描（必须）**：若 `tier0pp_openspec_pending=true` 且当前时间已过 `tier0pp_deadline`，输出**硬提示**：须补 mini OpenSpec 并 `clear-tier0pp-pending`，或在 `proposal.md` 落盘 `## 带债项`（含 follow-up）；不得当作已完成变更继续推进归档。
 3. 若状态为 idle / 无 change-id，定位用户指定的 change-id；若未指定，只列出候选并请用户选择。
-4. 读取该变更目录下的 `proposal.md`、`tasks.md`、`specs/**/spec.md`、`research/**`、`backend-*.md`、`backend-yapi-*.md`、`qa-*.md`、`e2e-report.md` 等存在的产物。
+4. 读取已有产物：
+   - 脑暴未落盘：有 Trellis 读 task `prd.md`；无 Trellis 读 `openspec/changes/<change-id>/brainstorm.md`（含 `## 已确认决策`）。
+   - 已有 change 目录时再读 `proposal.md`、`tasks.md`、`specs/**/spec.md`、`research/**`、`backend-*.md`、`backend-yapi-*.md`、`qa-*.md`、`e2e-report.md` 等存在的产物。
+   - 无 Trellis 时运行态以 `current.json` + OpenSpec 扫描为准，不得因缺少 task 而拒绝恢复。
+4a. **已确认决策（必须）**：
+   - 脑暴未落盘：以 `prd.md`（有 Trellis）或 `brainstorm.md`（无 Trellis）的 `## 已确认决策` 为已决事实；不得语义重问。
+   - 已落盘：读 `proposal.md` → `## 已确认决策`（并与 `prd.md` / `brainstorm.md` 对照）；不得重问。
+   - 文件缺失但对话里已有明确结论：先补写到当前阶段对应文件（有 Trellis 脑暴→`prd.md`；无 Trellis 脑暴→`brainstorm.md`；已落盘→`proposal.md`），再继续。
 5. 使用 `skills/tier-triage/SKILL.md` 判断继续路径。
 6. Tier 0+/1：继续使用 `mini-change` 或 `light-change` 的任务与验证纪律。
 7. Tier 2+：读取 `full-change` 判断完整流程阶段；必要时调用 `openspec-change`、`external-spec`、`pull-yapi`、`re-check` 或 `verify-change`。
