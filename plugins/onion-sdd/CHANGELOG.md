@@ -15,6 +15,22 @@
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-09-15
+
+### Fixed
+
+- `/onsf-plan` 脑暴：先写入工作记忆再问下一题；对已确认决策禁止语义重问，避免答完再问卡死。
+- 脑暴期不再要求或依赖提前写入 `proposal.md`；收敛后再进入 OpenSpec 落盘。
+
+### Added
+
+- 无 Trellis 全流程兜底：脑暴工作记忆落 `openspec/changes/<id>/brainstorm.md`，运行态写 `current.json`，`/onsf-continue` 可无 task 恢复。
+- `full-change` / `onsf-plan` / `onsf-continue` / `openspec-change` / `trellis-brainstorm`：有/无 Trellis 双路径与决策迁移说明对齐。
+
+### Specs
+
+- 新增并合入 `onion-sdd-clarification`：脑暴工作记忆、禁重问、无 Trellis 可完成、落盘迁移已确认决策。
+
 ## [0.2.1] - 2026-08-26
 
 ### Added
