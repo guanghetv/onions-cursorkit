@@ -1,0 +1,39 @@
+{
+  "id": "clarify-no-reask-ledger",
+  "name": "clarify-no-reask-ledger",
+  "title": "澄清问答禁重问与决策账本",
+  "description": "",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "yangpeng",
+  "assignee": "yangpeng",
+  "createdAt": "2026-09-15",
+  "completedAt": "2026-09-15",
+  "branch": "feat/fix-clarify-reask-ledger",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "onion": {
+      "version": 1,
+      "change_id": null,
+      "change_path": null,
+      "tier": null,
+      "phase": "idle",
+      "last_action": "document no-trellis brainstorm+flow fallback",
+      "last_action_at": "2026-09-15T16:11:36+08:00",
+      "upgrade_risk": false,
+      "tier0pp_openspec_pending": false,
+      "tier0pp_deadline": null
+    }
+  }
+}
