@@ -17,8 +17,9 @@ description: 对变更做 Onion SDD Tier 分级，并路由到 mini、light 或 
 6. Tier 0++：转入 `/onsf-fix`，并 `mark-tier0pp`。
 7. Tier 1：转入 `/onsf-tweak` 与 `light-change`。
 8. Tier 2：读取 `skills/full-change/SKILL.md`，按完整流程完成需求接入、澄清、OpenSpec 落盘、任务规划、实现纪律、外部 spec 事件、E2E/验收与归档判断；各阶段结束调用 `onion_state.py set`。
-9. Tier 3：先拆分父子任务或多阶段计划，再让每个子任务进入 Tier 2+ 流程；使用 `trellis-adapter` / `bind-trellis` 将 parent/child change 映射到 Trellis parent/child task tree。
-
+   - **脑暴卡死防护**：每答一题先写入工作记忆的 `## 已确认决策`，再问下一题；已决禁止语义重问。脑暴期不要写 `proposal.md`；收敛后再 OpenSpec 落盘。
+   - **无 Trellis 兜底**：用户未装/拒绝 Trellis 时不得阻塞。运行态只写 `current.json`；脑暴工作记忆用 `openspec/changes/<change-id>/brainstorm.md`；调研与 check 在主会话降级完成。完整流程仍以 OpenSpec 为正文真相源。
+9. Tier 3：先拆分父子任务或多阶段计划，再让每个子任务进入 Tier 2+ 流程；有 Trellis 时用 `trellis-adapter` / `bind-trellis` 映射 parent/child；无 Trellis 时用 OpenSpec 目录 + `current.json` 表达多阶段，不强制建 task 树。
 ## Tier 2+ 衔接
 
 当需要完整流程时，以 onion 的 Tier 判断和当前变更产物为准，按以下 onion 自有 skill 串联：

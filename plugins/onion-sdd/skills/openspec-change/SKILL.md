@@ -59,6 +59,13 @@ OpenSpec change 目录由 Agent 根据当前环境创建：如 CLI 可用，执�
 ## 不做范围
 - <明确排除的相邻需求>
 
+## 已确认决策
+| 决策点 | 结论 | 来源 |
+|--------|------|------|
+| <澄清问题摘要> | <用户确认结论> | 用户确认 / AskQuestion |
+
+> 本表在**脑暴收敛并进入 OpenSpec 落盘时**从脑暴工作记忆整理而来：有 Trellis 时取 `prd.md` → `## 已确认决策`；无 Trellis 时取 `openspec/changes/<change-id>/brainstorm.md` → `## 已确认决策`。不是脑暴每一问的即时账本。落盘后本表与来源文件对齐；`/onsf-continue` 须读取且禁止对表中条目语义重问。无 Trellis 不阻塞落盘。
+
 ## 验收
 - <必须通过的场景、命令或 E2E 条件>
 
