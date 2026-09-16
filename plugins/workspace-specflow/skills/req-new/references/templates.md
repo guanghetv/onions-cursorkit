@@ -43,6 +43,10 @@ prd:
     status: pending
     confirmed_at: null
     snapshot: null
+  risk_precheck:             # /prd-risk 维护；报告正文不写这些字段
+    last_result: null        # 规则预检通过 | 待补信息 | 需调整
+    last_checked_at: null
+    report: null             # prototypes/prd-risk-precheck.md
 
 test_spec:
   status: pending

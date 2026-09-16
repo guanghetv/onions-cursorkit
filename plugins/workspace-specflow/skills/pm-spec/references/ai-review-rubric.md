@@ -10,6 +10,7 @@
 
 - 详细评审记录写入 `prototypes/ai-review.md`
 - 结论摘要先写入 `prototypes/ai-review.md`；`prd.md` **二、版本及进度跟踪** 对应行在 `/pm-spec` Step 6（push v9 + check 成功后）再追加（如 `AI Review: 可开工`）
+- **风险预检**：Step 4.5 已执行；本报告须含「## 风险预检」（只写结论 + `prototypes/prd-risk-precheck.md` 路径，不内嵌规则明细）
 
 ## 一、评审范围（先于阻断规则执行）
 
@@ -140,7 +141,7 @@ XX/100
 
 ### 写入 `prd.md`
 
-在 `/pm-spec` Step 6（push v9 + consistency-check 成功后）于 **二、版本及进度跟踪** 追加 9稿确认行：`变更内容` 含 `AI Review: 可开工`（或建议完善后开工 / 不可开工）。同步或校验失败时**不得**追加暗示可开工的版本行。
+在 `/pm-spec` Step 6（风险预检方案 C 通过或待补已确认，且 push v9 + consistency-check 成功后）于 **二、版本及进度跟踪** 追加 9稿确认行：`变更内容` 含 `AI Review: 可开工`（或建议完善后开工 / 不可开工）。**需调整**或未预检时**不得**追加暗示可开工的版本行。同步或校验失败时同样不得追加。
 
 ## 七、可读性约束
 

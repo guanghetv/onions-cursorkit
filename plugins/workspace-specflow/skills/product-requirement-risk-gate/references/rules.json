@@ -1,0 +1,1294 @@
+{
+  "schema_version": "1.0",
+  "package_version": "1.1.1",
+  "source_url": "https://guanghe.feishu.cn/docx/LlQldNdLpoatWWx4QOMcSoa8nod",
+  "source_revision": 227,
+  "verified_on": "2026-09-09",
+  "status": "local_user_revision_pending_platform_activation",
+  "business_rule_count": 31,
+  "governance_rule_count": 6,
+  "rules": [
+    {
+      "rule_id": "R-体验品-01",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "创建时默认开启防灰产开关",
+      "level": "L1",
+      "source_text": "体验品创建时必须开启“限制灰产交易”和“限制绑定手机号”等现有防灰产配置；关闭或绕过须进入损失评估。",
+      "applicability": "体验品创建",
+      "checks": [
+        {
+          "field": "anti_abuse_enabled",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "phone_binding_required",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "LEGAL_LOSS_ASSESSMENT",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-体验品-02",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "必须限购",
+      "level": "L1",
+      "source_text": "体验品使用到期型、相对时间等正确 SKU 配置，并开启限购。限购须覆盖账号 ID、手机号和涉及的第三方平台账号。",
+      "applicability": "体验品",
+      "checks": [
+        {
+          "field": "sku_time_configuration_correct",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "purchase_limit_enabled",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "limit_account",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "limit_phone",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "limit_third_party_if_involved",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "LEGAL_LOSS_ASSESSMENT",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-体验品-03",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "非正价品必须进入体验品类目",
+      "level": "L1",
+      "source_text": "用于引流和体验的低价商品必须放入受统一风控约束的体验品类目，不得通过其他类目规避限购。",
+      "applicability": "用于引流或体验的低价商品",
+      "checks": [
+        {
+          "field": "in_trial_category",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "LEGAL_LOSS_ASSESSMENT",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-体验品-04",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "修改后重新生成商品快照",
+      "level": "L0",
+      "source_text": "商品修改后旧快照下架，新订单基于新快照；防灰产开关、价格、权益和限购变化必须同步更新快照，旧链接不得继续下单。",
+      "applicability": "体验品商品修改",
+      "checks": [
+        {
+          "field": "old_snapshot_offline",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "new_orders_use_new_snapshot",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "risk_price_rights_limit_changes_snapshotted",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "old_links_cannot_order",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "D_OR_SPECIAL_APPROVAL",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-免费活动-01",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "领取前验证手机号",
+      "level": "L1",
+      "source_text": "强制绑定手机号并进行短信验证码校验，同时覆盖分享链接的领取方。仅图形验证码不满足本规则。",
+      "applicability": "免费/低价权益活动或付费赠送",
+      "checks": [
+        {
+          "field": "phone_binding_required",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "sms_verified_before_claim",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "shared_recipient_verification_if_shared",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "LEGAL_LOSS_ASSESSMENT",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-免费活动-02",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "短信验证码明示用途",
+      "level": "L1",
+      "source_text": "短信须明确说明用于换绑、激活会员或领取活动权益，不得仅写“用于手机号验证”。",
+      "applicability": "活动手机号短信验证",
+      "checks": [
+        {
+          "field": "sms_states_specific_purpose",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "LEGAL_LOSS_ASSESSMENT",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-免费活动-03",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "设置多维度参与上限",
+      "level": "L1",
+      "source_text": "至少同时设置账号 ID、手机号和涉及的第三方平台账号上限；限制必须在服务端生效。",
+      "applicability": "免费/低价权益活动或付费赠送",
+      "checks": [
+        {
+          "field": "limit_account",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "limit_phone",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "limit_third_party_if_involved",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "limits_enforced_server_side",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "LEGAL_LOSS_ASSESSMENT",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-免费活动-04",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "单次活动单账号权益天数不超过 7 天",
+      "level": "L1",
+      "source_text": "超过 7 天进入损失评估；超过 30 天必须升级管理层特别审批。",
+      "applicability": "免费/低价权益活动或付费赠送",
+      "checks": [
+        {
+          "field": "single_activity_account_rights_days",
+          "operator": "lte",
+          "expected": 7
+        }
+      ],
+      "exception_route": "LEGAL_LOSS_ASSESSMENT",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-免费活动-05",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "可分享链接或二维码有效期不超过 7 天",
+      "level": "L1",
+      "source_text": "默认不超过 7 天，超期自动失效；修复漏洞或活动停止时，存量链接必须可批量失效。",
+      "applicability": "活动含可分享链接或二维码",
+      "checks": [
+        {
+          "field": "share_validity_days",
+          "operator": "lte",
+          "expected": 7
+        },
+        {
+          "field": "expires_automatically",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "existing_links_batch_revocable",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "LEGAL_LOSS_ASSESSMENT",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-免费活动-06",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "用户类型使用稳定属性判断",
+      "level": "L1",
+      "source_text": "新用户、未付费用户、回归用户等资格，使用首次注册时间、累计付费等稳定属性；裂变“拉新”定义应包含有效付费或其他可验证的真实新增条件。",
+      "applicability": "按新用户/未付费/回归等类型判断资格，或裂变拉新",
+      "checks": [
+        {
+          "field": "eligibility_uses_stable_attributes",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "acquisition_is_verifiable_if_acquisition",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "LEGAL_LOSS_ASSESSMENT",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-免费活动-07",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "埋点支持区分正常用户和疑似灰产",
+      "level": "L1",
+      "source_text": "至少记录领取时间、账号、手机号关联标识、IP、设备、渠道、权益来源、领取结果和失败原因，并遵守数据最小必要要求。",
+      "applicability": "免费/低价权益活动或付费赠送",
+      "checks": [
+        {
+          "field": "event_time_logged",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "account_logged",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "phone_relation_logged",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "ip_logged",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "device_logged",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "channel_logged",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "rights_source_logged",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "result_logged",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "failure_reason_logged",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "data_minimization",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "LEGAL_LOSS_ASSESSMENT",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-兑换码-01",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "批量兑换码随机生成且不可枚举",
+      "level": "L0",
+      "source_text": "使用 UUID 或安全随机 token，禁止连续数字、姓名加日期等可预测字符串。",
+      "applicability": "批量兑换码生成",
+      "checks": [
+        {
+          "field": "secure_random_unenumerable_codes",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "D_OR_SPECIAL_APPROVAL",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-兑换码-02",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "兑换账号绑定手机号并进行短信验证",
+      "level": "L1",
+      "source_text": "不得匿名兑换或仅凭登录态兑换；兑换行为须可追溯到经过验证的手机号。",
+      "applicability": "兑换行为",
+      "checks": [
+        {
+          "field": "phone_binding_required",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "sms_verified",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "verified_phone_traceable",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "LEGAL_LOSS_ASSESSMENT",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-兑换码-03",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "自动发放前设置核身或复核",
+      "level": "L1",
+      "source_text": "企业微信自动回复、问卷自动发放、活动自动触发等场景，必须具备核身、资格校验或明确的人工复核机制。",
+      "applicability": "自动发放兑换凭证",
+      "checks": [
+        {
+          "field": "identity_or_eligibility_or_manual_review",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "LEGAL_LOSS_ASSESSMENT",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-B端-01",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "B 端可分享二维码或链接有效期不超过 7 天",
+      "level": "L1",
+      "source_text": "默认不超过 7 天，超期自动失效，并支持提前批量撤销。",
+      "applicability": "B端含可分享链接或二维码",
+      "checks": [
+        {
+          "field": "share_validity_days",
+          "operator": "lte",
+          "expected": 7
+        },
+        {
+          "field": "expires_automatically",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "batch_revocable",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "LEGAL_LOSS_ASSESSMENT",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-B端-02",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "设置操作额度和异常预警",
+      "level": "L1",
+      "source_text": "按角色设置单次、单日、单月账号创建或权益发放额度；超过历史正常范围、集中向关联账号发放或短时高频操作时立即预警并暂停。",
+      "applicability": "B端创建账号或发放权益",
+      "checks": [
+        {
+          "field": "role_single_daily_monthly_limits",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "abnormal_volume_alert_and_pause",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "related_accounts_alert_and_pause",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "high_frequency_alert_and_pause",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "LEGAL_LOSS_ASSESSMENT",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-B端-03",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "离职、解约和资格失效时自动收权",
+      "level": "L0",
+      "source_text": "员工离职、代理商解约、学校失去签约资格或角色变化时，自动取消权限、失效会话，并复核存量账号和未使用发放凭证。",
+      "applicability": "B端员工/代理商/学校/角色权限生命周期",
+      "checks": [
+        {
+          "field": "offboarding_contract_school_role_events_covered",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "permissions_revoked_automatically",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "sessions_invalidated",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "existing_accounts_and_unused_vouchers_reviewed",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "D_OR_SPECIAL_APPROVAL",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-接口-01",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "涉资产/权益接口同时验证登录态和 Token",
+      "level": "L0",
+      "source_text": "无登录态或无有效 Token 的请求不得访问用户资产或获得权益。",
+      "applicability": "涉资产或权益接口",
+      "checks": [
+        {
+          "field": "login_required",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "valid_token_required",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "D_OR_SPECIAL_APPROVAL",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-接口-02",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "不得仅凭 URL 参数确认身份",
+      "level": "L0",
+      "source_text": "必须结合服务端登录态或可信凭证，不允许仅凭 user_id 等可修改参数鉴权。",
+      "applicability": "接口身份鉴别",
+      "checks": [
+        {
+          "field": "server_session_or_trusted_credential",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "url_parameters_not_sole_identity",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "D_OR_SPECIAL_APPROVAL",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-接口-03",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "限购覆盖订单全生命周期并原子执行",
+      "level": "L0",
+      "source_text": "创建订单时按账号及适用主体进行原子占位；已有待支付订单时复用或拒绝新建；已支付账号再次下单被拒绝；刷新支付凭据和支付回调时重新校验；异常订单不发权益或自动撤销。仅“撤销其他待支付凭据”不能代替创建订单时的原子限制。",
+      "applicability": "存在限购约束的订单全生命周期",
+      "checks": [
+        {
+          "field": "atomic_reservation_at_creation",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "pending_order_reuse_or_reject",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "paid_subject_repeat_order_rejected",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "revalidate_payment_credentials",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "revalidate_payment_callback",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "abnormal_order_no_rights_or_revoke",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "D_OR_SPECIAL_APPROVAL",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-接口-04",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "关键资源 ID 随机且不可枚举",
+      "level": "L1",
+      "source_text": "商品、订单、权益等外部可见标识使用 UUID 或安全随机字符串，禁止连续数字。",
+      "applicability": "外部可见商品/订单/权益标识",
+      "checks": [
+        {
+          "field": "secure_random_unenumerable_ids",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "LEGAL_LOSS_ASSESSMENT",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-接口-05",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "关键权益逻辑在服务端执行",
+      "level": "L0",
+      "source_text": "资格判断、限购次数、价格和权益天数由服务端计算，客户端输入仅作为请求信息，不能作为可信结论。",
+      "applicability": "权益资格/限购/价格/天数计算",
+      "checks": [
+        {
+          "field": "eligibility_server_side",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "limit_server_side",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "price_server_side",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "rights_days_server_side",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "client_not_trusted",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "D_OR_SPECIAL_APPROVAL",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-接口-06",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "Token 设置合理有效期",
+      "level": "L1",
+      "source_text": "操作类 Token 不超过 10 分钟，会话类 Token 不超过 24 小时；业务确有不同要求时须说明风险和补偿措施。",
+      "applicability": "使用操作类或会话类Token",
+      "checks": [
+        {
+          "field": "operation_token_minutes",
+          "operator": "lte",
+          "expected": 10
+        },
+        {
+          "field": "session_token_hours",
+          "operator": "lte",
+          "expected": 24
+        }
+      ],
+      "exception_route": "LEGAL_LOSS_ASSESSMENT",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-接口-07",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "关键操作 Token 绑定设备或等效风险信息",
+      "level": "L1",
+      "source_text": "换设备使用时重新验证；无法绑定设备的场景须提供等效的风险校验。",
+      "applicability": "关键操作Token",
+      "checks": [
+        {
+          "field": "device_binding_or_equivalent_risk_verification",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "reverify_device_change",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "LEGAL_LOSS_ASSESSMENT",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-接口-08",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "换绑、绑定、解绑后旧 Token 失效",
+      "level": "L0",
+      "source_text": "操作后强制刷新相关会话，旧 Token 立即失效；一次性操作 Token 使用后立即废弃。",
+      "applicability": "绑定/解绑/换绑或一次性操作Token",
+      "checks": [
+        {
+          "field": "binding_changes_refresh_sessions",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "old_tokens_invalidated_immediately",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "one_time_token_consumed_once",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "D_OR_SPECIAL_APPROVAL",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-接口-09",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "新上线涉资产接口完成风控覆盖确认",
+      "level": "L1",
+      "source_text": "产品工作台在上线前核验该接口是否进入风控覆盖范围；参数白名单、临时绕过和测试通道都必须申报。无法证明覆盖时不得按“已满足”通过。",
+      "applicability": "新上线涉资产接口",
+      "checks": [
+        {
+          "field": "risk_coverage_declared",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "parameter_whitelist_declared",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "bypass_declared",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "test_channels_declared",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "LEGAL_LOSS_ASSESSMENT",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-接口-11",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "新增账号注册入口同步接入风控",
+      "level": "L1",
+      "source_text": "新增入口同时接入手机号和风控检测，并设计被拦截后的正常用户路径。",
+      "applicability": "新增注册入口",
+      "checks": [
+        {
+          "field": "phone_check",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "risk_detection",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "legitimate_user_path_after_block",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "LEGAL_LOSS_ASSESSMENT",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-接口-12",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "新功能同步处理老接口",
+      "level": "L0",
+      "source_text": "确认新功能不能绕回老接口；仍活跃的老接口同步加固，超过 3 个月无调用且涉资产的老接口申请下线。保留老接口须说明渠道白名单和监控。",
+      "applicability": "新功能涉及新旧接口或接口迁移兼容",
+      "checks": [
+        {
+          "field": "cannot_bypass_via_old_interfaces",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "active_old_interfaces_hardened",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "inactive_asset_interfaces_over_3_months_retirement_requested",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "retained_interfaces_channel_whitelist_and_monitoring",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "D_OR_SPECIAL_APPROVAL",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-接口-13",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "敏感参数进行签名校验",
+      "level": "L0",
+      "source_text": "金额、价格、权益天数、资格结果等可篡改获利的参数必须进行服务端签名或等效完整性校验。",
+      "applicability": "含可篡改获利的敏感参数",
+      "checks": [
+        {
+          "field": "server_signature_or_equivalent_integrity",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "D_OR_SPECIAL_APPROVAL",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-接口-14",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "第三方统一激活接口独立风控",
+      "level": "L1",
+      "source_text": "第三方订单在激活和发放权益时独立检测，不能只依赖第三方平台的下单限制。",
+      "applicability": "第三方订单激活/发放权益",
+      "checks": [
+        {
+          "field": "independent_risk_check_at_activation",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "independent_risk_check_at_fulfillment",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "LEGAL_LOSS_ASSESSMENT",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-接口-15",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "渠道、商品、订单与激活请求真实绑定",
+      "level": "L0",
+      "source_text": "商品 ID、渠道标识、salesfrom、第三方店铺订单和激活请求在服务端核对；第三方回调必须验签；抓取或拼凑直链不得创建订单或发放权益。",
+      "applicability": "第三方渠道商品/订单/激活链路",
+      "checks": [
+        {
+          "field": "product_channel_salesfrom_order_activation_bound",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "callback_signature_verified",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "forged_direct_links_cannot_order_or_grant",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "D_OR_SPECIAL_APPROVAL",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-设备-01",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "客户端登录或权益逻辑不得削弱破解版风控",
+      "level": "L0",
+      "source_text": "新增或修改客户端逻辑时，须确认不突破现有破解版检测点；权益资格和发放结果仍以服务端为准。",
+      "applicability": "客户端登录或权益逻辑变更",
+      "checks": [
+        {
+          "field": "existing_crack_detection_not_weakened",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "eligibility_and_fulfillment_server_authoritative",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "D_OR_SPECIAL_APPROVAL",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-设备-02",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "老版本兼容不得重开历史漏洞",
+      "level": "L0",
+      "source_text": "兼容方案不得重开影子登录、扩大老接口适用渠道，或让旧版本绕过双重校验和风控。",
+      "applicability": "老版本兼容",
+      "checks": [
+        {
+          "field": "no_shadow_login_reopened",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "no_old_interface_channel_expansion",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "no_legacy_bypass_double_check_or_risk",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "D_OR_SPECIAL_APPROVAL",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-设备-03",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "新增 Hardcode 渠道严格白名单管理",
+      "level": "L0",
+      "source_text": "明确允许的硬件型号、版本和调用范围；主 App 不得调用；持续监控异常调用并支持即时撤销。",
+      "applicability": "新增Hardcode渠道",
+      "checks": [
+        {
+          "field": "hardware_models_versions_scope_allowlisted",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "main_app_forbidden",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "abnormal_calls_monitored",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "immediate_revocation_supported",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "D_OR_SPECIAL_APPROVAL",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-风控-01",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "所有风控除外规则设置审计和有效期",
+      "level": "L0",
+      "source_text": "账号白名单、业务/订单/渠道检测除外均须记录原因、日期、责任人，默认有效期不超过 6 个月；到期未复核自动失效，法务每季度全量审计。",
+      "applicability": "新增/修改/续期风控除外或白名单",
+      "checks": [
+        {
+          "field": "reason_date_owner_recorded",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "validity_months",
+          "operator": "lte",
+          "expected": 6
+        },
+        {
+          "field": "unreviewed_expiry_auto_invalid",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "quarterly_legal_audit",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "D_OR_SPECIAL_APPROVAL",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-风控-02",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "规则、阈值和模型变更必须版本化、测试和审批",
+      "level": "L0",
+      "source_text": "任何增删规则、阈值调整、供应商切换或模型更新，必须记录变更原因和负责人，用历史案例回归测试，并具备灰度、监控和回滚。AI 只能提出建议，不得自动发布规则。",
+      "applicability": "规则/阈值/供应商/模型变更",
+      "checks": [
+        {
+          "field": "reason_owner_recorded",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "versioned",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "historical_regression",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "approved",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "staged_rollout",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "monitoring",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "rollback",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "human_publication",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "D_OR_SPECIAL_APPROVAL",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    },
+    {
+      "rule_id": "R-风控-03",
+      "rule_version": "V4-r241-business-precheck-1.1.1",
+      "title": "建立唯一规则主库和规则编译检查",
+      "level": "L0",
+      "source_text": "每条规则必须有唯一 ID、版本、状态、适用场景、判定表达式、等级、证据要求、负责人、生效/失效时间、来源案例和测试用例。发布前自动检查编号引用、规则数量、阈值冲突和公式可计算性；检查失败不得发布新版本。",
+      "applicability": "规则主库建立/维护或发布",
+      "checks": [
+        {
+          "field": "unique_ids",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "versions_status_scope_predicates_levels_evidence_owners_dates_cases_tests_complete",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "reference_count_threshold_formula_checks",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "field": "failed_checks_block_publication",
+          "operator": "eq",
+          "expected": true
+        }
+      ],
+      "exception_route": "D_OR_SPECIAL_APPROVAL",
+      "source_reference": "source-framework.xml",
+      "precheck_policy": {
+        "input_provider": "business",
+        "design_commitment_sufficient": true,
+        "technical_detail_required": false,
+        "scope": "后置实现信息未知不阻塞；明确不符合已适用规则的设计仍HIT。详见input-output.md。"
+      }
+    }
+  ],
+  "rule_bundle_version": "V4-r241-business-precheck-1.1.1",
+  "local_revision_basis": "2026-09-09用户明确要求按线上B端正文编号修改Skill：旧02/03/04改为01/02/03；内容和等级不变。保留v1.1业务预检语义，未修改飞书框架或发布工作台。",
+  "removed_rule_ids": [],
+  "numbering_source_revision": 241,
+  "historical_removed_rules": [
+    {
+      "rule_bundle_version": "V4-r227-business-precheck-1.1",
+      "rule_id": "R-B端-01",
+      "note": "此前已删除的旧规则内容不恢复；不可据此排除当前版本的链接有效期规则。"
+    }
+  ],
+  "rule_id_migrations": [
+    {
+      "from_version": "V4-r227-business-precheck-1.1",
+      "from_rule_id": "R-B端-02",
+      "to_version": "V4-r241-business-precheck-1.1.1",
+      "to_rule_id": "R-B端-01"
+    },
+    {
+      "from_version": "V4-r227-business-precheck-1.1",
+      "from_rule_id": "R-B端-03",
+      "to_version": "V4-r241-business-precheck-1.1.1",
+      "to_rule_id": "R-B端-02"
+    },
+    {
+      "from_version": "V4-r227-business-precheck-1.1",
+      "from_rule_id": "R-B端-04",
+      "to_version": "V4-r241-business-precheck-1.1.1",
+      "to_rule_id": "R-B端-03"
+    }
+  ]
+}

@@ -33,14 +33,15 @@
 |------|------|------|
 | 新建需求骨架 | `/req-new` | 中文目录 + `id`；本地骨架；目录创建后**必须** `/prd-feishu-sync create`（失败不得假装已绑定） |
 | 原型快速生成（可选） | `/pm-proto` | 生成或迭代 `prototypes/`、`assets/` |
-| 5稿结构化增强 | `/pm-spec-5` | 内审/交互评审前；允许 `[待定]`；未 v9 同步时可 push 飞书 |
+| 5稿结构化增强 | `/pm-spec-5` | 内审/交互评审前；允许 `[待定]`；写出后自动 `/prd-risk`；确认时需调整硬阻断、待补可确认；未 v9 同步时可 push 飞书 |
+| 产品需求风险预检 | `/prd-risk` | 报告按预检 skill 产品正文落 `prototypes/prd-risk-precheck.md`；复检更新 + 运行历史；可手动重跑 |
 | 9稿定稿 | `/pm-spec` | 交互评审后；瘦身后写 `v9_pending`；严格 AI Review；**push v9 → check 通过后**才 `confirmed`（未瘦身拒 v9） |
 | 飞书同步 | `/prd-feishu-sync` | create/push/reconcile；XML 局部增量；**禁 overwrite**；失败 STOP（策略 A）；画板保活；文字墙告警写入飞书可读性区 |
 | 一致性校验 | `/prd-consistency-check` | 契约层结构+语义；飞书一致性 callout + 可读性告警 callout（文字墙仅 warn） |
 | 一键发布 | `/prd-publish` | sync → check |
 | 看进度 | `/req-status` | 5稿/9稿/测试状态 |
 
-**典型顺序**：`/req-new` → `/pm-proto`（可选）→ `/pm-spec-5` → 交互评审 → `/pm-spec`（或 `/prd-publish`）→ 通知测试与开发。
+**典型顺序**：`/req-new` → `/pm-proto`（可选）→ `/pm-spec-5`（写出后自动 `/prd-risk`）→ 交互评审 → `/pm-spec`（写出后再次 `/prd-risk`）→ 通知测试与开发。
 
 **双文档角色**：飞书 = 讲解/评审（背景/价值）；本地 9 稿 = Agent 契约（无讲解小节，**展示序号不重排**）。章节按 **语义 unit + 标题关键词** 定位。飞书七章产品模板不废。
 
@@ -155,6 +156,7 @@
 | `/req-new` | 产品 / TL | 中文目录 + 飞书七章骨架 |
 | `/pm-proto` | 产品 | 原型（可选） |
 | `/pm-spec-5` | 产品 | 5稿（交互评审前） |
+| `/prd-risk` | 产品 | 产品需求风险预检 |
 | `/pm-spec` | 产品 | 9稿定稿 |
 | `/prd-feishu-sync` | 产品 | PRD ↔ 飞书同步 |
 | `/prd-consistency-check` | 产品 | 契约层一致性校验 |

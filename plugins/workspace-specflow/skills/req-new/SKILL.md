@@ -80,7 +80,7 @@ description: >-
 
 ### Step 5: 提示下一步
 
-默认流程：`/req-new`（含飞书 create）→ `/pm-proto`（可选）→ `/pm-spec-5` → 交互评审 → `/pm-spec`（9稿）→ `/prd-publish`（或分步 sync/check）。
+默认流程：`/req-new`（含飞书 create）→ `/pm-proto`（可选）→ `/pm-spec-5`（写出后 `/prd-risk`）→ 交互评审 → `/pm-spec`（写出后 `/prd-risk`）→ `/prd-publish`（或分步 sync/check）。
 
 ## 约束
 

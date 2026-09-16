@@ -1,0 +1,7 @@
+interface:
+  display_name: "产品需求风险预检"
+  short_description: "仅依业务信息进行评审前预检，认可设计承诺，输出结论及后续流程并记录台账"
+  default_prompt: "使用 $product-requirement-risk-gate 对业务方案做评审前预检，仅补业务必填，设计承诺视为条件满足，技术细节不阻塞，返回结论及下一步。"
+policy:
+  allow_implicit_invocation: true
+
