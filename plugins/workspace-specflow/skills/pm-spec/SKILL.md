@@ -116,7 +116,7 @@ description: >-
    - `prd.md` 的修改时间晚于 `prd.risk_precheck.last_checked_at`（上次预检后方案已改）
    然后：
    - **需调整** → **硬阻断**，停止后续步骤；不得写 v9 快照、不得设 `prd.status = confirmed`。
-   - **待补信息** → 软提醒后用户仍确认则可继续。
+   - **待补信息** → **软提醒（非阻断）**后用户仍确认则可继续；禁止说成硬拦。
    - **规则预检通过** → 继续。
 1. `/prd-feishu-sync push --stage v9`（失败则明确报错、保持 `prd.stage = v9_pending`，停止）
 2. `/prd-consistency-check`（进开发前）；存在 critical fail → 保持 `v9_pending`，停止 confirmed
