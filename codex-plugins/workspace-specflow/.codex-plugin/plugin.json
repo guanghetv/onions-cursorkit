@@ -1,6 +1,6 @@
 {
   "name": "workspace-specflow",
-  "version": "0.1.0",
+  "version": "0.3.9",
   "description": "面向 Codex 的多角色需求工作流，支持通过 CodeWiki 获取 workspace registry 关联仓库的代码上下文。",
   "author": {
     "name": "wenli"
