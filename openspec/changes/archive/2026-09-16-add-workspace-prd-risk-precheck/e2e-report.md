@@ -16,7 +16,7 @@
 | AI Review 只展示结论 | 通过（v5 与 9稿 rubric） |
 | Codex pack check + unittest | 见本轮脚本 |
 | OpenSpec validate | 见本轮脚本 |
-| 插件版本 | `0.3.6` |
+| 插件版本 | `0.3.9` |
 | 10 天会员夹具 vs `R-免费活动-04` | 静态走查仍成立（`fixtures/ten-day-membership.md`） |
 
 ## 未验证 / 不记通过
@@ -29,3 +29,7 @@
 ## 结论
 
 Review 修复已写入 skill/命令/文档。真实会话与生产门禁未宣称通过。
+
+## 验收结论
+
+**通过（带已知未验证项）**。静态走查、`pack.py check`、OpenSpec validate 与 skill/命令口径已闭合；真实 specs 仓对话冒烟、工作台入库/双周调度/法务移交、飞书同步预检报告未执行，不记生产门禁通过。用户于 2026-09-16 明确要求归档提案，同意带上述未验证项归档。
