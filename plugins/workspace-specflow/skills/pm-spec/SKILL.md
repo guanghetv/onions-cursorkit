@@ -11,7 +11,7 @@ description: >-
 在 Step 3 Brainstorming 完成且用户**明确确认**之前，**禁止**：
 
 - 写入或大幅改写 `prd.md` 的结构化内容（Step 4）
-- 执行 AI Review 并更新 `metadata.yaml.prd.status`（Step 5–6）
+- 执行风险预检、AI Review 并更新 `metadata.yaml.prd.status`（Step 4.5–6）
 - 以「prd 已有内容 / 飞书已拉取」为由跳过澄清
 
 允许在 **Step 4 瘦身完成后** 将 `prd.stage` 写为 `v9_pending`（不等于 confirmed）。**禁止**在 Step 1–3（脑暴/瘦身前）写入 `v9_pending`，以免中途 auto-v9 / C6 误拦。
@@ -81,6 +81,19 @@ description: >-
 
 **瘦身完成后（本步收口）**：确认本地已无 `narrative.*`，再更新 `metadata.yaml` → `prd.stage = v9_pending`（供 sync/publish auto→v9 与 C6 启用；仍不等于 `confirmed`）。若瘦身未完成（仍含讲解层）→ **不得**写 `v9_pending`，先补删再继续。
 
+写出并完成瘦身后进入 Step 4.5（**不要**跳过预检直接进 AI Review）。
+
+### Step 4.5: 产品需求风险预检（自动）
+
+**9稿 `prd.md` 写出后、Step 5 之前**必须执行：
+
+1. Read 并执行 `prd-risk`（与 `/prd-risk` 同一套）
+2. 按预检 skill 更新 `prototypes/prd-risk-precheck.md`（含运行历史）并回写 `prd.risk_precheck`
+3. 按 `prd-risk` 的 Agent 提示分级展示结论
+4. **本步不写 v9 快照、不改 `prd.status`**
+
+然后进入 Step 5。
+
 ### Step 5: AI Review（9稿）
 
 读取 `references/ai-review-rubric.md`：
@@ -90,12 +103,21 @@ description: >-
 3. **必做可读性扫描**（长段落 / MODULE 说明墙）：明细写入 `prototypes/ai-review.md`「## 可读性告警」；P1 不阻断 confirmed
 4. 已绑定飞书时：更新飞书 `prd-sync:readability:v1` **摘要**（条数 + `prototypes/ai-review.md` 路径），不列明细
 5. 五维评分 + P0/P1 问题项 → `prototypes/ai-review.md`
-6. **不在本步追加版本表行**；结论摘要留在 `ai-review.md`，待 Step 6 同步/校验成功后再写入版本表「变更内容」
+6. **必含「## 风险预检」小节**：只写最新结论与报告路径，**禁止**内嵌规则明细
+7. **不在本步追加版本表行**；结论摘要留在 `ai-review.md`，待 Step 6 同步/校验成功后再写入版本表「变更内容」
 
 ### Step 6: 确认、同步、校验、快照与状态
 
 用户确认通过后，**按序**执行（任一步 critical 失败则**不得**将 `prd.status` 设为 `confirmed`，**不得**追加「可开工」版本行 / 落 v9 快照）：
 
+0. **风险预检（方案 C，与 5稿相同）**。出现任一情况 → **先执行 `prd-risk`**，不得直接当通过：
+   - 不存在 `prototypes/prd-risk-precheck.md`
+   - 读不到 `precheck_result`（或 metadata `prd.risk_precheck.last_result` 为空）
+   - `prd.md` 的修改时间晚于 `prd.risk_precheck.last_checked_at`（上次预检后方案已改）
+   然后：
+   - **需调整** → **硬阻断**，停止后续步骤；不得写 v9 快照、不得设 `prd.status = confirmed`。
+   - **待补信息** → 软提醒后用户仍确认则可继续。
+   - **规则预检通过** → 继续。
 1. `/prd-feishu-sync push --stage v9`（失败则明确报错、保持 `prd.stage = v9_pending`，停止）
 2. `/prd-consistency-check`（进开发前）；存在 critical fail → 保持 `v9_pending`，停止 confirmed
 3. **二、版本表** 追加：`9-n`、当天日期、`AI Review: 可开工`（等，可附可读性告警提示）、`snapshots/prd-v9-<date>.md`
@@ -122,3 +144,4 @@ description: >-
 - 增强而非覆盖产品原始决策
 - 产品 spec 只描述需求本质，不涉及技术实现
 - MODULE ID 稳定锚点；版本表仅在 Step 6 **同步与校验均成功后**追加
+- 无预检报告或结论过期时视为未预检；仅「需调整」硬阻断 9稿 confirmed

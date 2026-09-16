@@ -27,7 +27,7 @@ description: >-
 - `metadata.name`、`metadata.id`（slug）
 - `prd.stage`、`prd.v5.status`、`prd.v9.status`、`prd.status`
 - `prd.v5.snapshot`、`prd.v9.snapshot`（如有）
-- `prototypes/prd-risk-precheck.md` 是否存在（风险预检报告）
+- `prd.risk_precheck.last_result` / `last_checked_at`（若有）
 - `test_spec.status`
 
 ### Step 2: 输出
@@ -37,7 +37,7 @@ description: >-
 
 订单退款流程优化（id: order-refund-flow-opt）
   PRD 5稿:  confirmed (06-10) → snapshots/prd-v5-2026-06-10.md
-  风险预检: prototypes/prd-risk-precheck.md
+  风险预检: 需调整 (2026-09-16T12:00+08:00) → prototypes/prd-risk-precheck.md
   PRD 9稿:  pending
   测试用例: pending
 
@@ -52,7 +52,7 @@ contract-subject-tree（id: contract-subject-tree）  # 既有英文目录
 - 主标识：`name` 或目录名（中文优先）
 - 辅助：`id: <slug>`
 - 5稿/9稿：读 `prd.v5` / `prd.v9`；旧 metadata 无 v5/v9 时仅显示 `prd.status`
-- 风险预检：若存在 `prototypes/prd-risk-precheck.md` 则列出路径，否则 `—`
+- 风险预检：优先读 `prd.risk_precheck`（结论 + 时间 + 报告路径）；否则若存在 `prototypes/prd-risk-precheck.md` 则列路径与其中 `precheck_result`；都没有则 `—`
 
 ## 约束
 

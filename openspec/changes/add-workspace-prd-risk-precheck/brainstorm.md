@@ -10,13 +10,18 @@
 | 遗留 Codex Trellis | 暂不归档 `08-26-workspace-specflow-codex-plugin`，仅切走绑定 | 用户选 B |
 | 本需求协作账本 | 拒绝新建 Trellis task；运行态只写 `.onion-sdd/current.json`；脑暴记忆用本文件 | 用户拒绝 |
 | change-id | `add-workspace-prd-risk-precheck` | Agent 按 OpenSpec 命名 |
-| 5稿触发点 | `/pm-spec-5` Step 6：用户明确确认 5稿时、写入快照之前自动跑预检；同时支持手动重新跑 | 用户选 C + 手动重跑 |
-| HIT 门禁 | 硬阻断：结论为 HIT（需调整）或待补信息时，禁止完成 5稿确认与快照；须调整/补信息后复检通过才能确认 | 用户选 hard_block |
-| 报告落盘 | 需求目录：`requirements/<需求>/prototypes/prd-risk-precheck.md`（与 5稿 AI Review 报告并列） | 用户选 req_prototypes |
+| 5稿触发点（初版，已废） | Step 6 确认时、快照前 | 已被「触发时机（修订）」替代 |
+| HIT 门禁（初版，已废） | HIT 或待补均硬阻断 | 已被「Step 6 门禁（修订）」替代 |
+| 报告落盘 | 需求目录：`requirements/<需求>/prototypes/prd-risk-precheck.md`；同一文件复检更新 | 用户选 req_prototypes + 修订 |
 | 手动重跑入口 | 独立 slash `/prd-risk` + `/pm-spec-5` 确认时自动调用同一 skill | 用户选 A + `/prd-risk` |
 | 飞书同步 | 本期不同步飞书，只写本地 `prototypes/prd-risk-precheck.md` | 用户选 no_sync |
 | 接入方案 | 整包 vendoring 到 `plugins/workspace-specflow/skills/product-requirement-risk-gate/`；薄适配 `/prd-risk` + `/pm-spec-5` Step6 硬门禁；Codex 经现有 `pack.py` 同步 | 用户选 vendor_adapter |
 | 设计确认 | 同意方案 1 设计，进入 OpenSpec 落盘 | 用户选 approve |
+| 触发时机（修订） | `/pm-spec-5` Step 4 写出 5稿后、Step 5 AI Review 前自动预检；保留 `/prd-risk` 手动重跑 | 产品：产出5稿后自动触发 |
+| 报告策略（修订） | 需调整、待补均写独立报告；多次预检覆盖更新同一文件，并追加运行记录（时间点 + 结论）；通过时不写命中明细、Agent 仅轻提示，但仍更新当前结论与历史行 | 用户确认待补要报告 + 复检更新 |
+| Step 6 门禁（修订） | 方案 C：需调整硬阻断确认；待补软提醒可确认；通过可直接确认 | 用户选 C |
+| 9稿复检 | `/pm-spec` Step 4 写出后同样自动预检；确认时方案 C + 无报告必跑 | 修复 Review 缺口 |
+| 报告正文 | 严格预检 skill 产品正文；工作区门禁不进报告 | 用户：按预检 skill 产出 |
 
 ## 开放问题
 

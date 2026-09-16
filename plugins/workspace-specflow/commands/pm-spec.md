@@ -11,14 +11,15 @@ description: 9稿 PRD 定稿（交互评审后）：结构化增强、消除待�
 
 **`v9_pending` 时机**：仅在 Step 4 **瘦身完成**（本地已无讲解层）后写入；脑暴/瘦身前不得写，以免中途误推 v9。
 
-严格 AI Review（`ai-review-rubric.md`）。
+严格 AI Review（`ai-review-rubric.md`）。写出 9稿后自动 `/prd-risk`；AI Review 只展示预检结论。
 
 **硬门禁（用户确认后必须按序；任一步失败禁止 confirmed）**：
 
-1. `/prd-feishu-sync push --stage v9`（或 `/prd-publish --stage v9` 覆盖 1–2；本地仍有 narrative → REJECT）
+0. 风险预检：无报告 / 结论不可读 / `prd.md` 晚于上次预检 → 先跑；**需调整硬阻断**；待补软提醒可确认
+1. `/prd-feishu-sync push --stage v9`（或 `/prd-publish --stage v9` 覆盖 sync+check；本地仍有 narrative → REJECT）
 2. `/prd-consistency-check`（进开发前）；存在 critical → **停止**
 3. 成功后再：追加版本行 `9-n`、快照 `snapshots/prd-v9-<date>.md`、`prd.status = confirmed` / `prd.stage = confirmed`
 
 完整规程见技能 `pm-spec`。
 
-典型顺序：`/pm-spec-5`（确认前 `/prd-risk`）→ 交互评审 → `/pm-spec`。
+典型顺序：`/pm-spec-5`（写出后 `/prd-risk`）→ 交互评审 → `/pm-spec`（写出后再次 `/prd-risk`）。

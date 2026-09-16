@@ -50,26 +50,37 @@
 | **建议补充后进入交互评审** | 有 P1 项但不阻断，建议先补再开会 |
 | **暂不建议进入交互评审** | 命中 P0 或范围严重不清 |
 
-## 五、5稿确认后 Agent 动作
+## 五、风险预检（写出后自动，确认时方案 C）
 
-0. **产品需求风险预检（硬门禁）**：执行 `prd-risk`，报告 `prototypes/prd-risk-precheck.md`。需调整或待补 → **停止确认**，不写快照、不改 `prd.v5.status`。
+- **触发**：`/pm-spec-5` Step 4 写出 5稿后（Step 4.5），在本 AI Review 之前执行 `prd-risk`
+- **报告**：`prototypes/prd-risk-precheck.md`（待补/需调整写完整口径；多次预检更新并追加时间+结论历史）；并回写 `prd.risk_precheck`
+- **本评审文件**：须含「## 风险预检」——只写结论 + 报告路径，**禁止**内嵌规则明细
+- **Step 6 确认**：需调整 → 停止确认；待补 → 软提醒可确认；通过 → 可确认
+
+## 六、5稿确认后 Agent 动作
+
 1. **二、版本表** 追加行：`5-n`、当天日期、变更摘要、待定项计数、`snapshots/prd-v5-*.md` 路径
 2. 复制 `prd.md` → `snapshots/prd-v5-<YYYY-MM-DD>.md`
 3. 更新 metadata：`prd.v5.status = confirmed`，`prd.stage = v5_confirmed`，`prd.v5.snapshot`
 4. **不** 设置 `prd.status = confirmed`
 
-## 六、位置锚点
+## 七、位置锚点
 
 同 9稿 rubric：`## 一、需求概述`、`### 3.3`、`## 五、需求详情说明 / MODULE-N / 说明列`
 
-## 七、报告中的可读性章节（必含）
+## 八、报告必含章节
 
 `prototypes/ai-review-v5.md` 须含：
 
 ```markdown
+## 风险预检
+- 结论: 规则预检通过 | 待补信息 | 需调整
+- 报告: prototypes/prd-risk-precheck.md
+（有风险/待补时引导阅读独立报告；此处不展开规则明细）
+
 ## 可读性告警
 无 / 共 N 处（不阻断）
 - <位置>：… — 建议…
 ```
 
-飞书只写摘要 + 本报告路径，不复制上列明细。
+飞书只写摘要 + 本报告路径，不复制可读性明细；风险预检明细不进飞书。

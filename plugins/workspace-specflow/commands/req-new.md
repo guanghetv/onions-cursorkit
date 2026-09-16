@@ -19,4 +19,4 @@ description: 初始化新需求目录（中文目录名 + 英文 id slug）：�
 
 完整规程见技能 `req-new` / `prd-feishu-sync`。
 
-默认下一步：`/pm-proto`（可选）→ `/pm-spec-5`（确认前 `/prd-risk`）→ 交互评审 → `/pm-spec`（9稿）。
+默认下一步：`/pm-proto`（可选）→ `/pm-spec-5`（写出后 `/prd-risk`）→ 交互评审 → `/pm-spec`（写出后 `/prd-risk`）。

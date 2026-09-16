@@ -1,6 +1,6 @@
 # workspace-specflow-prd-risk-precheck
 
-工作区插件内的产品需求风险预检：整包规则 skill、独立报告、手动命令与 5 稿确认硬门禁。
+工作区插件内的产品需求风险预检：整包规则 skill、独立报告（含复检历史）、手动命令与 5 稿产出后自动触发。
 
 ## ADDED Requirements
 
@@ -22,13 +22,45 @@
 
 ### Requirement: 独立预检报告口径
 
-系统 MUST 将每次预检结果单独写入当前需求的 `prototypes/prd-risk-precheck.md`，正文面向业务且严格对齐使用说明。
+系统 MUST 将预检**产品正文**写入当前需求的同一文件 `prototypes/prd-risk-precheck.md`。正文 MUST 对齐 vendored 预检包 `input-output.md` 的「产品正文：可直接转发业务」。多次预检覆盖当前结论与当前明细，并追加运行历史。工作区门禁与非预检字段 MUST NOT 写入该文件。
 
 #### Scenario: 三类结论
 
 - **WHEN** 预检结束
 - **THEN** 结论为「规则预检通过」「待补信息」「需调整」三者之一
 - **AND** 规则预检通过时须说明可进入正常方案评审，不等同技术验证或上线批准
+
+#### Scenario: 报告结构对齐预检 skill
+
+- **WHEN** 写入 `prd-risk-precheck.md`
+- **THEN** 含评估结论、需处理事项（无则省略）、下一步；请业务回复无则省略
+- **AND** MUST NOT 写入 PASS/SOFT/BLOCK、Step 6、AI Review、工作台 persistence/run_id、37 条全量表
+
+#### Scenario: 工作区索引不进报告
+
+- **WHEN** 预检完成
+- **THEN** 将 `last_result`、`last_checked_at`、报告路径写入 `metadata.yaml` 的 `prd.risk_precheck`
+- **AND** 这些字段不复制进预检报告正文
+
+#### Scenario: 待补信息必须落报告
+
+- **WHEN** 结论为「待补信息」
+- **THEN** 必须写入/更新独立报告（缺项清单 + 当前结论）
+- **AND** Agent MUST 显著提示缺项与报告路径
+
+#### Scenario: 通过时不写命中明细
+
+- **WHEN** 结论为「规则预检通过」且无现行 HIT
+- **THEN** 报告当前明细区不得展开规则命中表
+- **AND** 仍须写入当前结论与本次预检时间，并追加运行历史行
+- **AND** Agent 仅轻提示已预检通过，不得使用 HIT 级告警
+
+#### Scenario: 多次预检更新同一报告并记录历史
+
+- **WHEN** 对同一需求再次执行预检（自动或 `/prd-risk`）
+- **THEN** 更新 `prototypes/prd-risk-precheck.md` 的当前结论与当前明细（与最新一次扫描一致）
+- **AND** 在报告内追加一条运行记录，至少含预检时间点与结论
+- **AND** 不得删除既有运行历史行
 
 #### Scenario: 需调整时展示命中规则
 
@@ -58,7 +90,7 @@
 
 ### Requirement: `/prd-risk` 手动重跑
 
-系统 MUST 提供 slash 命令 `/prd-risk`，对当前 specs 仓目标需求执行与 5 稿确认时相同的预检与报告落盘。
+系统 MUST 提供 slash 命令 `/prd-risk`，对当前 specs 仓目标需求执行与 Step 4.5 相同的预检与报告更新。
 
 #### Scenario: 从 5 稿抽取业务事实
 
