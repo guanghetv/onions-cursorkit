@@ -1,0 +1,31 @@
+---
+description: 保障开发分支卫生：禁止从测试环境基线（dev / develop / test）切出，禁止把基线的提交或文件内容带入开发分支
+alwaysApply: true
+---
+
+# 开发分支卫生（禁止混入测试环境基线）
+
+保障**开发 / 功能分支**不被测试环境集成分支污染，避免未上线代码进入发版链路。
+
+测试环境基线（不区分前后端）：`dev`、`develop`、`test`（含 `origin/<基线>`）。
+
+- **`master` 不是测试环境基线。**
+- 若仓库另有测试环境集成分支名（README、分支保护、团队文档），一并视为基线并拦截。
+
+下文「基线」均指上述分支。
+
+执行 `merge` / `pull` / `rebase` / `cherry-pick` / `checkout -b` / `switch -c` / 按路径取出文件之前，先确认**当前分支**和**来源 ref**（含上游跟踪分支、`FETCH_HEAD`、commit SHA 实际指向的分支）。来源是基线则按下面禁止处理，并说明判定的基线名。
+
+## 禁止
+
+- **禁止**从测试环境基线切出开发 / 功能分支。当前就在基线上时同样禁止，例如 `git checkout -b feature/xxx`、`git switch -c feature/xxx`（此时 HEAD 即基线）。
+- **禁止**在非基线的开发 / 功能分支上，把基线的提交或文件内容带进来。包括：
+  - `merge` / `pull` / `rebase` 基线（含 `git pull` 且上游是基线，以及 `fetch` 基线后 `merge FETCH_HEAD` 或按该基线的 SHA 合并）
+  - `cherry-pick` 仅存在于基线、尚不是 `master` 祖先的提交。先用 `git merge-base --is-ancestor <sha> master`（或 `origin/master`）判断；成立说明该提交已在 `master` 上，不因此项拒绝。无法确认时拒绝
+  - `git checkout <基线> -- <path>`、`git restore --source=<基线>`
+  - 通过 GitLab API 或网页把基线合进该开发分支
+- **禁止**把「同步最新」「解决冲突」「对齐测试环境」理解成可以合入基线。用户未明确要求合入该基线时，不得执行上述操作，也不得用「先合入再解决冲突」绕过。
+
+## 范围说明
+
+- 禁止范围是**从基线切出开发分支**，以及**把基线的提交或文件内容带入非基线开发分支**。
