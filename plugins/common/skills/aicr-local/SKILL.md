@@ -76,6 +76,8 @@ git add <files>
 
 如果暂存区为空，提示："暂存区为空，请先使用 git add 添加需要审查的文件"。
 
+取得 diff 后，必须先做下方「测试环境基线检查」，再进入步骤 2。
+
 #### 有 GitLab MR 链接时（MR 模式，input_mode=mr）
 
 **1) 解析链接**：从 MR 链接中提取 `host`、`project_path`、`merge_request_iid`。
@@ -183,6 +185,67 @@ git log --oneline origin/<target_branch>..origin/<source_branch>
 ```
 
 将结果作为 `commits_text`，用于后续步骤 9 构建审查提示词，帮助理解变更的演进过程。
+
+完成后必须先做下方「测试环境基线检查」，再进入步骤 2。
+
+### 测试环境基线检查
+
+暂存区模式与 MR 模式都执行，判定不同。本小节不属于 MR 模式专属步骤。
+
+测试环境基线为 `dev`、`develop`、`test`。`master` 不是基线。跳过只看被审分支的名字：
+
+- 暂存区模式的被审分支就是当前分支。当前分支名是这三条之一时跳过。
+- MR 模式的被审分支是 `source_branch`，不看工作区当前分支。`source_branch` 是这三条之一时跳过。人在 `dev`、`develop`、`test` 上审查功能分支 MR 时不得跳过。
+
+**暂存区模式**只看当前分支最近 5 条第一父提交的 subject，不 fetch，不做祖先判断：
+
+```bash
+git log -5 --first-parent --format=%s HEAD
+```
+
+subject 不以 `Revert` 开头，且匹配下面之一时命中。基线名后必须紧跟结束引号，`develop-hotfix` 不算 `develop`。
+
+- `Merge branch 'dev'`、`Merge branch 'develop'`、`Merge branch 'test'`
+- `Merge remote-tracking branch 'origin/dev'`、`Merge remote-tracking branch 'origin/develop'`、`Merge remote-tracking branch 'origin/test'`
+
+这 5 条里若另有 subject 以 `Revert "Merge branch '<同一基线>'` 或 `Revert "Merge remote-tracking branch 'origin/<同一基线>'` 开头，该命中通过。仍有未撤销的命中时 🔴。早于这 5 条的 merge 不阻断。`git log` 失败时跳过，不得因此 🔴。
+
+**MR 模式**检查源分支祖先。`subject` 为 `origin/<source_branch>`。不得改用工作区 `HEAD`。
+
+逐个 `git fetch origin <ref>` 获取 `master` 与上述基线。某个基线在远程不存在则跳过该名字。`fetch` 失败或 `origin/master` 不存在时，**跳过本检查并继续业务审查**，不得因此 🔴，也不得拒绝 pass。
+
+对每个现存基线 `B`：
+
+```bash
+git rev-list --first-parent "origin/$B" --not origin/master
+```
+
+这些提交是基线自己的历史、且尚未进入 `master`。若其中没有任何一个是 `subject` 的祖先，该基线通过。功能分支只是被合进基线时，自己的提交不在基线第一父历史上，不会命中。
+
+若有此类提交是 `subject` 的祖先，在 `subject` 的第一父历史上找 merge `M`：第二父是这些提交之一。
+
+- 没有这种 merge：分支从基线切出，🔴。
+- 有这种 merge：在 `M..subject` 的第一父历史上查找正文包含 `This reverts commit <M 的完整 SHA>` 的提交。找到，且其后没有新的未撤销同类 merge，则该基线通过。没找到则 🔴。不要用工作区 diff 豁免。
+
+```bash
+git log --first-parent --format=%H "$M".."$subject" | while read -r c; do
+  git log -1 --format=%B "$c" | grep -F "This reverts commit $M" && echo "$c"
+done
+```
+
+确认污染时，步骤 10 的报告必须包含：
+
+```text
+🔴 开发分支混入测试环境基线 <基线名>：基线尚未进入 master 的提交已在开发分支上，且未被撤销
+```
+
+暂存区模式命中时写成：
+
+```text
+🔴 最近提交含有 merge 测试环境基线 <基线名>
+```
+
+结论不得为「✅ 无明显问题」，不得写入 `status=pass` 的 `cr_completed`。
 
 ### 步骤 2: 判断代码类型
 
@@ -313,7 +376,7 @@ MR 模式下，根据 `branch_state` 分三层策略，逐层递减 Cursor Agent
 
 ### 步骤 10: 执行审查并输出报告
 
-基于构建的提示词进行审查，输出极简报告。
+基于构建的提示词进行审查，输出极简报告。仅当测试环境基线检查**确认污染**时，报告必须包含该 🔴，结论不得为「✅ 无明显问题」。检查被跳过或无法确认时，不得因此写 🔴。
 
 ## 四维度审查逻辑
 
