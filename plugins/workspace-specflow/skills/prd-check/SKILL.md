@@ -26,7 +26,7 @@ description: >-
 
 命中触发词就必须真跑并落盘报告，禁止口头打勾。
 
-本技能不修改 `prd.md` 契约正文，不 push 正文，不写快照，不改 `prd.status`。只写报告、`metadata.consistency` 和飞书文末那一行校验结论。
+本技能不修改 `prd.md` 契约正文，不 push 正文，不写快照，不改 `prd.status`。只写报告、`metadata.consistency`，以及文末「文档状态」的 emoji、底色、边框和校验行。
 
 ## 检查什么
 
@@ -52,7 +52,7 @@ description: >-
 | C4 | Feature 清单中的 MODULE 列与详情中的 MODULE-N 一致 |
 | C5 | 进开发前：各 MODULE 意图一致（允许措辞差）。评审前降为 warning |
 | C6 | 契约展示序号未为「补洞」而重排。存在背景与目标章节不是失败 |
-| C7 | 相对 last_synced 无未推送契约改动 |
+| C7 | 相对 last_synced 无未推送契约改动。两端都有、且 `feishu.feishu_revision` 已记到发布回读 `R2` 的版本表基线行，不算未推送 |
 
 `/prd-publish` 里调用时，阶段是进开发前，C5 与 C6 为 critical。单独自检且用户说明仍在评审前时，C5 降为 warning。
 
@@ -64,16 +64,29 @@ description: >-
 4. 缺少旧式验收 checklist，但需求详情里的规则可判断时，不得因此判失败。用户没有明确保留时，残留未确认的 `[待定]` 视为阻断。
 5. 写入 `prototypes/prd-check-YYYY-MM-DD.md`（同日覆盖）。报告含 rubric 要求的评审范围、可开工结论、总分、可读性告警明细，以及逐条 C/W 证据。证据写 unit key 和命中标题。
 6. 更新 `metadata.consistency`：`status`（`pass` / `warn` / `fail`）/ `checked_at` / `report_path` / `source_commit`。这个字段就是 `/prd-check` 的结论，名字保持 `consistency`，兼容已有需求目录。不要另写 `prd.check`。只读时若旧目录没有该字段，视为 `unknown`。
-7. 用 XML 局部更新文末一行校验结论，心跳码 `prd-sync:check:v1`。禁止整篇覆盖。若仍有旧的 `prd-sync:readability:v1` 或 `prd-sync:consistency:v1`，删掉这两块，只留这一行。
+7. 用 XML 局部更新文末那一块「文档状态」。emoji、底色、边框、校验行按选定的一态一起改。心跳码仍是 `prd-sync:check:v1`。同步绑定行和 `prd-sync:status:v1` 保留。禁止整篇覆盖。若仍是「同步绑定」「校验」两块，或还有 `prd-sync:readability:v1`、`prd-sync:consistency:v1`，先合并成这一块再写结论。
+
+| 结论 | 属性 | 校验行 | `consistency.status` |
+|---|---|---|---|
+| 无 critical，且无未跳过 warning | `emoji="✅" background-color="light-green" border-color="green"` | ✅ · YYYY-MM-DD · prototypes/prd-check-YYYY-MM-DD.md | `pass` |
+| 仅 warning | `emoji="⚠️" background-color="light-orange" border-color="orange"` | ⚠️ · YYYY-MM-DD · 可读性约 N 处 · prototypes/prd-check-YYYY-MM-DD.md | `warn` |
+| 有 critical | `emoji="❌" background-color="light-red" border-color="red"` | ❌ · YYYY-MM-DD · prototypes/prd-check-YYYY-MM-DD.md | `fail` |
+
+告警的摘要写可读性约 N 处和报告路径，不在飞书逐条罗列。写飞书失败时本地不得伪造成 `pass`。
+
+块内结构固定。开标签用上表选中的那一行，不要把通过态抄到告警或失败上。通过态：
 
 ```xml
 <callout emoji="✅" background-color="light-green" border-color="green">
+  <p><b>文档状态</b></p>
+  <p><b>同步绑定</b> <code>prd-sync:status:v1</code></p>
+  <p>{原同步绑定行}</p>
   <p><b>校验</b> <code>prd-sync:check:v1</code></p>
   <p>✅ · YYYY-MM-DD · prototypes/prd-check-YYYY-MM-DD.md</p>
 </callout>
 ```
 
-映射：无 critical 且无未跳过 warning → ✅ + `pass`；仅 warning → ⚠️ + 橙色 callout + `warn`，摘要里写可读性约 N 处和报告路径，不在飞书逐条罗列；有 critical → ❌ + 红色 callout + `fail`。写飞书失败时本地不得伪造成 `pass`。
+告警开标签改为 `emoji="⚠️" background-color="light-orange" border-color="orange"`，校验行改为 `⚠️ · YYYY-MM-DD · 可读性约 N 处 · prototypes/prd-check-YYYY-MM-DD.md`。失败开标签改为 `emoji="❌" background-color="light-red" border-color="red"`，校验行改为 `❌ · YYYY-MM-DD · prototypes/prd-check-YYYY-MM-DD.md`。
 
 8. 对话给紧凑摘要。有 critical 时明确阻断 `/prd-publish` 写基线。`/qa-spec` 仍生成用例，只提示未通过。
 
@@ -91,6 +104,6 @@ description: >-
 | 命令 | 关系 |
 | --- | --- |
 | `/pm-spec` | 改稿循环不自动调用 |
-| `/prd-feishu-sync` | 只推正文。push 不写 ✅/⚠️/❌ |
-| `/prd-publish` | push 成功后调用本技能，通过后才写基线 |
+| `/prd-feishu-sync` | 只推正文。push 不写 ✅/⚠️/❌，重置时 emoji 也回到 📎 |
+| `/prd-publish` | push 成功后调用本技能。没有 critical 才写基线，`warn` 可以写 |
 | `/qa-spec` | 读 `consistency.status`。`fail`、缺失或 `unknown` 只提示 |

@@ -1,9 +1,10 @@
 ---
 name: prd-publish
 description: >-
-  发布需求基线：必要时先做风险预检，再增量同步飞书并跑 /prd-check。
-  通过后写入快照、版本表和 revision_id。第一次成功把 prd.status 设为 confirmed。
-  Use when: 一键发布 PRD、发布到飞书并校验、prd-publish。
+  发布需求基线。用户说「同步到飞书」或「推到飞书」时也走本技能。
+  必要时先做风险预检，再增量同步飞书并跑 /prd-check。
+  没有 critical 后写入快照、版本表和 revision_id。`warn` 可以发布。第一次成功把 prd.status 设为 confirmed。
+  Use when: 同步到飞书、推到飞书、一键发布 PRD、发布到飞书并校验、prd-publish。
 ---
 
 # /prd-publish — 发布基线
@@ -14,15 +15,15 @@ description: >-
 
 1. 定位需求目录与 `metadata.yaml`。
 2. 发布会把当前 `prd.md` 写到飞书。开始前 Read `../../references/three-way-sync.md` 并读出原型、飞书和 `prd.md`。飞书、原型都没有当前 `prd.md` 里没有的内容时，这是草稿超前，直接进入下一步，不再追问。已有基线且本地正文偏离快照时，在发布结果里写明「相对上一版基线有未发布改动」，只多出版本表那一行不算。飞书或原型有当前 `prd.md` 没有的更新时，先展示差异；用户确认「仍按当前 `prd.md` 发布」后才继续，否则停止。
-3. 风险预检：没有 `prototypes/prd-risk-precheck.md`、结论不可读，或 `prd.md` 新于 `prd.risk_precheck.last_checked_at` 时，先 Read 并执行 `/prd-risk`。结论为「需调整」则停止，不 push，不写基线。结论为「待补信息」时提醒后可继续。
-4. 执行 `/prd-feishu-sync push`（XML 增量；文档已有内容时禁止整篇覆盖）。
-5. sync 失败则停止。不跑校验，不写基线，不把状态改成 `confirmed`。
-6. sync 成功后执行 `/prd-check`。存在 critical fail 则停止，不写基线。
-7. 校验通过后前进基线，按顺序。飞书写入全部完成之后才回读序号，回读之后不再写飞书：
+3. 风险预检：没有 `prototypes/prd-risk-precheck.md`、结论不可读，或 `prd.md` 新于 `prd.risk_precheck.last_checked_at` 时，先 Read 并执行 `/prd-risk`。结论为「需调整」则停止，不 push，不写基线，不发群通知。飞书保持原样。结论为「待补信息」时提醒后可继续。
+4. 执行 `/prd-feishu-sync push` 的写入步骤（XML 增量；文档已有内容时禁止整篇覆盖）。这一步已经在发布流程里，禁止再调用 `/prd-publish`。发布第 2 步已经决定要写时，push 不再追问。
+5. sync 失败则停止。不跑校验，不写基线，不把状态改成 `confirmed`，不发群通知。飞书可能只写了一部分，结果里写明停在哪个 unit。
+6. sync 成功后执行 `/prd-check`。存在 critical 则停止，不写基线，不发群通知。`warn` 可以继续写基线。此时若停下，飞书正文已经是本次 `prd.md`，结果写明「飞书已更新，校验未通过，基线未写」。不要把这次说成发布成功。
+7. 没有 critical 时前进基线，按顺序。先回读追加版本行之前的序号 `R1`，写入版本行后再回读 `R2`。`R2` 回读之后不再写飞书：
    1. 复制当前 `prd.md` 到 `snapshots/prd-baseline-<YYYY-MM-DD>.md`。同一天已存在则追加 `-HHMM`。快照是需求正文，不含下面即将追加的版本行。
    2. `lark-cli docs +fetch` 得到 `R1`。此时版本表还没有这一行。
-   3. 在飞书和本地 `prd.md` 的版本表追加一行：日期、版本号 `R1`、变更 MODULE、快照路径。追加用局部更新，不整篇覆盖。不用 `5-n` / `9-n`。这是本次发布的最后一次飞书写入。飞书追加失败则停止，不写 `R2`，不改 `confirmed`。
-   4. 再 `+fetch` 得到 `R2`。写入 `prd.baseline.revision_id = R2`。**到此停止写飞书**，不要把 `R2` 写进版本表。
+   3. 在飞书和本地 `prd.md` 的版本表追加一行：日期、版本号 `R1`、变更 MODULE、快照路径。追加用局部更新，不整篇覆盖。不用 `5-n` / `9-n`。只追加这一行，不要改写文末「文档状态」，也不要把校验结论重置成未校验。这是本次发布的最后一次飞书写入。飞书追加失败则停止，不写 `R2`，不改 `confirmed`。
+   4. 再 `+fetch` 得到 `R2`。写入 `prd.baseline.revision_id = R2`。同时把 `feishu.feishu_revision` 和 `feishu.last_synced_at` 更新为这次回读，`last_synced_stage=current`。manifest 里版本表 unit 的 hash 改成追加后的表。这一行已经在两端，以后的 `/prd-check` 不要把它当成未推送。**到此停止写飞书**，不要把 `R2` 写进版本表，也不要改「文档状态」。
    5. 写入 metadata 其余字段：
       - `prd.baseline.snapshot`
       - `prd.baseline.published_at`

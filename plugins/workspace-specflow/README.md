@@ -35,18 +35,18 @@
 | 原型 | `/pm-proto` | 只留核心页面流程和交互，不写占位文案和操作引导 |
 | 编写需求 | `/pm-spec` | 多轮只改本地 `prd.md`。每一轮先提示三端差异。不在这一步设 `confirmed` |
 | 产品需求风险预检 | `/prd-risk` | 报告落 `prototypes/prd-risk-precheck.md`。发布时按新鲜度自动跑；「需调整」阻止发布，「待补信息」可继续 |
-| 飞书同步 | `/prd-feishu-sync` | create/push/reconcile；XML 局部增量；已有内容禁止整篇覆盖。改了正文把校验行重置为「未校验」 |
+| 飞书同步 | `/prd-feishu-sync` | create / reconcile / status / rebind。用户说同步到飞书时不走这里，改走 `/prd-publish` |
 | 发布前检查 | `/prd-check` | 内容、对齐、可读性一次完成。旧命令 `/prd-consistency-check` 走这里 |
-| 发布基线 | `/prd-publish` | 预检 → push → `/prd-check` → 快照、版本表、`revision_id`，然后发短通知并引导提交代码。第一次成功才 `confirmed`。无群时发布仍成功 |
+| 发布基线 | `/prd-publish` | 用户说「同步到飞书」也是这条。预检 → push → `/prd-check` → 快照、版本表、`revision_id`，然后发短通知并引导提交代码。第一次成功才 `confirmed`。无群时发布仍成功 |
 | 看进度 | `/req-status` | 是否已确认、基线 revision、测试状态 |
 
 **典型顺序**：`/req-new` → `/pm-proto` → `/pm-spec`（可多轮）→ `/prd-publish`。
 
-**三端**：原型、飞书文档、`prd.md`。任一端先改时，先按 `references/three-way-sync.md` 提示差异，确认前不写另外两端。产品先手改飞书再贴回工作区：走 `/prd-feishu-sync reconcile`，或在对话里贴链接要求同步回来时按同一规程；禁止用粘贴正文直接覆盖 `prd.md`。
+**三端**：原型、飞书文档、`prd.md`。任一端先改时，先按 `references/three-way-sync.md` 提示差异，确认前不写另外两端。用户说「同步到飞书」时走 `/prd-publish`。产品先手改飞书再贴回工作区：走 `/prd-feishu-sync reconcile`，或在对话里贴链接要求同步回来时按同一规程；禁止用粘贴正文直接覆盖 `prd.md`。
 
 **文档角色**：飞书文档给人读，`prd.md` 给 Agent。两端都保留当前有效规则，变更记在版本表。已发布后，飞书序号不等于 `prd.baseline.revision_id`，或本地 `prd.md` 正文偏离基线快照时，除 `/qa-spec` 外的下游读基线快照。群内查询不是产品命令，由葱明-multica 使用技能 `prd-change`。
 
-**PRD 模板**：[飞书标准模板](https://guanghe.feishu.cn/docx/S38Id4fxAofdz8xsWCVcRkHjnHg) + 「关键关注」/「回归范围」与 MODULE。
+**PRD 模板**：新建文档标题用需求名。骨架是需求概述、版本表、背景与目标、需求详情，文末一块「文档状态」。关键关注、回归范围等有内容才加。旧飞书七章模板只作兼容：https://guanghe.feishu.cn/docx/S38Id4fxAofdz8xsWCVcRkHjnHg
 
 **飞书正文写作规范**：[产品组 PRD 写作规范 V1.0](https://guanghe.feishu.cn/docx/Cqtqd9BxJoUYAFxbXFocp2qYnWd)，插件内副本为 `references/产品组PRD写作规范.md`。
 
@@ -160,9 +160,9 @@
 | `/pm-proto` | 产品 | 原型（可选） |
 | `/pm-spec` | 产品 | 多轮编写本地需求文档，并提示三端差异 |
 | `/prd-risk` | 产品 | 产品需求风险预检 |
-| `/prd-feishu-sync` | 产品 | PRD ↔ 飞书同步 |
+| `/prd-feishu-sync` | 产品 | 创建、回收、状态、换绑。同步到飞书走 `/prd-publish` |
 | `/prd-check` | 产品 | 发布前一次检查内容、对齐和可读性 |
-| `/prd-publish` | 产品 | 发布基线，并附带短通知和提交引导 |
+| `/prd-publish` | 产品 | 同步到飞书并发布基线，附带短通知和提交引导 |
 | `/qa-spec` | 测试 | PRD → 测试 spec |
 | `/qa-sync-xmind` | 测试 | test-spec.md ↔ XMind |
 | `/qa-execute` | 测试 | test/*.md → Case Flow 快速模式 |

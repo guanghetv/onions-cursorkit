@@ -13,7 +13,7 @@
 - **WHEN** 产品按主路径新建需求并要求出文档
 - **THEN** 先有原型中的核心页面流程
 - **AND** `/pm-spec` 默认只写本地 `prd.md`
-- **AND** 飞书在用户明确要求同步或 `/prd-publish` 时才写入
+- **AND** 飞书只在 `/prd-publish` 时写入。用户说「同步到飞书」就是这条命令，不单独 push
 
 ### Requirement: 确认后才改另外两端
 
@@ -33,10 +33,23 @@
 
 #### Scenario: 多轮只改本地
 
-- **WHEN** 产品在 `/pm-spec` 里连续调整需求描述，且没有明确要求同步飞书或发布
+- **WHEN** 产品在 `/pm-spec` 里连续调整需求描述，且没有明确说同步到飞书
 - **THEN** 每一轮仍展示原型、飞书文档和 `prd.md` 的差异
 - **AND** 只更新本地 `prd.md`
 - **AND** 不自动推飞书，也不自动改原型
+
+#### Scenario: 同步到飞书就是发布
+
+- **WHEN** 用户明确说「同步到飞书」或「推到飞书」，或要求 `/prd-feishu-sync push`
+- **AND** 当前不在 `/prd-publish` 的写入步骤
+- **THEN** 改走 `/prd-publish`
+- **AND** 不在 push 之后结束
+
+#### Scenario: 发布中的写入不再发布
+
+- **WHEN** `/prd-publish` 执行到增量写入
+- **THEN** 只跑 `/prd-feishu-sync` 的 push 写入步骤
+- **AND** 不再调用 `/prd-publish`
 
 #### Scenario: 草稿只是超前
 

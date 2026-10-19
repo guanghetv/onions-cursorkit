@@ -4,6 +4,7 @@ description: >-
   Use when user mentions: 写需求文档/pm-spec/产品spec/转换需求/增强prd/spec转换/PRD评审。
   也兼容旧说法 5稿、9稿、pm-spec-5、定稿。稿次已取消，统一走本技能。
   多轮只改本地 prd.md。不在本技能里自动预检、校验或推飞书。
+  用户说同步到飞书时改走 /prd-publish。
 ---
 
 # /pm-spec — 编写并更新需求文档
@@ -79,17 +80,13 @@ description: >-
 
 ### Step 5: 本轮收尾
 
-告诉用户可以继续改、同步飞书，或发布。不要自动进入预检、校验或 push。
+告诉用户可以继续改，或同步到飞书。同步到飞书就是发布基线。不要在本步自动预检、校验或 push。
 
-用户明确说「同步到飞书」时：
-
-1. 再按 `three-way-sync.md` 确认这一轮要写回飞书的差异。
-2. 只执行 `/prd-feishu-sync push`。失败则停止。
-3. 不跑 `/prd-risk`，不跑 `/prd-check`，不复制基线快照，不把 `prd.status` 设为 `confirmed`。
+用户明确说「同步到飞书」「推到飞书」，或要执行 `/prd-feishu-sync push` 时：结束本技能，改走 `/prd-publish`。不要在这里 push，也不要在这里跑 `/prd-risk` 或 `/prd-check`。
 
 用户要改原型：执行 `/pm-proto`，由该技能按三端协议处理。
 
-发布基线由用户执行 `/prd-publish`。那一步才会在需要时跑风险预检、推飞书、跑 `/prd-check`，然后写基线。
+「同步回来 / 按飞书改本地」不是发布，走 `/prd-feishu-sync reconcile`。
 
 ## 约束
 

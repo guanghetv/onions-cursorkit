@@ -96,8 +96,12 @@
 - 2026-10-19：群内查询补上按 `chat_id` 反查项目卡的命令。发布读群使用同一次 `project_key`。发短通知收进 `/prd-publish` 第 6 步。`/qa-spec` 只有一致性为 `pass` 或 `warn` 才把测试 spec 标为 `confirmed`。`/pm-spec` 写正文前也先调用 `search_wiki`。
 - 2026-10-19：飞书需求文档的同步绑定、可读性、一致性改为一行结论，并全部放在正文之后的文末。不再保留「评审修改记录」，变更只记版本表。已有该区在下次 push 时删除；表内有文字时先摘进本次结果。
 - 2026-10-19：`/pm-spec` 可多轮，默认只改本地 `prd.md`，每一轮按三端协议提示另外两端，不自动预检、不自动 `/prd-check`、不自动 push。用户明确说同步时才 push。`/prd-publish` 按新鲜度跑 `/prd-risk`，再 push，再跑合并后的 `/prd-check`（写作规范 + 内容质量 + 对齐 + 可读性告警），通过后才写基线。飞书文末机器区改为同步绑定加一行 `prd-sync:check:v1`。旧 `/prd-consistency-check` 转入 `/prd-check`。
+- 2026-10-19：`/req-new` 标题、目录名、`metadata.name` 用需求名，不加 `【】` 和 `PRD`。空骨架只留需求概述、版本表、背景与目标、需求详情。关键关注、回归范围、Feature List、关联材料、数据观察有内容才加，不写「无额外」占位，不把版本号规则写进正文。飞书文末同步绑定和校验合并为一块「文档状态」。
 - 2026-10-19：Review 收口。内容质量规则改到 `prd-check/references/ai-review-rubric.md`，旧路径只留指针。`metadata.consistency` 明确为 `/prd-check` 结论，不改字段名。未声明的本地 `prd.md` 改动也要走三端提示。仓库内插件目录优先于 Cursor 缓存。
 - 2026-10-19：本地新于上次同步不算手改。草稿超前时 `/pm-spec` 只提示、`/prd-publish` 直接 push。飞书或原型多出来的内容才停下。主路径改为 `/pm-spec` 默认只写本地。
+- 2026-10-19：Review 后收紧。`【标题】PRD` 先去末尾 `PRD` 再去成对括号。空骨架的背景三节不写 `-`，没有规则时不要求 `MODULE-N`。`push` 必须把「文档状态」重置为未校验（📎、蓝底、蓝边），该块不在保护白名单。校验四态的 emoji、底色、边框一起改。
+- 2026-10-19：用户说「同步到飞书」或「推到飞书」改为走 `/prd-publish`。预检、增量写入、`/prd-check`、基线和群通知都在这一条里。`/prd-feishu-sync push` 只作为发布第 4 步的写入，不再单独结束。飞书手改收回本地仍走 reconcile。
+- 2026-10-19：换绑后跟上本地正文走 `/prd-publish`，不再单独全量 push。版本表基线行不把「文档状态」打回未校验，并记入 `feishu_revision` / `last_synced`。收回本地时未校验态连 emoji 和颜色一起改。`warn` 可以写基线。
 
 ## References
 
