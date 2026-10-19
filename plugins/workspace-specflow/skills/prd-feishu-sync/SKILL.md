@@ -50,6 +50,7 @@ description: >-
 
 **文风**
 
+- 飞书需求文档正文写法以 `../../references/产品组PRD写作规范.md` 为准（来源 [产品组 PRD 写作规范 V1.0](https://guanghe.feishu.cn/docx/Cqtqd9BxJoUYAFxbXFocp2qYnWd)）。
 - 用户可见正文用简体中文；专有名词/代码/路径保持英文。
 - 简洁直接；重要段结论前置（callout 或短结论段）。
 - 多维信息优先表格；流程/分支用 Mermaid 画板；风险与关键点用 callout。

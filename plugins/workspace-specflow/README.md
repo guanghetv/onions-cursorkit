@@ -47,6 +47,8 @@
 
 **PRD 模板**：[飞书标准模板](https://guanghe.feishu.cn/docx/S38Id4fxAofdz8xsWCVcRkHjnHg) + 「关键关注」/「回归范围」与 MODULE。
 
+**飞书正文写作规范**：[产品组 PRD 写作规范 V1.0](https://guanghe.feishu.cn/docx/Cqtqd9BxJoUYAFxbXFocp2qYnWd)，插件内副本为 `references/产品组PRD写作规范.md`。
+
 **权限与边界**（需求目录内）：可读写 `prd.md`、`metadata.yaml`、`prototypes/`、`assets/`；对代码仓库仅 **只读扫描**。**禁止**改业务代码仓库文件。
 
 **依赖提示**：飞书读写优先 **lark-cli**。**`/pm-proto`、`/pm-spec-5`、`/pm-spec` 须先 brainstorming 并获用户放行**。

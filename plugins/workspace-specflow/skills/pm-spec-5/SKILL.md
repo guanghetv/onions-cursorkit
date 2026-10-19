@@ -25,6 +25,7 @@ description: >-
 
 - **5稿**用于产品内审与交互评审会；方案可未定
 - 允许 `[待定]`、`[待交互确认]`；验收标准可写「待交互后补充」
+- 飞书需求文档正文写法以 `../../references/产品组PRD写作规范.md` 为准（来源 [产品组 PRD 写作规范 V1.0](https://guanghe.feishu.cn/docx/Cqtqd9BxJoUYAFxbXFocp2qYnWd)）
 - 模板见 `references/prd-template-v5.md`（结构与 9稿飞书模板一致，规则更宽松）
 - 飞书读取：`lark-cli` 优先，`feishu-mcp` 兜底；按 h2 **一~七** 章节映射回填
 - 本地有实质内容时本地优先；空模板时飞书优先

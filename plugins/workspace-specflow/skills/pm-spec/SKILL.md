@@ -29,6 +29,7 @@ description: >-
 
 **9稿**为交互评审后的需求评审定稿；`prd.md` 确认后即为下游权威输入。
 
+- 飞书需求文档正文写法以 `../../references/产品组PRD写作规范.md` 为准（来源 [产品组 PRD 写作规范 V1.0](https://guanghe.feishu.cn/docx/Cqtqd9BxJoUYAFxbXFocp2qYnWd)）
 - 模板见 `references/prd-template.md`（飞书一~七；关键关注/回归按语义定位，见 `prd-feishu-sync/references/chapter-map.md`）
 - **禁止**残留 `[待定]` / `[待交互确认]`（P0）
 - 飞书读取：`lark-cli` 优先；按 **语义 unit + 标题关键词** 定位章节（序号仅兼容）；**本地优先**：本地有实质内容时用本地，空模板 + 已绑定飞书时再拉取回填
