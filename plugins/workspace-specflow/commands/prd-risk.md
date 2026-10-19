@@ -1,6 +1,6 @@
 ---
 name: prd-risk
-description: 对当前需求执行产品需求风险预检。判定严格按 product-requirement-risk-gate；报告写 prototypes/prd-risk-precheck.md。5稿/9稿写出后自动调用。待补可确认，仅需调整硬拦。
+description: 对当前需求执行产品需求风险预检。判定严格按 product-requirement-risk-gate；报告写 prototypes/prd-risk-precheck.md。/prd-publish 在报告缺失或 prd.md 更新后调用。待补可继续，仅需调整阻止发布。
 ---
 
 # /prd-risk
@@ -11,4 +11,4 @@ description: 对当前需求执行产品需求风险预检。判定严格按 pro
 
 报告：`requirements/<需求>/prototypes/prd-risk-precheck.md`（预检包产品正文 + 运行历史）。本期不同步飞书。
 
-`/pm-spec-5` 与 `/pm-spec` 在写出后、AI Review 前自动调用。确认时：无报告先预检；**仅需调整硬阻断**；待补软提醒可确认。
+`/pm-spec` 改稿不自动调用。`/prd-publish` 在无报告、结论不可读或 `prd.md` 新于上次预检时调用。**仅需调整阻止发布**；待补软提醒后可继续。

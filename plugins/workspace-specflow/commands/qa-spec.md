@@ -1,8 +1,10 @@
 ---
 name: qa-spec
-description: 基于已确认的 prd.md 生成测试用例：brainstorming、按 MODULE 组织、覆盖率校验，可选导出 XMind；输入隔离，禁止读取开发产出。
+description: 从 prd.md 或飞书需求文档生成测试用例。未确认、一致性失败或基线漂移时仍生成，并给出提示。
 ---
 
 # /qa-spec
 
-基于已确认的 prd.md 生成测试用例。包含 brainstorming、十大类功能专家知识、按 MODULE 组织、覆盖率校验、可选导出 XMind（供飞书项目导入）。输入隔离：禁止读取开发产出。
+从需求详情生成测试用例。输入可以是 `prd.md`，或用飞书 CLI 读取飞书文档链接。门禁只提示，不阻断生成。
+
+详见技能 `qa-spec`。

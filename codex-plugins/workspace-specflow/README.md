@@ -25,7 +25,7 @@ Codex CLI 当前不直接从 ZIP 安装插件。需要 CLI 管理时，应先把
 ## 依赖
 
 - CodeWiki MCP：跨仓代码检索首选；认证由目标 Codex 环境管理，本包不内置凭证。
-- brainstorming skill：`pm-proto`、`pm-spec-5`、`pm-spec` 和 `qa-spec` 的既有流程依赖。
+- brainstorming skill：`pm-proto`、`pm-spec` 和 `qa-spec` 的既有流程依赖。稿次已取消，不再有 `pm-spec-5`。
 - `lark-cli`、XMind MCP、Python、`curl`：按具体 workspace-specflow skill 的前置条件安装。
 
 缺少可选依赖时必须按对应 skill 的停止或降级规则处理，不能假装步骤已完成。

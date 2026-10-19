@@ -1,6 +1,6 @@
 ---
 name: req-new
-description: 初始化新需求目录（中文目录名 + 英文 id slug）：飞书七章 prd 骨架、metadata、snapshots/、prototypes/、test/；目录创建后必须 /prd-feishu-sync create。
+description: 初始化新需求目录（中文目录名 + 英文 id slug）：写作规范 prd 骨架、metadata、snapshots/、prototypes/、test/；目录创建后必须 /prd-feishu-sync create。
 ---
 
 # /req-new
@@ -9,7 +9,7 @@ description: 初始化新需求目录（中文目录名 + 英文 id slug）：�
 
 - **目录名**：清洗后中文（重名 `-2` / `-MMDD`）
 - **metadata.id**：英文关键词 slug，创建后不变
-- **prd.md**：飞书七章骨架
+- **prd.md**：写作规范骨架
 
 **硬门禁（目录创建成功后必须执行）**：
 
@@ -19,4 +19,4 @@ description: 初始化新需求目录（中文目录名 + 英文 id slug）：�
 
 完整规程见技能 `req-new` / `prd-feishu-sync`。
 
-默认下一步：`/pm-proto`（可选）→ `/pm-spec-5`（写出后 `/prd-risk`）→ 交互评审 → `/pm-spec`（写出后 `/prd-risk`）。
+默认下一步：`/pm-proto` → `/pm-spec` → `/prd-publish`。

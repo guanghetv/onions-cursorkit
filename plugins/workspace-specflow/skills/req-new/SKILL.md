@@ -61,8 +61,8 @@ description: >-
 按 `references/templates.md` 创建：
 
 - `requirements/<中文目录名>/`
-- `metadata.yaml`（`prd.stage = v5_pending`，`prd.v5/v9` 初始 pending；含 `feishu.*` / `consistency.*` 占位）
-- `prd.md`（飞书七章空骨架；Agent 用 Step 1 信息填充标题与概述占位）
+- `metadata.yaml`（`prd.status=pending`，`prd.baseline` 为空；含 `feishu.*` / `consistency.*` 占位；不写 v5/v9 稿次）
+- `prd.md`（写作规范空骨架；Agent 用 Step 1 信息填充标题与概述占位）
 - `snapshots/.gitkeep`
 - `prototypes/.gitkeep`
 - `test/test-spec.md`
@@ -71,20 +71,20 @@ description: >-
 
 目录创建成功后 **必须** 执行 `/prd-feishu-sync create`（按该技能全文规程）：
 
-1. 使用 `lark-cli` **XML** 创建飞书文档（按 `prd-feishu-sync`：同步绑定 + 评审区 + 七章 + 可读性告警占位 + 一致性「⏳ 未校验」；禁止裸 `[PRD-SYNC:BEGIN/END]`；章节按语义 unit 定位）
+1. 使用 `lark-cli` **XML** 创建飞书文档（按 `prd-feishu-sync`：先写写作规范正文，机器区放在文末；禁止裸 `[PRD-SYNC:BEGIN/END]`；章节按语义 unit 定位）
 2. 回写 `metadata.feishu.doc_url` / `doc_token`，并同步 `feishu_doc`
-3. `last_synced_stage=skeleton`，`v9_synced=false`，`consistency.status=unknown`
+3. `last_synced_stage=skeleton`，`consistency.status=unknown`。不把 `v9_synced` 当作新的稿次开关
 
 
 若 `lark-cli` 不可用或 create 失败：**明确报错**，不得假装已绑定；可提示用户修好环境后手动 `/prd-feishu-sync create`。若用户在 Step 1 已提供飞书链接且希望接管已有文档，改为引导 `rebind`（须用户确认），不要静默覆盖他人文档。
 
 ### Step 5: 提示下一步
 
-默认流程：`/req-new`（含飞书 create）→ `/pm-proto`（可选）→ `/pm-spec-5`（写出后 `/prd-risk`）→ 交互评审 → `/pm-spec`（写出后 `/prd-risk`）→ `/prd-publish`（或分步 sync/check）。
+默认流程：`/req-new`（含飞书 create）→ `/pm-proto`（可选）→ `/pm-spec`（可多轮，只改本地）→ `/prd-publish`。
 
 ## 约束
 
 - 目录名中文、可读；`id` 英文 slug 稳定（废除原 D14「目录 kebab-case」）
-- 1稿由 Agent 代写骨架，产品不单独维护
+- 空骨架由 Agent 代写，产品不单独维护一份初稿
 - 不记录 feishu_task（D17）、不记录 created_by（D18）
 - 初始化必须留下可用飞书绑定或显式失败提示

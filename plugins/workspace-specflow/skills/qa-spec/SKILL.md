@@ -2,16 +2,16 @@
 name: qa-spec
 description: >-
   Use when user mentions: 测试spec/qa-spec/测试用例/生成测试/写测试文档/导出xmind。
-  Triggers when prd.status is confirmed and test_spec.status is pending.
+  未确认、一致性失败或基线漂移时仍生成，并在结果里提示风险。
 ---
 
-# /qa-spec — prd.md → 测试 spec（+ 可选 XMind 导出）
+# /qa-spec — 需求详情 → 测试 spec（+ 可选 XMind 导出）
 
 ## 前置条件
 
-- `metadata.yaml` 中 `prd.status` 为 `confirmed`
-- `test_spec.status` 为 `pending`
-- **一致性**：`consistency.status` 不得为 `fail`（默认**阻断**）。若为 `unknown`/缺失，须先跑 `/prd-consistency-check` 或 `/prd-publish`；用户显式豁免时写入报告理由后再继续
+- 输入是某个需求的 `prd.md`，或用户给出的飞书需求文档链接
+- 未确认、`consistency.status=fail`（即 `/prd-check` 未通过）、没有基线、正文已漂移，都**不阻断**生成
+- 这些情况必须在结果开头写明风险。其他下游仍要等第一次 `/prd-publish`
 
 ## 流程
 
@@ -19,24 +19,34 @@ description: >-
 
 提示用户在 specs 仓库目录执行 `git pull`，确保 prd.md 是产品团队提交的最新版本。可通过 `git status` 检测是否 behind remote，若 behind 则**必须先提示 pull**。
 
-### Step 0.5: 一致性门禁
+### Step 0.5: 风险提示（不阻断）
 
-读取 `metadata.consistency`：
+读取 `metadata` 与飞书 `revision_id`（有链接或已绑定时用 `lark-cli docs +fetch`）：
 
-- `fail` → **停止**，提示修复后 `/prd-publish` 或 `/prd-consistency-check`
-- `unknown` / 缺失 → 先执行 check（进开发前），再继续
-- `pass` / `warn` → 可继续（warn 须在摘要中提示）
+- `prd.status` 不是 `confirmed`：提示尚未第一次发布，用例可能超前
+- `consistency.status` 为 `fail`：提示 `/prd-check` 未通过，仍继续生成
+- `consistency.status` 缺失或为 `unknown`：提示尚未做 `/prd-check`，仍继续生成
+- 没有 `prd.baseline.revision_id`：提示尚未发布，建议先 `/prd-publish`，仍按当前可读正文生成
+- 飞书当前 `revision_id` 不等于 `prd.baseline.revision_id`，或当前 `prd.md` 正文与基线快照不一致：提示已漂移。有快照则按快照生成；没有快照则按当前正文生成。只多出版本表那一行不算不一致
 
 ### Step 1: 定位需求
 
-**自动模式**：扫描 `requirements/` 下 prd 已确认且测试 spec 为 pending 的需求。
-**手动模式**：用户直接指定路径。
+**自动模式**：扫描 `requirements/` 下测试 spec 仍为 pending 的需求，包含尚未第一次发布的。每条都生成，并在结果开头写风险。
+**手动模式**：用户直接指定路径或飞书链接。未确认、一致性失败、漂移都不跳过。
 
-### Step 2: 读取 prd.md
+### Step 2: 读取需求正文
 
-读取 `prd.md` 全文。
+按 `../../references/three-way-sync.md` 选择正文。未漂移只认两件事：飞书当前 `revision_id` 等于 `prd.baseline.revision_id`，且 `prd.md` 正文与基线快照一致。只多出版本表那一行不算不一致。版本表里的 `R1` 不参与比较。
 
-**⛔ 输入隔离（决策 D5）**：禁止读取 `openspec/changes/` 下任何开发产出。唯一输入来源：prd.md + 原型（如有）。
+按这个顺序，命中一条就停：
+
+1. 已发布且未漂移：读当前 `prd.md`。用户同时给出飞书链接时，改读 `lark-cli docs +fetch` 的当前正文。
+2. 已漂移且有基线快照：读快照，并提示正文已超前。
+3. 尚未发布，或没有快照：读当前能读到的正文。有 `prd.md` 读 `prd.md`；用户只给了飞书链接就读该链接。提示可能含未发布改动。
+
+从需求详情的规则、状态、异常提取可测点。没有独立验收章也可以生成。
+
+**⛔ 输入隔离（决策 D5）**：禁止读取 `openspec/changes/` 下任何开发产出。输入来源：上述正文 + 原型（如有）。
 
 ### Step 3: 扫描前后端现状（业务层面）
 
@@ -92,11 +102,19 @@ description: >-
 
 ### Step 7: 覆盖率校验
 
-AI 对照 prd.md 每条验收标准：✅ 已覆盖（标注场景标题）/ ❌ 未覆盖（需补充或标记不适用）。
+AI 对照需求详情里的规则、状态和异常：✅ 已覆盖（标注场景标题）/ ❌ 未覆盖（需补充或标记不适用）。不因为没有验收 checklist 判失败。
 
 ### Step 8: 确认 & 写入
 
-写入 `test/test-spec.md`，更新 `metadata.yaml`：`test_spec.status = confirmed`。
+写入 `test/test-spec.md`。
+
+同时满足下面三条，才把 `metadata.test_spec.status` 写成 `confirmed`：
+
+- `prd.status` 为 `confirmed`
+- 本轮正文来源是已发布且未漂移
+- `consistency.status` 为 `pass` 或 `warn`
+
+有一条不满足：文件照写，`test_spec.status` 写成 `pending`。未发布或已漂移时，结果里说明要等基线对齐的 `/prd-publish` 后再确认用例。`consistency.status`（`/prd-check` 的结论，字段名不改）为 `fail`、缺失或 `unknown` 时，说明先跑 `/prd-check`（发布时会跑）。
 
 ### Step 9: XMind 导出（可选）
 

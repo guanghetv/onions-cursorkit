@@ -13,7 +13,7 @@ globs:
 
 ## 分层说明
 
-- **需求仓库（当前）**：需求管理、prd.md（飞书七章 + 5稿/9稿）、测试 spec、进度追踪。依赖 Superpowers。
+- **需求仓库（当前）**：需求管理、持续更新的 prd.md 与飞书需求文档、测试 spec、进度追踪。依赖 Superpowers。
 - **代码仓库（其他）**：技术设计、TDD 开发、验证、归档。
 
 当前仓库始终作为需求真相源，代码仓库按需求语义和 MODULE 边界理解并执行。
@@ -22,18 +22,17 @@ globs:
 
 | 命令 | 角色 | 用途 |
 |------|------|------|
-| `/req-new` | 任何人 | 初始化需求目录（中文目录名 + 英文 id slug；飞书七章骨架） |
-| `/pm-proto` | 产品 | 原型快速生成或迭代（可选） |
-| `/pm-spec-5` | 产品 | 5稿结构化增强（内审/交互评审前；允许待定项；写出后 `/prd-risk`；确认时需调整硬阻断） |
-| `/prd-risk` | 产品 | 产品需求风险预检（独立报告 + 运行历史；可手动重跑） |
-| `/pm-spec` | 产品 | **9稿定稿**（交互评审后；写出后 `/prd-risk`；严格 AI Review；`prd.status=confirmed`） |
-| `/prd-feishu-sync` | 产品 | PRD ↔ 飞书同步（create/push/reconcile；禁止默认整篇覆盖） |
-| `/prd-consistency-check` | 产品 | 契约层一致性校验（结构 A + 语义 B）；结果回写飞书 |
-| `/prd-publish` | 产品 | 一键：sync → consistency-check |
-| `/qa-spec` | 测试 | prd.md → 测试 spec + 可选 XMind 导出（禁止读取开发产出） |
+| `/req-new` | 任何人 | 初始化需求目录（中文目录名 + 英文 id slug；写作规范骨架） |
+| `/pm-proto` | 产品 | 原型只留核心流程和交互 |
+| `/pm-spec` | 产品 | 多轮只改本地 `prd.md`。每一轮先提示三端差异。不在这一步设 `confirmed` |
+| `/prd-risk` | 产品 | 产品需求风险预检。发布时按新鲜度自动跑，也可手动重跑 |
+| `/prd-feishu-sync` | 产品 | PRD ↔ 飞书同步（create/push/reconcile；已有内容禁止整篇覆盖） |
+| `/prd-check` | 产品 | 一次检查内容、对齐和可读性。结果回写飞书文末一行。旧命令 `/prd-consistency-check` 走这里 |
+| `/prd-publish` | 产品 | 预检 → push → `/prd-check` → 基线，并在成功后发短通知、引导提交代码。无群则跳过，基线仍有效。不调用 Multica |
+| `/qa-spec` | 测试 | 从需求详情生成测试 spec。未发布或漂移时仍生成并提示 |
 | `/qa-sync-xmind` | 测试 | test-spec.md ↔ XMind |
 | `/qa-execute` | 测试 | test/*.md → Case Flow 快速模式上传 |
-| `/req-status` | 任何人 | 查看 PRD 5稿/9稿 与测试 spec 状态 |
+| `/req-status` | 任何人 | 查看是否已确认、基线 revision 与测试状态 |
 
 ## 需求目录命名
 
@@ -46,7 +45,7 @@ globs:
 
 读取 `requirements/` 前提示 `git pull`。behind remote 时**必须先提示 pull**。
 
-## 产品流程脑暴门禁（`/pm-proto`、`/pm-spec-5`、`/pm-spec`）
+## 产品流程脑暴门禁（`/pm-proto`、`/pm-spec`）
 
 写入 `prototypes/` 或结构化改写 `prd.md` **之前**，必须：
 
@@ -54,37 +53,55 @@ globs:
 2. 与用户完成灰区确认（一次一问）
 3. 用户明确放行
 
+## 三端对齐门禁
+
+原型、飞书需求文档、`prd.md` 任一端先改时，写入另外两端之前必须：
+
+1. **Read** `references/three-way-sync.md`（相对本插件根目录；在 specs 仓库会话里按已安装的 `workspace-specflow` 插件路径定位）
+2. 用 `lark-cli docs +fetch` 读绑定飞书文档；同时读本地 `prd.md` 与原型。聊天里粘贴的飞书正文或链接只当线索，不能代替这次 fetch
+3. 展示哪一端更新、影响哪些模块、另外两端建议怎么写回
+4. 用户明确确认前，不改另外两端，也不用本地旧稿 `push` 盖掉飞书手改
+
+命中任一条就要走上面的门禁，不要求用户先说出命令名：
+
+- 用户贴了飞书链接或正文，要求更新 `prd.md`、原型，或「同步回来 / 按飞书改本地」
+- 飞书或原型有当前 `prd.md` 没有的内容（细则见 `three-way-sync.md`「草稿超前，还是另一端多了内容」）。本地只是还没推上去时不因此停下
+- `/prd-feishu-sync pull` / `reconcile`
+- `/pm-spec`、`/pm-proto`、`/prd-publish`、`/prd-check` 开始时（细则以各自技能和 `three-way-sync.md` 为准）
+
+飞书写回本地之后：`metadata.consistency.status=unknown`；若写了本地契约，飞书文末校验行重置为「未校验」，不写成通过。不在这一步跑 `/prd-check`，不写基线。
+
 ## 关键约束
+
+- **必须遵守** `rules/agent-hard-rules.mdc`：写作禁令、禁止擅自删除飞书评论、查询现有实现时先调用 CodeWiki `search_wiki`。该文件 `alwaysApply: true`。
+- **必须遵守** 上文「三端对齐门禁」与 `references/three-way-sync.md`。
 
 - 需求层文件只在 `requirements/` 下操作
 - `/qa-spec` 禁止读取 `openspec/changes/`
-- prd.md 对齐飞书模板（https://guanghe.feishu.cn/docx/S38Id4fxAofdz8xsWCVcRkHjnHg）；契约补充「关键关注」「回归」（语义定位，序号仅兼容）
+- prd.md 以《产品组 PRD 写作规范》为准；旧七章模板仅兼容。有复杂协作或回归风险时补充「关键关注」「回归」（语义定位，序号仅兼容）
 - **开发禁止修改 requirements/ 下的文件**
-- 5稿快照：`snapshots/prd-v5-*.md`；9稿快照：`snapshots/prd-v9-*.md`
-- 版本表（第二章）仅在 `/pm-spec-5` 或 `/pm-spec` **确认时**追加行
-- 开发在代码仓库按 fe-specflow / be-specflow / onion-sdd 启动；直接读取已 `confirmed` 的 `prd.md`，不再提供 `/dev-start`
-- 飞书同步禁止默认整篇 overwrite；9 稿按语义删背景/价值且不重排关键关注/回归与四～七；`v9_synced` 后默认不再推 5 稿
+- 基线快照：`snapshots/prd-baseline-*.md`。旧的 `prd-v5-*.md`、`prd-v9-*.md` 只在没有新基线时回落读取
+- 版本表的基线行只在 `/prd-publish` 成功后追加
+- 开发在代码仓库按 fe-specflow / be-specflow / onion-sdd 启动。未漂移时读 `prd.md`。飞书序号不等于 `prd.baseline.revision_id`，或 `prd.md` 正文与基线快照不一致时，读快照。只多出版本表行不算不一致。不再提供 `/dev-start`
+- 飞书文档已有内容时禁止整篇 overwrite。背景与目标可以保留，不得为补洞重排关键关注/回归与四～七
 
 ## 流程阶段
 
-1. **需求发起**：`/req-new` → 中文目录 + 飞书七章骨架 + **`/prd-feishu-sync create`**
-2. **原型（可选）**：`/pm-proto`
-3. **5稿**：`/pm-spec-5` → 写出后 `/prd-risk` → AI Review → 确认（无报告先预检；需调整则阻断）→ 内审；未 `v9_synced` 时 sync push v5
-4. **交互评审**：产品可手工改 `prd.md` / 飞书；契约变更须 sync 或 reconcile
-5. **9稿**：`/pm-spec` 脑暴 → 瘦身完成并**写 `prd.stage=v9_pending`** → 写出后 `/prd-risk` → Review → 确认（无报告先预检；需调整则阻断）→ push v9 → **consistency-check** → 成功后再快照与 `prd.status=confirmed`（瘦身前不写 `v9_pending`；本地仍有讲解层时拒 v9）
-6. **一键发布（可选）**：`/prd-publish`
-7. **测试 spec**：`/qa-spec`（与开发并行；启动前读 consistency）
-8. **Case Flow 执行（可选）**：`/qa-execute`
-9. **开发**：代码仓库流程读取 `prd.md`（要求 `prd.status = confirmed`）
-10. **进度追踪**：`/req-status`
+1. **需求发起**：`/req-new` → 中文目录 + 文档骨架 + **`/prd-feishu-sync create`**
+2. **原型**：`/pm-proto`。只留核心流程和交互
+3. **写文档**：`/pm-spec` 可多轮，每一轮先按 `references/three-way-sync.md` 提示原型、飞书和 `prd.md` 的差异，默认只改本地。用户明确说同步时才 push。不设稿次，不在这一步 `confirmed`
+4. **发布基线**：`/prd-publish`。必要时先 `/prd-risk`，再 push，再 `/prd-check`，通过后第一次成功把 `prd.status=confirmed`，之后只前进快照、版本表和 `revision_id`。随后发短通知并引导提交代码；无群则跳过，基线仍有效
+5. **测试 spec**：`/qa-spec` 可与开发并行。门禁只提示
+6. **Case Flow 执行（可选）**：`/qa-execute`
+7. **开发**：已确认且未漂移时读 `prd.md`；已漂移时读基线快照
+8. **进度追踪**：`/req-status`
 
 ## 需求定位
 
 - 扫描 `requirements/` 下子目录的 `metadata.yaml`
 - 列表显示：`name（id: slug）` 或中文目录名
-- `/pm-spec-5` 过滤 `prd.stage` 为 v5_pending / v5_confirmed 且 9稿未完成的需求
-- `/pm-spec` 过滤 `prd.stage` 为 v5_confirmed / v9_pending（或 9稿未 confirmed）的需求
-- `/qa-spec` 与代码仓库开发流程要求 `prd.status = confirmed`
+- `/pm-spec` 可编写未发布和已发布的需求。已发布后再改，基线要等下一次 `/prd-publish`
+- 除 `/qa-spec` 外，下游要求需求已确认且未漂移。漂移包括飞书序号变化，也包括本地 `prd.md` 正文偏离快照
 
 ## 权限模型
 
