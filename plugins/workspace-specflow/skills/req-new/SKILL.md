@@ -71,7 +71,7 @@ description: >-
 
 目录创建成功后 **必须** 执行 `/prd-feishu-sync create`（按该技能全文规程）：
 
-1. 使用 `lark-cli` **XML** 创建飞书文档（按 `prd-feishu-sync`：标题等于 `name`；正文用上面的空骨架；文末只放一块「文档状态」；禁止裸 `[PRD-SYNC:BEGIN/END]`）
+1. 使用 `lark-cli` **XML** 创建飞书文档（按 `prd-feishu-sync`：标题等于 `name`；正文用上面的空骨架，但飞书版本表只有日期、版本号、PM、变更内容，不建「对应 spec / demo」；文末只放一块「文档状态」；禁止裸 `[PRD-SYNC:BEGIN/END]`）
 2. 按 `prd-feishu-sync` 的「同一文档的 wiki 与 docx」回写 `doc_url` / `doc_token` / `wiki_token`，并同步 `feishu_doc`
 3. `last_synced_stage=skeleton`，`consistency.status=unknown`。不把 `v9_synced` 当作新的稿次开关
 

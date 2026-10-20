@@ -10,7 +10,7 @@
 
 写入另外两端之前：
 
-1. 读出三端当前内容。飞书用 `lark-cli docs +fetch`，每个契约 unit 和每个 MODULE 详细说明都要整段读完。工具截断时按块继续取。只拿到开头和结尾，视为没读完，不得比较，也不得发布。`revision_id` 跳号只说明文档被写过，不能当成插入了图片。没有的一端记为缺失。本地 `prd.md` 末尾的「飞书文档」只留展示地址，不参与比较，也不写入飞书。`/wiki/<node_token>` 与 `/docx/<obj_token>` 由 `wiki +node-get` 解开后 `obj_token` 相同，就是同一份文档。
+1. 读出三端当前内容。飞书用 `lark-cli docs +fetch`，每个契约 unit 和每个 MODULE 详细说明都要整段读完。工具截断时按块继续取。只拿到开头和结尾，视为没读完，不得比较，也不得发布。`revision_id` 跳号只说明文档被写过，不能当成插入了图片。没有的一端记为缺失。本地 `prd.md` 末尾的「飞书文档」只留展示地址，不参与比较，也不写入飞书。版本表「对应 spec / demo」只在本地 `prd.md`，飞书版本表没有这一列，不把它当成两端差异。`/wiki/<node_token>` 与 `/docx/<obj_token>` 由 `wiki +node-get` 解开后 `obj_token` 相同，就是同一份文档。
 2. 用一段判断说明差异：哪一端更新、影响哪些模块、建议如何写回另外两端。
 3. 用户明确确认前，不写另外两端。
 4. 确认后只改用户同意的那一端或两端。飞书文档已有内容时禁止整篇覆盖。
@@ -42,7 +42,7 @@
 2. 用绑定文档的 `doc_token` 做 `lark-cli docs +fetch`。聊天粘贴的正文只当线索，不能代替 fetch。
 3. 同时读 `prd.md` 和原型，展示差异与建议写回项。
 4. 用户确认前，不改 `prd.md`，不改原型，也不用本地旧稿 `push` 盖掉飞书手改。
-5. 本步只用于拉回和 reconcile。第一次确认后只写用户同意的本地或原型差异。随后把 `metadata.consistency.status` 标成 `unknown`。若写了本地契约，飞书文末「文档状态」重置为未校验态：emoji `📎`、`background-color="light-blue"`、`border-color="blue"`、校验行「未校验」。不要只改文字，不要写成通过。不跑 `/prd-check`，不写基线。写完停住，按「文档更新后的二次确认」引导 `/prd-publish`。发布里的 `/prd-check` 仍由该命令执行。
+5. 本步只用于拉回和 reconcile。第一次确认后只写用户同意的本地或原型差异。写回版本表时不追加版本行，并保留本地「对应 spec / demo」：按版本号对上已有行的快照路径。禁止因为飞书没有这一列就删掉本地表头或已有路径。随后把 `metadata.consistency.status` 标成 `unknown`。若写了本地契约，飞书文末「文档状态」重置为未校验态：emoji `📎`、`background-color="light-blue"`、`border-color="blue"`、校验行「未校验」。不要只改文字，不要写成通过。不跑 `/prd-check`，不写基线。写完停住，按「文档更新后的二次确认」引导 `/prd-publish`。发布里的 `/prd-check` 仍由该命令执行。
 
 正式入口是 `/prd-feishu-sync reconcile`（或 `pull`）。用户没说命令名、只贴了链接要求同步回来时，同样按本条执行，不要直接整篇覆盖 `prd.md`。用户是在绑定文档上给出新的产品决定时，不走本条。
 

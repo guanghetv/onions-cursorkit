@@ -52,7 +52,7 @@ alwaysApply: true
 - 先 Read 插件内 `references/three-way-sync.md`，再 fetch 绑定文档、读本地 `prd.md` 与原型。
 - 聊天粘贴不能代替 `lark-cli docs +fetch`。
 - 用户确认前，禁止改 `prd.md` 或原型，禁止用本地旧稿 `push` 盖掉飞书手改。
-- 确认写回本地后：`consistency.status=unknown`。若写了本地契约，飞书文末「文档状态」重置为未校验态：emoji `📎`、`background-color="light-blue"`、`border-color="blue"`、校验行「未校验」。不要只改文字。不在这一步跑 `/prd-check`，不写基线。写完停住，按 `three-way-sync.md` 二次确认并引导 `/prd-publish`。
+- 确认写回本地后：`consistency.status=unknown`。写回版本表时不追加版本行，保留本地「对应 spec / demo」，按版本号对上已有快照路径，禁止因为飞书没有这一列就删掉。若写了本地契约，飞书文末「文档状态」重置为未校验态：emoji `📎`、`background-color="light-blue"`、`border-color="blue"`、校验行「未校验」。不要只改文字。不在这一步跑 `/prd-check`，不写基线。写完停住，按 `three-way-sync.md` 二次确认并引导 `/prd-publish`。
 
 ## 发布之外禁止写基线
 

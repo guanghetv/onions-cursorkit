@@ -120,7 +120,7 @@ host 先转成小写，去掉 query 和 fragment。展示地址沿用这个 host
 
 ### create 时 XML 骨架（示意）
 
-标题等于 `metadata.name`。正文与 `req-new/references/templates.md` 的空骨架一致：需求概述、版本表、背景与目标、需求详情。背景、目标、本次范围只留标题。不写空的关键关注、回归范围、Feature List、关联材料、数据观察，不预置 `MODULE-N`，不写 `-` 占位，不把技能说明写进正文。
+标题等于 `metadata.name`。正文与 `req-new/references/templates.md` 的空骨架一致：需求概述、版本表、背景与目标、需求详情。背景、目标、本次范围只留标题。飞书版本表只有日期、版本号、PM、变更内容，不建「对应 spec / demo」。不写空的关键关注、回归范围、Feature List、关联材料、数据观察，不预置 `MODULE-N`，不写 `-` 占位，不把技能说明写进正文。
 
 ```xml
 <title>需求名称</title>
@@ -292,7 +292,7 @@ push 成功后写 `last_synced_stage=current`，并记录读到的 `feishu_revis
 1. 已经在 `/prd-publish` 第 4 步。忽略 `--stage v5|v9|auto`。发布第 2 步已经决定写入，本步不再追问，禁止再调用 `/prd-publish`，禁止跑 `/prd-check`。不因仍有背景章节而 REJECT。
 2. `+fetch` 飞书（with-ids）；若仍有旧裸 marker → **先迁移**再改契约（迁移也用局部替换，禁止整篇 overwrite）。
 3. 按 chapter-map **语义 unit** 与 MODULE 算 diff。声明不把校验行写成通过或失败，不改未变更的 whiteboard。若存在评审修改记录则按存量兼容删除。背景与目标按发布第 2 步已经确认的范围增量更新。
-4. 按「XML 片段 + 排版规程 + 增量策略」**局部**写入；MODULE「图示」列必须走「图片」硬规则（`block_replace` + `<img …/>`，**禁止** `media-insert`）；**不得**清空背景与目标；**不得**把校验行写成 ✅ / ⚠️ / ❌，也不得把 emoji 留成这三枚；**不得** `overwrite`。
+4. 按「XML 片段 + 排版规程 + 增量策略」**局部**写入；MODULE「图示」列必须走「图片」硬规则（`block_replace` + `<img …/>`，**禁止** `media-insert`）；**不得**清空背景与目标；**不得**把校验行写成 ✅ / ⚠️ / ❌，也不得把 emoji 留成这三枚；**不得** `overwrite`。本次 push 不上传「对应 spec / demo」，也不写快照路径。飞书版本表还有这一列时，不论其他格子有没有变化，都删掉表头和格子。本地 `prd.md` 保留该列。
 5. 流程/Mermaid：按「画板保活」表执行；写入失败 → **STOP**（策略 A），不得文本顶替后继续。
 6. 任 unit 定位失败 / revision 冲突 → **立即 STOP**，询问用户。文档已有内容时不得整篇覆盖。
 7. 本次若改了契约正文：在同一块「文档状态」里重置为未校验态（emoji、底色、边框、校验行一起改），`metadata.consistency.status=unknown`。同步绑定行保留。若仍是分开的两块，或还有旧的可读性、一致性，先合并成这一块再重置。没有这块则在文末插入。机器区若仍在正文前，本步一并移到文末。不在本步扫描文字墙。
@@ -306,7 +306,7 @@ push 成功后写 `last_synced_stage=current`，并记录读到的 `feishu_revis
 1. **Read** `../../references/three-way-sync.md`，并按其中「飞书先改、贴回工作区」执行。
 2. 用绑定 `doc_token` 做 `docs +fetch`（契约区与可选评论）。聊天粘贴的正文只当线索，不能代替 fetch。评审修改记录不作为契约。
 3. 同时读本地 `prd.md`、原型（`prototypes/` / `assets/`，没有则记缺失），以及上次 baseline/manifest。形成决策项（`ED`/`CM`/`FB`），并写明是否还要改原型。
-4. **STOP**；用户确认接受项后，只写入同意的本地契约 unit / MODULE（含背景与目标）或原型；不改契约展示序号。禁止用本地旧稿再 `push` 盖掉本次飞书手改。
+4. **STOP**；用户确认接受项后，只写入同意的本地契约 unit / MODULE（含背景与目标）或原型；不改契约展示序号。禁止用本地旧稿再 `push` 盖掉本次飞书手改。写回版本表时不追加版本行，并保留本地「对应 spec / demo」：按版本号对上已有行的快照路径。禁止因为飞书没有这一列就删掉本地表头或已有路径。
 5. 更新 metadata：`last_synced_*`、`feishu_revision`、`consistency.status=unknown`。若写了本地契约，把同一块「文档状态」**重置为未校验态**（emoji、底色、边框、校验行一起改，不要写成通过）。不跑 `/prd-check`，不写基线。
 6. 写完停住。按 `three-way-sync.md` 的「文档更新后的二次确认」再问是否发布，并说明下一步是 `/prd-publish`。第二次明确同意之前不进入发布。不要在 reconcile 里直接 push。
 
