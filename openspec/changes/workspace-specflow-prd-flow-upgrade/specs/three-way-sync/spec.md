@@ -40,7 +40,8 @@
 
 #### Scenario: 同步到飞书就是发布
 
-- **WHEN** 用户明确说「同步到飞书」或「推到飞书」，或要求 `/prd-feishu-sync push`
+- **WHEN** 本地文档已经写完
+- **AND** 用户明确说「同步到飞书」或「推到飞书」或「发布」，或要求 `/prd-feishu-sync push`
 - **AND** 当前不在 `/prd-publish` 的写入步骤
 - **THEN** 改走 `/prd-publish`
 - **AND** 不在 push 之后结束
@@ -67,11 +68,57 @@
 
 #### Scenario: 飞书先改贴回工作区
 
-- **WHEN** 产品先在飞书改了文档，再把链接贴进会话并要求更新本地
+- **WHEN** 产品先在飞书改了文档，再把链接贴进会话并要求同步回来或按飞书改本地
 - **THEN** Agent 先 Read `three-way-sync.md`
 - **AND** 用绑定文档做 `docs +fetch`，同时读 `prd.md` 与原型
 - **AND** 用户确认前不改本地，也不用旧稿 `push` 盖掉飞书手改
-- **AND** 确认写回后把 `consistency.status` 标为 `unknown`，不在本步跑发布检查
+- **AND** 确认写回后把 `consistency.status` 标为 `unknown`，不在本步跑 `/prd-check`，不写基线
+
+#### Scenario: 绑定文档上的新决定先写本地
+
+- **WHEN** 用户贴的链接解析后与某个需求的 `metadata.feishu.doc_token` 相同
+- **AND** 用户要求更新需求、改范围，或说这条先不做了
+- **THEN** 第一次确认后把决定写入本地 `prd.md`
+- **AND** 写完停住，再问一次是否发布，并说明下一步是 `/prd-publish`
+- **AND** 第二次明确同意之前不进入发布
+- **AND** 不把这次当成飞书拉回
+- **AND** 在发布没有 critical 之前，不追加版本表，不把「文档状态」写成通过
+
+### Requirement: 文档更新后二次确认再发布
+
+工作区改了需求，或从飞书把更新写入本地之后，系统 MUST 停住，MUST 再确认一次，并 MUST 引导下一步执行 `/prd-publish`。第二次明确同意之前 MUST NOT 进入发布。
+
+#### Scenario: 工作区改了需求
+
+- **WHEN** `/pm-spec` 把本轮决定写入本地 `prd.md`
+- **THEN** 写完停住
+- **AND** 询问是否现在发布，并说明下一步是 `/prd-publish`
+- **AND** 第二次明确同意之前不进入发布
+
+#### Scenario: 从飞书拉回
+
+- **WHEN** reconcile 按用户第一次确认把飞书差异写入本地
+- **THEN** 写完停住
+- **AND** 询问是否现在发布，并说明下一步是 `/prd-publish`
+- **AND** 拉回这一步不跑 `/prd-check`，不写基线
+
+#### Scenario: 同一句话里要求发布
+
+- **WHEN** 用户在同一次要求里既改需求内容，又说发布或同步到飞书
+- **THEN** 先写入本地并停住
+- **AND** 再单独确认一次后才执行 `/prd-publish`
+
+#### Scenario: 空骨架不引导发布
+
+- **WHEN** `/prd-feishu-sync create` 刚写完空骨架
+- **THEN** 只提示下一步 `/pm-spec`
+- **AND** 不问是否现在发布
+
+#### Scenario: 绑定文档按 wiki 或 docx 都能对上
+
+- **WHEN** 用户贴的是绑定文档的 `/wiki/<node_token>` 或 `/docx/<obj_token>`
+- **THEN** 都能识别为同一篇绑定文档
+- **AND** 不因只比对 path 最后一段而漏匹配
 
 ### Requirement: 已有飞书文档禁止整篇覆盖
 

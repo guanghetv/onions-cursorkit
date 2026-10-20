@@ -105,6 +105,8 @@
 - 2026-10-19：`prd.md` 末尾追加飞书文档地址，不上传。三端比对必须读完 MODULE 全文，句子不一致或正文截断时停止，不得判通过。项目卡按「迭代需求」的 `type_key` 查找，不用链接路径 `tec_prd`。短通知改由葱明-multica 的 bot profile 发送，失败不回退到产品用户。版本号从 1 起，每次发布加 1；第一次变更内容留空，之后写入规则差异并在飞书单元格标红。漂移仍看 `prd.baseline.revision_id`。
 - 2026-10-20：找群仍在 `/prd-publish`。找到群后改为 POST `PRD_BASELINE_NOTIFY_WEBHOOK_URL`，载荷含群 ID、文档地址、更新内容、发布序号和基线回读序号。本机不再 `im +messages-send`。webhook 地址不入库。
 - 2026-10-20：通知地址改为桌面版 Autopilot 的固定 webhook，找到群后直接 POST。发布结果不打印该地址。
+- 2026-10-20：知识库 `/wiki/<node_token>` 与正文 `/docx/<obj_token>` 视为同一文档。展示地址用知识库链接，读写只用 `obj_token`。找项目卡同时匹配两个 token。
+- 2026-10-20：工作区改需求，或从飞书拉回写入本地之后，必须二次确认，并引导下一步 `/prd-publish`。同一句话里说发布也不立刻进入发布。空骨架 create 不引导发布。绑定文档按 `obj_token` / `wiki_token` 识别，不单比 path 末段。
 
 ## References
 

@@ -24,7 +24,7 @@
 | `contract.design` | 契约 | `设计图` | 旧 `六、` | 兼容旧标题；新稿优先 `contract.materials` |
 | `contract.observability` | 契约 | `数据观察` 或 `发布约束` | 常为 `七、` | 按需 |
 | `contract.tracking` | 契约 | `埋点` | 旧 `七、` | 兼容旧标题；新稿优先 `contract.observability` |
-| `local.feishu_link` | 本地 | `飞书文档` | — | 只在 `prd.md` 末尾，由 create、rebind 或发布补上地址。不上传，不参与契约 diff，reconcile 不删这一节 |
+| `local.feishu_link` | 本地 | `飞书文档` | — | 只在 `prd.md` 末尾，由 create、rebind 或发布补上展示地址。在知识库时写 `/wiki/<node_token>`。不上传，不参与契约 diff，reconcile 不删这一节 |
 
 ## 兼容别名
 

@@ -36,7 +36,25 @@ description: >-
 1. 当前为 specs 仓；定位 `requirements/<目录>/`（含 `prd.md`、`metadata.yaml`）。
 2. `lark-cli` 可用；优先 `--as user`。执行前：`lark-cli auth status`；缺 scope 时用 `lark-cli auth login --scope "..." --no-wait --json`，展示 `verification_url` 与二维码，等用户完成后再继续。
 3. 文档操作使用当前 CLI 支持的 `docs +fetch` / `+create` / `+update` 与 drive 上传能力；正文**独立配图**可用 `+media-insert`；**MODULE「图示」列 / 表格单元格 / callout 内禁止** `media-insert`（见「图片」硬规则）。参数以本机 `lark-cli docs --help` 为准。
-4. 除 `create`/`rebind` 外，必须已有 `metadata.feishu.doc_token`（可从 `feishu_doc` URL 解析后写回自愈）。
+4. 除 `create`/`rebind` 外，必须已有 `metadata.feishu.doc_token`。缺失时按「同一文档的 wiki 与 docx」从 `feishu_doc` / `doc_url` 解开后写回，禁止只取 URL path 最后一段当作 `doc_token`（知识库地址会解错）。`doc_token` 是正文 `obj_token`。`docs +fetch` / `+update` 只用它，不用知识库节点 token。
+
+## 同一文档的 wiki 与 docx
+
+知识库里打开的地址是 `/wiki/<node_token>`，正文读写地址是 `/docx/<obj_token>`。同一份文档会同时有这两个 token。项目卡「需求文档」常保存知识库地址，本地创建时先拿到 docx 地址。
+
+绑定、换绑，以及 `/prd-publish` 找项目卡之前，对当前地址执行一次：
+
+```bash
+lark-cli wiki +node-get --node-token "<url>" --format json
+```
+
+host 先转成小写，去掉 query 和 fragment。展示地址沿用这个 host。
+
+- 成功且有 `obj_token`：`doc_token` = `obj_token`。有 `node_token` 时 `wiki_token` = `node_token`，`doc_url` 与 `feishu_doc` 写成 `<host>/wiki/<node_token>`。没有 `node_token` 时 `wiki_token` 留空，展示地址写成 `<host>/docx/<obj_token>`。
+- 命令失败，且输入路径是 `/docx/` 或 `/doc/`：文档不在知识库。`wiki_token` 留空，展示地址保持这条 docx URL，`doc_token` 取 path 最后一段。
+- 命令失败，且输入路径是 `/wiki/`，或鉴权、网络失败：不要猜 token。创建和换绑停止并写明原因。发布找项目卡跳过，结果写明原因。已经在用的 `doc_token` 继续给正文读写。
+
+`doc_url`、`feishu_doc` 和本地 `prd.md` 末尾「飞书文档」写展示地址。这一节不上传。历史目录不批量改，下次创建、换绑或发布时补齐。
 
 ## 写入格式硬规则（XML）
 
@@ -254,18 +272,18 @@ push 成功后写 `last_synced_stage=current`，并记录读到的 `feishu_revis
 ## 意图路由
 
 1. 用户要把当前正文同步到飞书、推到飞书，或直接说 `/prd-feishu-sync push`，且当前不是 `/prd-publish` 第 4 步：不要进入 push。改走 `/prd-publish`。
-2. 「同步回来 / 按飞书改本地」走 reconcile。这不是发布。
-3. create、status、rebind 仍在本技能。create 结束后建议 `/pm-spec`，不要建议立刻发布空骨架。
+2. 「同步回来 / 按飞书改本地 / 飞书里我已经改过了」走 reconcile。贴了绑定文档并说更新需求、改范围或这条先不做了，先写入本地 `prd.md`。两条都在写完后按 `three-way-sync.md` 的「文档更新后的二次确认」引导 `/prd-publish`，不在本技能里直接发布。不要先改飞书再拉回。
+3. create、status、rebind 仍在本技能。create 结束后建议 `/pm-spec`，不要问是否发布空骨架。
 4. 已经在 `/prd-publish` 第 4 步：只执行下面的 push 写入。禁止再调用 `/prd-publish`，禁止在本步跑 `/prd-check`。
 
 ---
 
 ### create
 
-1. 已有 `doc_token` → 停止，提示 `/prd-publish` 或 `rebind`。不要在这里 push。
+1. 已有 `doc_token` → 停止，提示继续 `/pm-spec`，或二次确认后 `/prd-publish`，或 `rebind`。不要在这里 push，也不要直接进入发布。
 2. 标题用 `metadata.name`。name 里如果还套着 `【】` 或末尾 `PRD` / `prd`，先按 `req-new` Step 2 清洗并写回 `metadata.name`，不改已经建好的目录名。按上文 **XML 骨架** 创建空骨架，文末只放一块未校验态「文档状态」。不创建评审修改记录，也不再单独建同步绑定、校验、可读性、一致性多块。
 3. **`lark-cli docs +create ... --as user --doc-format xml`**（禁止默认 markdown）。
-4. 写回 `metadata.feishu.*` 与 `feishu_doc`；`last_synced_stage=skeleton`；`v9_synced=false`；`consistency.status=unknown`；初始化 manifest。把 `doc_url` 写到本地 `prd.md` 末尾的「飞书文档」。已有这一节就替换地址，没有就追加。不要把这一节写入飞书。
+4. 按「同一文档的 wiki 与 docx」解析刚创建的地址，再写回 `metadata.feishu.*`（含 `wiki_token`）与 `feishu_doc`。`last_synced_stage=skeleton`；`v9_synced=false`；`consistency.status=unknown`；初始化 manifest。把展示地址写到本地 `prd.md` 末尾的「飞书文档」。已有这一节就替换地址，没有就追加。不要把这一节写入飞书。
 5. `+fetch` 跑写后自检；确认校验行存在且无裸 BEGIN/END。
 
 ### push
@@ -283,14 +301,14 @@ push 成功后写 `last_synced_stage=current`，并记录读到的 `feishu_revis
 
 ### pull / reconcile
 
-飞书 → 本地的正路。用户只贴飞书链接、说「同步回来 / 按飞书改本地」且未点名本命令时，也按本节执行，不要整篇覆盖 `prd.md`。
+飞书 → 本地的正路，只用于拉回。用户只贴飞书链接、说「同步回来 / 按飞书改本地」且未点名本命令时，也按本节执行，不要整篇覆盖 `prd.md`。绑定文档上的新决定不走本节。
 
 1. **Read** `../../references/three-way-sync.md`，并按其中「飞书先改、贴回工作区」执行。
 2. 用绑定 `doc_token` 做 `docs +fetch`（契约区与可选评论）。聊天粘贴的正文只当线索，不能代替 fetch。评审修改记录不作为契约。
 3. 同时读本地 `prd.md`、原型（`prototypes/` / `assets/`，没有则记缺失），以及上次 baseline/manifest。形成决策项（`ED`/`CM`/`FB`），并写明是否还要改原型。
 4. **STOP**；用户确认接受项后，只写入同意的本地契约 unit / MODULE（含背景与目标）或原型；不改契约展示序号。禁止用本地旧稿再 `push` 盖掉本次飞书手改。
 5. 更新 metadata：`last_synced_*`、`feishu_revision`、`consistency.status=unknown`。若写了本地契约，把同一块「文档状态」**重置为未校验态**（emoji、底色、边框、校验行一起改，不要写成通过）。不跑 `/prd-check`，不写基线。
-6. 若用户还要求飞书与本地一致，那是「同步到飞书」，改走 `/prd-publish`。不要在 reconcile 里直接 push。默认到第 5 步结束。
+6. 写完停住。按 `three-way-sync.md` 的「文档更新后的二次确认」再问是否发布，并说明下一步是 `/prd-publish`。第二次明确同意之前不进入发布。不要在 reconcile 里直接 push。
 
 ### status
 
@@ -298,14 +316,14 @@ push 成功后写 `last_synced_stage=current`，并记录读到的 `feishu_revis
 
 ### rebind
 
-展示旧/新目标 → **STOP 确认** → 更新绑定；重置 sync 标记；在同一块「文档状态」里重置为未校验态（emoji、底色、边框、校验行一起改；XML，`prd-sync:check:v1`）。仍是分开的两块时先合并。本地 `consistency.status=unknown`。本地 `prd.md` 末尾「飞书文档」改成新的 `doc_url`。若要让飞书正文跟上本地，接着走 `/prd-publish`。不要单独 push，也不要把校验留到下一次。
+展示旧/新目标 → **STOP 确认** → 按「同一文档的 wiki 与 docx」解析新地址并更新绑定（`doc_token`、`wiki_token`、展示用 `doc_url` / `feishu_doc`）；重置 sync 标记；在同一块「文档状态」里重置为未校验态（emoji、底色、边框、校验行一起改；XML，`prd-sync:check:v1`）。仍是分开的两块时先合并。本地 `consistency.status=unknown`。本地 `prd.md` 末尾「飞书文档」改成新的展示地址。换绑后停住，按 `three-way-sync.md` 二次确认并引导 `/prd-publish`。不要单独 push，也不要把校验留到下一次。
 
 ## 与工作区命令协作
 
 | 命令 | 关系 |
 |---|---|
 | `/req-new` | 末尾必调 `create` |
-| `/pm-spec` | 默认只改本地。用户说同步到飞书时改走 `/prd-publish`，不在这里 push |
+| `/pm-spec` | 默认只改本地。写完后二次确认，再引导 `/prd-publish`。不在这里 push |
 | `/prd-check` | 内容、对齐、可读性（本技能不替代） |
 | `/prd-publish` | 第 4 步才调用本技能的 push。本技能不得再转回发布 |
 

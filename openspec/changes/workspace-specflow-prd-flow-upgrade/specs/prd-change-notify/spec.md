@@ -34,6 +34,22 @@
 - **WHEN** 本地执行 `/prd-publish`
 - **THEN** 不调用 `notify_spec_published`，也不在本机用 bot profile 发群
 
+### Requirement: 知识库地址与 docx 地址是同一文档
+
+系统 MUST 用 `lark-cli wiki +node-get` 把文档地址解开为正文 `obj_token` 和知识库 `node_token`。`metadata.feishu.doc_token` MUST 是 `obj_token`，正文读写只用它。文档在知识库时，`doc_url`、`feishu_doc` 和 `prd.md` 末尾「飞书文档」MUST 写 `/wiki/<node_token>`，并保存 `wiki_token`。不在知识库时展示 docx 地址，`wiki_token` 为空。找项目卡时 MUST 同时匹配 `wiki_token` 与 `doc_token`；只有后者时只匹配 `doc_token`。wiki 地址解析失败或鉴权失败时 MUST 跳过找卡并写明原因，不得猜测 token。
+
+#### Scenario: 项目卡保存知识库链接
+
+- **WHEN** 项目卡「需求文档」是 `/wiki/<node_token>`，本地绑定的正文 token 是同一文档的 `obj_token`
+- **THEN** 找卡命中这一张
+- **AND** 本地展示地址写成该知识库链接
+
+#### Scenario: 文档不在知识库
+
+- **WHEN** `wiki +node-get` 对 docx 地址失败
+- **THEN** 展示地址保持 docx
+- **AND** 只用 `doc_token` 找卡
+
 ### Requirement: 发布后引导提交代码
 
 `/prd-publish` 成功后，系统 MUST 引导产品把本次需求改动提交到代码仓库。

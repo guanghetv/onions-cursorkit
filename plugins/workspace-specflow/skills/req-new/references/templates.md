@@ -12,8 +12,9 @@ created_at: <YYYY-MM-DD>
 
 # 飞书绑定与同步状态（/prd-feishu-sync 维护）
 feishu:
-  doc_url: null              # 与 feishu_doc 同步
-  doc_token: null
+  doc_url: null              # 展示地址。在知识库时为 /wiki/<node_token>，否则为 /docx/<obj_token>。与 feishu_doc 同步
+  doc_token: null            # 正文 obj_token。docs +fetch / +update 只用它
+  wiki_token: null           # 知识库 node_token。不在知识库时留空
   created_at: null
   last_synced_at: null
   last_synced_stage: null    # skeleton | current | reconcile；旧值 v5/v9 只作历史

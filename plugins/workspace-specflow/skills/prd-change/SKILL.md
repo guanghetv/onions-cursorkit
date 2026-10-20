@@ -33,8 +33,8 @@ meegle workitem query --project-key ruxiao --format json --mql \
 
 0 张、多于 1 张，或这次查询因为字段不能筛选而失败：回复无法匹配。不翻全空间，不换查询条件再试，不猜测变更内容。恰好 1 张：用同一个 `project_key` 再 `workitem get`，确认 `value.group_id` 仍等于 `chat_id`。
 
-3. 匹配到唯一项目卡后，按显示名读取「需求文档」。历史交叉核对 key=`field_38aeca`，以当次字段为准。没有可用文档链接：回复无法匹配，不猜测。
-4. 用 `lark-cli docs +fetch` 读完版本表最后一行和当前 `revision_id`。版本表被截断时不得判断。
+3. 匹配到唯一项目卡后，按显示名读取「需求文档」。历史交叉核对 key=`field_38aeca`，以当次字段为准。没有可用文档链接：回复无法匹配，不猜测。字段里的地址可能是 `/wiki/<node_token>`。先 `lark-cli wiki +node-get --node-token "<url>" --format json`，用返回的 `obj_token` 读正文。命令失败且地址本身是 `/docx/` 或 `/doc/` 时，用 path 最后一段。wiki 地址解析失败：回复无法匹配，不猜测。
+4. 用 `lark-cli docs +fetch --doc <obj_token>` 读完版本表最后一行和当前 `revision_id`。版本表被截断时不得判断。
 5. 最后一行的版本号不是纯数字（空着、`待回读`，或 `5-n` / `9-n` 这类旧稿次编号）：回复无法判断有没有未发布改动。不要把它说成已漂移，也不要猜测改了什么。等这次需求用 `/prd-publish` 写出数字序号后再查。
 6. 最后一行是纯数字时，先分清它是什么。数出版本表里已经填了版本号的行数，记为 N。最后一行等于 N：它是发布序号，不是飞书 revision。最后一行大于 N：旧写法，格子里的数字是追加该行之前的飞书序号。
 7. 发布序号：执行 `lark-cli docs +history-list --doc <文档> --page-size 20`，找到写入「版本号等于这个数字」的那次 `revision_id`，记为基线回读。同一 `revision_id` 去重。当前序号还没出现在已拉取历史里且 `has_more=true` 时继续翻页。没看到当前序号，或找不到写入那一行的历史：不得判定为无未发布改动；找不到那一行时回复无法判断。

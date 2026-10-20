@@ -34,14 +34,29 @@ alwaysApply: true
 - 增量失败时停止并询问，禁止改成整篇覆盖。用户说「整篇重建 / 全文覆盖」也不能执行。
 - 空文档的首次创建不受此限。
 
+## 绑定文档先分流
+
+用户贴了飞书链接时，先按 `prd-feishu-sync` 的「同一文档的 wiki 与 docx」解开，再判断意图。得到的 `obj_token` 等于某个需求的 `doc_token`，或 `node_token` 等于该需求的 `wiki_token`，或等于该需求展示地址里的 token，就是这篇绑定文档。
+
+| 用户在说什么 | 走哪条 |
+|---|---|
+| 同步回来、按飞书改本地、飞书里我已经改过了 | 下一节「飞书先改再写本地」 |
+| 更新需求、改范围、这条先不做了，并带上这篇绑定文档 | 新的产品决定。第一次确认后写入本地 `prd.md`，然后停住，按 `three-way-sync.md` 二次确认再引导 `/prd-publish`。禁止先改飞书正文，再把这次当成拉回 |
+
+`/fs-doc` 只处理排版和措辞。token 已经绑在某个需求上时，禁止用它改需求正文。
+
 ## 飞书先改再写本地
 
-用户贴了飞书链接或正文，要求更新 `prd.md`、原型，或「同步回来」时（不含 XMind 回写）：
+本条只用于拉回：用户贴了飞书链接或正文，要求更新 `prd.md`、原型，或「同步回来 / 按飞书改本地」（不含 XMind 回写，也不含上一节的新决定）：
 
 - 先 Read 插件内 `references/three-way-sync.md`，再 fetch 绑定文档、读本地 `prd.md` 与原型。
 - 聊天粘贴不能代替 `lark-cli docs +fetch`。
 - 用户确认前，禁止改 `prd.md` 或原型，禁止用本地旧稿 `push` 盖掉飞书手改。
-- 确认写回本地后：`consistency.status=unknown`。若写了本地契约，飞书文末「文档状态」重置为未校验态：emoji `📎`、`background-color="light-blue"`、`border-color="blue"`、校验行「未校验」。不要只改文字。
+- 确认写回本地后：`consistency.status=unknown`。若写了本地契约，飞书文末「文档状态」重置为未校验态：emoji `📎`、`background-color="light-blue"`、`border-color="blue"`、校验行「未校验」。不要只改文字。不在这一步跑 `/prd-check`，不写基线。写完停住，按 `three-way-sync.md` 二次确认并引导 `/prd-publish`。
+
+## 发布之外禁止写基线
+
+版本表新行、基线快照、`prd.baseline.revision_id`、把飞书「文档状态」或 `consistency.status` 写成通过，只能由 `/prd-publish` 在没有 critical 之后写入。改正文、拉回、`/fs-doc` 排版时禁止追加版本行，也禁止把校验行写成通过。
 
 ## 飞书评论
 
