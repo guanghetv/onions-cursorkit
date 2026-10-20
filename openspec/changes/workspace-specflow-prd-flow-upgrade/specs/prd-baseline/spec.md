@@ -29,12 +29,14 @@
 - **WHEN** `prd.status` 不是 `confirmed` 且 `/prd-publish` 成功
 - **THEN** 状态变为 `confirmed`
 - **AND** 写入基线快照、飞书版本表新行，以及版本表写入完成之后回读到的 `revision_id`
+- **AND** 版本号写 `1`，变更内容留空。`revision_id` 不写入版本号单元格
 
 #### Scenario: 再次发布
 
 - **WHEN** `prd.status` 已是 `confirmed` 且 `/prd-publish` 再次成功
 - **THEN** 状态仍是 `confirmed`
 - **AND** 基线指针改为新快照、新版本表行和新的 `revision_id`
+- **AND** 版本号在上一次发布序号上加 `1`。变更内容写入相对上一份快照的规则差异，飞书单元格为红色文字
 
 ### Requirement: 漂移时下游读基线
 

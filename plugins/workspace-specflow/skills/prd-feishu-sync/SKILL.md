@@ -69,7 +69,7 @@ description: >-
 
 **读写步骤**
 
-1. 改前：对目标范围 `docs +fetch`，需要定位时用 `--detail with-ids`；优先局部 scope。
+1. 改前：对目标范围 `docs +fetch`，需要定位时用 `--detail with-ids`。定位可以先看局部，比对和写入前必须拿到每个契约 unit 的全文，尤其每个 MODULE 详细说明整格。截断或只剩开头和结尾，视为没读完，停止，不得当成没有差异。`revision_id` 跳号不是插入图片。
 2. 改时：仅 `str_replace` / `block_replace` / `block_insert_after` / `block_delete` /（画板）`docs +whiteboard-update`；内容用 **XML**。表格/callout 内图片**不得**用 `media-insert`（见「图片」硬规则）。
 3. 结构写尽量带精确 `revision`；冲突 → **STOP**（策略 A），重新 fetch 对账后等用户决定；**禁止**改用 `latest` 盲重试，**禁止**整篇 `overwrite`。
 4. 改后：再 fetch；确认目标存在、邻接未误删、表格/画板/callout 结构正常；并跑「写后自检」。
@@ -180,7 +180,7 @@ push 成功后写 `last_synced_stage=current`，并记录读到的 `feishu_revis
 | Mermaid 写入/渲染失败 | **保留旧画板**（若有）+ warning；**禁止**降级为 `<pre>` 后标成功 |
 | Manifest | 记录 `unit → board_token / block_id / mermaid_hash`；hash 不变则跳过 |
 
-保护白名单（普通 `push` 永不碰）：已有 whiteboard、人工插图/评论锚点块。背景与目标按 `/prd-publish` 第 2 步已经做出的决定增量更新，不得整节清空，也不要在发布里再追问一次。已有「评审修改记录」按存量兼容删除，不再保护。「文档状态」不在白名单：契约正文有变更时必须重置为未校验态。例外只有 `/prd-publish` 追加的版本表基线行：这一行不重置，emoji、底色、边框和校验结论保持 `/prd-check` 刚写上的那一态。旧的一致性、可读性块合并进这一块后删除，不再保护。
+保护白名单（普通 `push` 永不碰）：已有 whiteboard、人工插图/评论锚点块。本地 `prd.md` 末尾「飞书文档」不上传，也不参与契约 diff。背景与目标按 `/prd-publish` 第 2 步已经做出的决定增量更新，不得整节清空，也不要在发布里再追问一次。已有「评审修改记录」按存量兼容删除，不再保护。「文档状态」不在白名单：契约正文有变更时必须重置为未校验态。例外只有 `/prd-publish` 追加的版本表基线行：这一行不重置，emoji、底色、边框和校验结论保持 `/prd-check` 刚写上的那一态。旧的一致性、可读性块合并进这一块后删除，不再保护。
 
 ## 图片（硬规则）
 
@@ -265,7 +265,7 @@ push 成功后写 `last_synced_stage=current`，并记录读到的 `feishu_revis
 1. 已有 `doc_token` → 停止，提示 `/prd-publish` 或 `rebind`。不要在这里 push。
 2. 标题用 `metadata.name`。name 里如果还套着 `【】` 或末尾 `PRD` / `prd`，先按 `req-new` Step 2 清洗并写回 `metadata.name`，不改已经建好的目录名。按上文 **XML 骨架** 创建空骨架，文末只放一块未校验态「文档状态」。不创建评审修改记录，也不再单独建同步绑定、校验、可读性、一致性多块。
 3. **`lark-cli docs +create ... --as user --doc-format xml`**（禁止默认 markdown）。
-4. 写回 `metadata.feishu.*` 与 `feishu_doc`；`last_synced_stage=skeleton`；`v9_synced=false`；`consistency.status=unknown`；初始化 manifest。
+4. 写回 `metadata.feishu.*` 与 `feishu_doc`；`last_synced_stage=skeleton`；`v9_synced=false`；`consistency.status=unknown`；初始化 manifest。把 `doc_url` 写到本地 `prd.md` 末尾的「飞书文档」。已有这一节就替换地址，没有就追加。不要把这一节写入飞书。
 5. `+fetch` 跑写后自检；确认校验行存在且无裸 BEGIN/END。
 
 ### push
@@ -298,7 +298,7 @@ push 成功后写 `last_synced_stage=current`，并记录读到的 `feishu_revis
 
 ### rebind
 
-展示旧/新目标 → **STOP 确认** → 更新绑定；重置 sync 标记；在同一块「文档状态」里重置为未校验态（emoji、底色、边框、校验行一起改；XML，`prd-sync:check:v1`）。仍是分开的两块时先合并。本地 `consistency.status=unknown`。若要让飞书正文跟上本地，接着走 `/prd-publish`。不要单独 push，也不要把校验留到下一次。
+展示旧/新目标 → **STOP 确认** → 更新绑定；重置 sync 标记；在同一块「文档状态」里重置为未校验态（emoji、底色、边框、校验行一起改；XML，`prd-sync:check:v1`）。仍是分开的两块时先合并。本地 `consistency.status=unknown`。本地 `prd.md` 末尾「飞书文档」改成新的 `doc_url`。若要让飞书正文跟上本地，接着走 `/prd-publish`。不要单独 push，也不要把校验留到下一次。
 
 ## 与工作区命令协作
 

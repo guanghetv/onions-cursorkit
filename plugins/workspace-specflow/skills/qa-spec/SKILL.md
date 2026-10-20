@@ -36,7 +36,7 @@ description: >-
 
 ### Step 2: 读取需求正文
 
-按 `../../references/three-way-sync.md` 选择正文。未漂移只认两件事：飞书当前 `revision_id` 等于 `prd.baseline.revision_id`，且 `prd.md` 正文与基线快照一致。只多出版本表那一行不算不一致。版本表里的 `R1` 不参与比较。
+按 `../../references/three-way-sync.md` 选择正文。未漂移只认两件事：飞书当前 `revision_id` 等于 `prd.baseline.revision_id`，且 `prd.md` 正文与基线快照一致。只多出版本表那一行不算不一致。版本表里的发布序号不参与比较。
 
 按这个顺序，命中一条就停：
 

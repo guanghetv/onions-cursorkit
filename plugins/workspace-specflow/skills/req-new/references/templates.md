@@ -34,8 +34,9 @@ prd:
   status: pending            # 第一次 /prd-publish 成功后改为 confirmed，之后保持 confirmed
   confirmed_at: null
   baseline:                  # 只由成功的 /prd-publish 前进
-    revision_id: null        # 发布最后一次写完飞书后的回读序号，不是版本表单元格里的 R1
-    row_revision_id: null    # 版本表该行写下的 R1，只给人读，不单独拿来判断漂移
+    revision_id: null        # 发布最后一次写完飞书后的回读序号，不是版本表里的发布序号
+    version: null            # 版本表里的发布序号，第一次成功发布为 1，之后每次 +1
+    row_revision_id: null    # 追加版本行之前的飞书 revision_id，不写入版本表，不拿来显示
     snapshot: null           # snapshots/prd-baseline-YYYY-MM-DD.md
     published_at: null
   risk_precheck:             # /prd-risk 维护；报告正文不写这些字段
@@ -61,7 +62,7 @@ test_spec:
 
 `/req-new` 只写下面这一版。飞书标题和 `metadata.name` 用同一句需求名。目录名从这句按 `SKILL.md` Step 2 清洗，最长 30 字，可以比 name 短。概述用用户原话写成一段，不写成待确认清单。
 
-不要在骨架里预置关键关注、回归范围、Feature List、关联材料、数据观察与发布约束，也不要预置 `MODULE-N`。这些等 `/pm-spec` 确认有内容再加。背景、目标、本次范围只留标题，不写 `-`。不要把版本号、`R1` / `R2` 或技能说明写进正文。飞书文末的「文档状态」只在 `/prd-feishu-sync create` 写入，不放进 `prd.md`。
+不要在骨架里预置关键关注、回归范围、Feature List、关联材料、数据观察与发布约束，也不要预置 `MODULE-N`。这些等 `/pm-spec` 确认有内容再加。背景、目标、本次范围只留标题，不写 `-`。不要把版本号、`R1` / `R2` 或技能说明写进正文。飞书文末的「文档状态」只在 `/prd-feishu-sync create` 写入，不放进 `prd.md`。create 成功后把文档地址追加到 `prd.md` 末尾的「飞书文档」，这一节不上传。
 
 ```markdown
 # <需求名称>

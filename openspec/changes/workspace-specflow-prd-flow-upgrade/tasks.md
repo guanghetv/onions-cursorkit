@@ -35,9 +35,9 @@
 
 ## 4. 产品变更技能
 
-- [x] 4.1 发布成功后由 `/prd-publish` 用当前登录账号 `im +messages-send --as user` 发短消息。群来自项目卡 `group_type.group_id`。无卡、多卡或无 `oc_` 群则跳过且发布仍成功。不建群，不用 bot，不调用 Multica 或 `notify_spec_published`。
-      验证点: 对照 `specs/prd-change-notify/spec.md` 的有群、无群、发送身份、不调用 Multica。
-- [x] 4.2 群内查询由 `prd-change` 按 `chat_id` 反查项目卡。有工作项链接时用该链接的 `project_key` 核对 `group_id`；没有链接时只在 `ruxiao` / `tec_prd` 查一次。0 张、多张或查询失败时不翻全空间。其后用版本表 `R1` 和历史序号判断。旧稿次编号无法判断。多次序号确认不了时不断言。该技能不发布基线，也不注册产品斜杠命令。
+- [x] 4.1 发布成功后由 `/prd-publish` 找群，再 POST 固定的需求更新通知 webhook。找卡使用「迭代需求」的 `type_key`，不用 `tec_prd`。群来自项目卡 `group_type.group_id`。无卡、多卡、无 `oc_` 群或 POST 失败则跳过，且发布仍成功。不建群，本机不 `im +messages-send`，不调用 `notify_spec_published`。
+      验证点: 对照 `specs/prd-change-notify/spec.md` 的有群、无群、只 POST webhook、不在本机发信。
+- [x] 4.2 群内查询由 `prd-change` 按 `chat_id` 反查项目卡。有工作项链接时用该链接的 `project_key` 核对 `group_id`；没有链接时只在 `ruxiao` 的「迭代需求」类型查一次。0 张、多张或查询失败时不翻全空间。发布序号不拿来和 `revision_id` 比，基线回读取写入该版本行的历史序号。旧稿次编号无法判断。多次序号确认不了时不断言。该技能不发布基线，也不注册产品斜杠命令。
       验证点: 走读查询分支的找卡、仅回写、同一次拆号、无法确认、超前、旧编号和无法匹配。
 - [x] 4.3 `/prd-publish` 成功后引导产品提交代码，引导失败不回滚基线。
       验证点: 发布结果文本包含提交引导，且基线字段已经写好。

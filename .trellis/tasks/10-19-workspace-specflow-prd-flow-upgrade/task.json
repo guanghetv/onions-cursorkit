@@ -35,8 +35,8 @@
       "change_path": "openspec/changes/workspace-specflow-prd-flow-upgrade",
       "tier": "3",
       "phase": "implement",
-      "last_action": "技能已按 OpenSpec 改完，待用户走读",
-      "last_action_at": "2026-10-19T12:43:01+08:00"
+      "last_action": "publish 改为 POST 需求更新通知 webhook，未提交",
+      "last_action_at": "2026-10-20T10:40:35+08:00"
     }
   }
 }

@@ -6,14 +6,15 @@
 
 ### Requirement: 发布短通知
 
-`/prd-publish` 成功后，本地产品 Agent MUST 在基线步骤之后立刻用当前登录账号、`lark-cli im +messages-send --as user` 发送短消息。找卡和读群 MUST 使用同一次解析出的 `project_key`；没有工作项链接时才用 `ruxiao`。群 MUST 来自项目卡 `group_type.value.group_id`，且为 `oc_` 前缀。消息只含版本表中的 `R1`、文档链接和变更的 MODULE。MUST NOT 使用 bot，MUST NOT 建群，MUST NOT 调用 `notify_spec_published`。
+`/prd-publish` 成功后，本地产品 Agent MUST 继续按现有规则找项目卡和需求群。找到 `oc_` 前缀的 `group_id` 后，MUST POST `https://multica.yc345.tv/api/webhooks/autopilots/awt_2iYIQNOIX7Ekg5-cqvFjHoYZ7lKKsC4TJRr8owW5WmU`，body 含 `chat_id`、`doc_url`、`change_summary`、`publish_version`、`baseline_revision_id`。MUST NOT 在本机执行 `lark-cli im +messages-send`。找卡和读群 MUST 使用同一次解析出的 `project_key`；没有工作项链接时才用 `ruxiao`。工作项类型 MUST 来自 `workitem meta-types` 里显示名为「迭代需求」的 `type_key`，MUST NOT 把链接路径里的 `tec_prd` 当作类型。MUST NOT 建群，MUST NOT 调用 `notify_spec_published`。POST 失败时跳过发信，基线仍然有效。发布结果 MUST NOT 打印该 URL。
 
 #### Scenario: 已有需求群
 
 - **WHEN** 飞书项目卡存在且能找到需求群
 - **AND** `/prd-publish` 成功
-- **THEN** 群内收到短消息
+- **THEN** 已向需求更新通知 webhook 提交 `chat_id`、文档地址和更新内容
 - **AND** 变更全文仍只在飞书版本表
+- **AND** 群消息由葱明发送，本命令不把它说成已经送达
 
 #### Scenario: 没有群
 
@@ -25,13 +26,13 @@
 #### Scenario: 发送身份
 
 - **WHEN** 需要发送发布短通知
-- **THEN** 命令包含 `--as user`
-- **AND** 不使用 `--as bot`，也不省略 `--as`
+- **THEN** 本机只 POST webhook
+- **AND** 不执行 `lark-cli im +messages-send`
 
-#### Scenario: 不调用 Multica
+#### Scenario: 不走旧通知
 
 - **WHEN** 本地执行 `/prd-publish`
-- **THEN** 不创建 Multica 任务，不调用 Multica 发送通知
+- **THEN** 不调用 `notify_spec_published`，也不在本机用 bot profile 发群
 
 ### Requirement: 发布后引导提交代码
 
@@ -45,27 +46,27 @@
 
 ### Requirement: 群内查询变更
 
-需求群内 `@葱明-multica` 时，查询技能 MUST 用 `chat_id` 找到项目卡和需求文档。消息里已有工作项链接时，MUST 用该链接的 `project_key` 读取 `group_type`，且 `group_id` 必须等于 `chat_id`。没有链接时 MUST 只在 `ruxiao` / `tec_prd` 按 `group_type` 查询一次。0 张、多张或查询失败时 MUST 回复无法匹配，不得翻全空间。版本表最后一行记下的是写入该数字之前的序号 `R1`。查询 MUST 用 `docs +history-list` 按 `revision_id` 去重，判断 `R1` 之后是否还有新的文档序号。该技能 MUST NOT 发布基线或发送发布通知，也不是产品斜杠命令。
+需求群内 `@葱明-multica` 时，查询技能 MUST 用 `chat_id` 找到项目卡和需求文档。消息里已有工作项链接时，MUST 用该链接的 `project_key` 读取 `group_type`，且 `group_id` 必须等于 `chat_id`。没有链接时 MUST 只在 `ruxiao` 按「迭代需求」的 `type_key` 查询一次，MUST NOT 使用 `tec_prd`。0 张、多张或查询失败时 MUST 回复无法匹配，不得翻全空间。版本表最后一行等于已填写版本行数时，它是从 `1` 起的发布序号，MUST NOT 拿它和飞书 `revision_id` 比较；基线回读是 `docs +history-list` 里写入该行的 `revision_id`。最后一行大于已填写行数时，那是旧写法，该数字是追加前序号。查询 MUST 按 `revision_id` 去重，判断基线回读之后是否还有正文编辑。该技能 MUST NOT 发布基线或发送发布通知，也不是产品斜杠命令。
 
 #### Scenario: 只有版本号回写
 
-- **WHEN** 当前 `revision_id` 等于 `R1`，或大于 `R1` 的序号只有一个且当前序号等于这一个
+- **WHEN** 当前 `revision_id` 等于基线回读，或旧写法里等于格子中的追加前序号，或大于基线回读的序号只有一个且当前序号等于这一个
 - **THEN** 回复没有未发布改动
 
 #### Scenario: 同一次追加拆成多个序号
 
-- **WHEN** 大于 `R1` 的序号有多个，且这些历史都是同一次追加版本表
+- **WHEN** 大于基线回读的序号有多个，且这些历史都是同一次追加版本表
 - **THEN** 回复没有未发布改动
 
 #### Scenario: 无法确认多次序号
 
-- **WHEN** 大于 `R1` 的序号有多个，且看不出是不是只有版本表这一次写入
+- **WHEN** 大于基线回读的序号有多个，且看不出是不是只有版本表这一次写入
 - **THEN** 回复序号已经向前走，但不能确定是不是只写了版本表
 - **AND** 不把当前正文说成已发布需求，也不断言存在未发布正文
 
 #### Scenario: revision 已前进
 
-- **WHEN** `R1` 之后还能看到正文编辑，或当前序号比唯一一个更大的序号还大
+- **WHEN** 基线回读之后还能看到正文编辑，或当前序号比唯一一个更大的序号还大
 - **THEN** 回复存在未发布改动
 - **AND** 说明仍以版本表基线为准
 

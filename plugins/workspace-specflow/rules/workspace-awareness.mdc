@@ -28,7 +28,7 @@ globs:
 | `/prd-risk` | 产品 | 产品需求风险预检。发布时按新鲜度自动跑，也可手动重跑 |
 | `/prd-feishu-sync` | 产品 | 创建、回收、状态、换绑。用户说同步到飞书时改走 `/prd-publish`。push 只在发布第 4 步执行 |
 | `/prd-check` | 产品 | 一次检查内容、对齐和可读性。结果回写飞书文末「文档状态」。旧命令 `/prd-consistency-check` 走这里 |
-| `/prd-publish` | 产品 | 用户说「同步到飞书」也走这里。预检 → push → `/prd-check` → 基线，并在成功后发短通知、引导提交代码。无群则跳过，基线仍有效。不调用 Multica |
+| `/prd-publish` | 产品 | 用户说「同步到飞书」也走这里。预检 → push → `/prd-check` → 基线。找到群后 POST 需求更新通知 webhook，由葱明发群，并引导提交代码。无群或 POST 失败则跳过，基线仍有效。本机不发飞书消息 |
 | `/qa-spec` | 测试 | 从需求详情生成测试 spec。未发布或漂移时仍生成并提示 |
 | `/qa-sync-xmind` | 测试 | test-spec.md ↔ XMind |
 | `/qa-execute` | 测试 | test/*.md → Case Flow 快速模式上传 |
@@ -90,7 +90,7 @@ globs:
 1. **需求发起**：`/req-new` → 中文目录 + 文档骨架 + **`/prd-feishu-sync create`**
 2. **原型**：`/pm-proto`。只留核心流程和交互
 3. **写文档**：`/pm-spec` 可多轮，每一轮先按 `references/three-way-sync.md` 提示原型、飞书和 `prd.md` 的差异，默认只改本地。用户明确说同步到飞书时改走 `/prd-publish`，不要只 push。不设稿次，不在这一步 `confirmed`
-4. **发布基线**：`/prd-publish`，口头「同步到飞书」也是这一步。必要时先 `/prd-risk`，再 push，再 `/prd-check`。没有 critical 才写基线，`warn` 可以。第一次成功把 `prd.status=confirmed`，之后只前进快照、版本表和 `revision_id`。随后发短通知并引导提交代码；无群则跳过，基线仍有效
+4. **发布基线**：`/prd-publish`，口头「同步到飞书」也是这一步。必要时先 `/prd-risk`，再 push，再 `/prd-check`。没有 critical 才写基线，`warn` 可以。第一次成功把 `prd.status=confirmed`，之后只前进快照、版本表和 `revision_id`。版本表从 `1` 起，每次加 `1`。飞书没读完，或有一句手改和本地不同，先停。随后把群 ID、文档地址和更新内容 POST 给需求更新通知 webhook，由葱明发群；无群、未配置 webhook 或提交失败则跳过，基线仍有效
 5. **测试 spec**：`/qa-spec` 可与开发并行。门禁只提示
 6. **Case Flow 执行（可选）**：`/qa-execute`
 7. **开发**：已确认且未漂移时读 `prd.md`；已漂移时读基线快照
