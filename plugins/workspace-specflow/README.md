@@ -182,7 +182,7 @@
 
 在 cursorkit 本仓库改插件、评审流程时，只读本目录。缓存里的 `workspace-specflow` 与本目录不一致时，以本目录为准。
 
-Codex 分发包不跟着 Cursor 缓存走。源技能变了之后，在仓库根执行 `python3 codex-plugins/workspace-specflow/scripts/pack.py sync`，再 `check`。未 sync 之前，Codex 的 `source-lock.json` 会落后于本目录。
+当前版本 `2.0.0`。Codex 分发包不跟着 Cursor 缓存走。源技能、`references/` 或 `rules/` 变了之后，在仓库根执行 `python3 codex-plugins/workspace-specflow/scripts/pack.py sync`，再 `check`。未 sync 之前，Codex 的 `source-lock.json` 会落后于本目录。
 
 ---
 

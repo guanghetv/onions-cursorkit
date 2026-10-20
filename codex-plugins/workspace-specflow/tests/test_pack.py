@@ -194,6 +194,13 @@ class BuildTests(unittest.TestCase):
                 packaged_skills,
                 source_skills | {"workspace-code-context"},
             )
+            self.assertTrue(
+                (package_root / "references" / "three-way-sync.md").is_file()
+            )
+            self.assertTrue(
+                (package_root / "rules" / "agent-hard-rules.mdc").is_file()
+            )
+            self.assertFalse((package_root / "commands").exists())
 
     def test_codewiki_appendix_is_added_only_to_registry_aware_skills(self):
         with tempfile.TemporaryDirectory() as temp:
