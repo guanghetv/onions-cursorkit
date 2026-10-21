@@ -12,7 +12,7 @@
     "plugins/workspace-specflow/skills/prd-consistency-check/SKILL.md": "36db71cc2cd1701da784da9cd64930ac04368fe875a960244d1e81ce3d9bc01d",
     "plugins/workspace-specflow/skills/prd-feishu-sync/SKILL.md": "7438687a25bf63fd6d645a53101983f245d538439673dfff5f5e4b0d96fb3e2d",
     "plugins/workspace-specflow/skills/prd-feishu-sync/references/chapter-map.md": "42a82ab15afc626f49a7ca31be4e5d3613bbc25f4fcf235d4247dda432130fab",
-    "plugins/workspace-specflow/skills/prd-publish/SKILL.md": "16bd2dff7eab32bb85e87ac5e22d4584057ffae79dd3c2996e725d903e19d0e1",
+    "plugins/workspace-specflow/skills/prd-publish/SKILL.md": "99dd65d402e11210ffa46d75ea54badca6599dd9ade581f7a0bbc0f40b82887b",
     "plugins/workspace-specflow/skills/prd-risk/SKILL.md": "0af1a6011ee664e7103336118eb90c265412ae3ff065b858310016dd3b8d424d",
     "plugins/workspace-specflow/skills/product-requirement-risk-gate/SKILL.md": "5140ec23ed2e6fef805d3e675ce1b7e30186b1f496e9ea4fb38f51647dca71ab",
     "plugins/workspace-specflow/skills/product-requirement-risk-gate/agents/openai.yaml": "ff8283072a7a8ba24ee1f068f04dbd63a320d87fe85d35a70fb0d558570b58fb",
@@ -36,6 +36,6 @@
     "plugins/workspace-specflow/references/three-way-sync.md": "3ad6c28cb5ed9f8a6c4070803376e0279d98ce074c26daea225ecded27b941c5",
     "plugins/workspace-specflow/references/产品组PRD写作规范.md": "a6d0ff0c4c5a0a66400c0d150b9048a0899b96d425ee2848f664d2f40a1429dd",
     "plugins/workspace-specflow/rules/agent-hard-rules.mdc": "2bc93ab03ca3382b585735c1be1b604a783d77ecc2b85a0f486bfa9857b255ca",
-    "plugins/workspace-specflow/rules/workspace-awareness.mdc": "ff69f307307489b48188c20d5b594dfc27c22cc5489fdd9620a1e0d441cf0f9e"
+    "plugins/workspace-specflow/rules/workspace-awareness.mdc": "9eae54cf878e73b3a3cf68d3d45f23e4fc5190e867d0a7b6b73b724d6f4157f9"
   }
 }

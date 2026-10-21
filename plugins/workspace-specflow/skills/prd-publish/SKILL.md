@@ -35,7 +35,7 @@ description: >-
       - 仅当原来不是 `confirmed` 时写 `prd.confirmed_at`
    6. 若仍有旧字段 `prd.stage` 且取值为 `v5_pending`、`v5_confirmed`、`v9_pending`：改为 `confirmed`。不新增 v5/v9 字段。
    7. 按 `prd-feishu-sync` 的「同一文档的 wiki 与 docx」解析当前文档地址，写回 `doc_token`、`wiki_token` 和展示用 `doc_url` / `feishu_doc`。本地 `prd.md` 末尾「飞书文档」改成展示地址。这一节不写入飞书。解析失败按该节处理，不猜 token。
-8. 基线写好后立刻执行下面的「发短通知」，做完才结束本命令。通知或提交引导失败，不回滚第 7 步，也不把 `prd.status` 改回 `pending`。用户执行本命令即表示同意按模板发到该需求群，不要再追问要不要发。
+8. 基线写好后立刻执行下面的「发短通知」，做完才结束本命令。通知或提交引导失败，不回滚第 7 步，也不把 `prd.status` 改回 `pending`。每次发布都重新查项目卡和群，不得沿用本会话里上次的查询结果。只有一个可发送群时直接发，不要再追问要不要发。有多个可发送群时，只请产品按项目卡名称多选。
 
 ## 发短通知
 
@@ -52,13 +52,13 @@ description: >-
 - 在发布结果里打印 webhook URL 或 token
 - 消息里写变更全文、测试 spec 链接，或套用「产品 SPEC 已发布 · 可进入技术评审」
 
-`meegle workitem get` 最多 3 次（含首次）。鉴权失败、工作项不存在：立刻停止发通知，不要换参数再试，不要 `sleep`。停止发通知不影响已经写好的基线。
+每张卡的 `meegle workitem get` 失败时，这一张可以再试，同一张最多 3 次（含首次）。鉴权失败、工作项不存在：立刻停止发通知，不要换参数再试，不要 `sleep`。停止发通知不影响已经写好的基线。命中多少张就读多少张，不要因为总次数到达 3 就停。
 
 ### 1. 找到项目卡
 
 找卡前先完成第 7 步第 7 点的地址解析。展示地址是 `metadata.feishu.doc_url`。正文 token 是 `doc_token`。知识库节点是 `wiki_token`，没有则为空。群消息里的 `doc_url` 用展示地址。
 
-下面的 `<project_key>` 全程用同一个值。用户本轮给了 `project.feishu.cn` 工作项链接，或 metadata 里已有工作项 ID：从链接解析 `project_key` 和 `work_item_id`，不做下面 1 到 4，直接读群。没有链接时 `project_key` 用 `ruxiao`，再按下面查询。wiki 地址解析失败，或鉴权、网络失败：跳过下面 1 到 4，结果写明原因。docx 地址不在知识库时继续，只用 `doc_token`。
+下面的 `<project_key>` 全程用同一个值。用户本轮给了 `project.feishu.cn` 工作项链接，或 metadata 里已有工作项 ID：只读这一张卡，不做下面 1 到 4 的全文检索。这是按已绑定的卡发通知，不表示同一文档上的其它卡也要通知。没有链接、也没有已保存的工作项 ID 时，`project_key` 用 `ruxiao`，再按下面查询。wiki 地址解析失败，或鉴权、网络失败：跳过下面 1 到 4，结果写明原因。docx 地址不在知识库时继续，只用 `doc_token`。
 
 1. `meegle project search --project-key <project_key>` 确认空间可用。不可用则跳过发消息，写明原因，不要改去搜其它空间。
 2. `meegle workitem meta-types --project-key <project_key> --format json`，取显示名为「迭代需求」的 `type_key`。链接路径里的 `tec_prd` 不是类型。历史交叉核对是 `62a00a85830291949c117b1c`，以当次列表为准。列表里没有这个显示名：跳过发消息，不要改用 `tec_prd`。
@@ -77,20 +77,24 @@ meegle workitem query --project-key <project_key> --format json --mql \
   "SELECT \`work_item_id\`, \`name\`, \`<需求文档 field_key>\` FROM \`<project_key>\`.\`<type_key>\` WHERE \`<需求文档 field_key>\` LIKE '%<doc_token>%'"
 ```
 
-0 张：跳过，结果写「未找到项目卡」。多于 1 张：跳过，列出工作项 ID，不挑一张。恰好 1 张：继续。
+0 张：跳过，结果写「未找到项目卡」。命中之后对每一张卡读群，不要只读第一张。
 
 ### 2. 读取需求群
+
+对每一张命中的卡：
 
 ```bash
 meegle workitem get --work-item-id <id> --project-key <project_key> \
   --fields '["group_type"]' --format json
 ```
 
-从 `work_item_fields` 里 `key=group_type` 的 `value.group_id` 取值。只有 `oc_` 前缀才算有群。空、`auto` 或其它值都算没有群：跳过发消息，结果写「项目卡还没有需求群」。不要补建群。
+从 `work_item_fields` 里 `key=group_type` 的 `value.group_id` 取值。只有 `oc_` 前缀才算有群。空、`auto` 或其它值都算没有群。记下工作项 ID、项目卡名称 `name`，有群时再记下 `chat_id`。同一个 `chat_id` 只保留一次：名称合并到这一条，后面只 POST 一次。不要补建群。
+
+按去重后的 `chat_id` 计数。恰好 1 个：直接 POST，不要再问。多于 1 个：只向产品展示项目卡名称；没有群的卡标成不可选。产品可以多选有群的卡。不选或取消：跳过发通知，基线仍有效。对每个选中且去重后的 `chat_id` 各 POST 一次，正文相同，不要把多个群放进同一次请求。可发送的群是 0 个：跳过发消息；有卡但都没有群时，结果写「项目卡还没有需求群」。
 
 ### 3. 调用需求更新通知 webhook
 
-找到群后直接 POST 这个地址，不要改地址，也不要先查环境变量：
+每个要发的 `chat_id` 单独 POST 这个地址一次，不要改地址，也不要先查环境变量：
 
 `https://multica.yc345.tv/api/webhooks/autopilots/awt_2iYIQNOIX7Ekg5-cqvFjHoYZ7lKKsC4TJRr8owW5WmU`
 
@@ -102,7 +106,7 @@ curl -sS -X POST "https://multica.yc345.tv/api/webhooks/autopilots/awt_2iYIQNOIX
   -d '{"chat_id":"<oc_...>","doc_url":"<feishu.doc_url>","change_summary":"<更新内容>","publish_version":"<发布序号>","baseline_revision_id":"<R2>"}'
 ```
 
-HTTP 2xx：结果写「已提交需求更新通知，由葱明发群」。不要写成群里已经收到。非 2xx 或网络失败：发布仍成功，结果写明状态码或失败原因。不要改用本机 `im +messages-send` 重发。同一 `R2` 的重试可以再 POST 一次，幂等由葱明按 `baseline_revision_id` 处理。
+HTTP 2xx：结果写「已提交需求更新通知，由葱明发群」。不要写成群里已经收到。非 2xx 或网络失败：发布仍成功，结果写明状态码或失败原因。不要改用本机 `im +messages-send` 重发。同一个群的重试可以再 POST 一次，幂等由葱明按 `baseline_revision_id` 和 `chat_id` 处理。不同群不算重复。
 
 ### 4. 引导提交代码
 

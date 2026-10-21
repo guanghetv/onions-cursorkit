@@ -6,7 +6,7 @@
 
 ### Requirement: 发布短通知
 
-`/prd-publish` 成功后，本地产品 Agent MUST 继续按现有规则找项目卡和需求群。找到 `oc_` 前缀的 `group_id` 后，MUST POST `https://multica.yc345.tv/api/webhooks/autopilots/awt_2iYIQNOIX7Ekg5-cqvFjHoYZ7lKKsC4TJRr8owW5WmU`，body 含 `chat_id`、`doc_url`、`change_summary`、`publish_version`、`baseline_revision_id`。MUST NOT 在本机执行 `lark-cli im +messages-send`。找卡和读群 MUST 使用同一次解析出的 `project_key`；没有工作项链接时才用 `ruxiao`。工作项类型 MUST 来自 `workitem meta-types` 里显示名为「迭代需求」的 `type_key`，MUST NOT 把链接路径里的 `tec_prd` 当作类型。MUST NOT 建群，MUST NOT 调用 `notify_spec_published`。POST 失败时跳过发信，基线仍然有效。发布结果 MUST NOT 打印该 URL。
+`/prd-publish` 成功后，本地产品 Agent MUST 重新查找项目卡和需求群，不得沿用本会话里上次的查询结果。每一张命中的卡都要读 `group_id`。只有 `oc_` 前缀算有群。可发送群按 `chat_id` 去重。恰好 1 个时 MUST 直接 POST。多于 1 个时 MUST 只展示项目卡名称供产品多选，没有群的卡不可选；对每个选中且去重后的 `chat_id` 各 POST 一次，正文相同。命中多少张卡就读多少张，不得用总次数 3 次截断。用户本轮给出工作项链接，或 metadata 已有工作项 ID 时，MUST 只读这一张已绑定的卡。POST 地址是 `https://multica.yc345.tv/api/webhooks/autopilots/awt_2iYIQNOIX7Ekg5-cqvFjHoYZ7lKKsC4TJRr8owW5WmU`，body 含 `chat_id`、`doc_url`、`change_summary`、`publish_version`、`baseline_revision_id`。MUST NOT 在本机执行 `lark-cli im +messages-send`。找卡和读群 MUST 使用同一次解析出的 `project_key`；没有工作项链接时才用 `ruxiao`。工作项类型 MUST 来自 `workitem meta-types` 里显示名为「迭代需求」的 `type_key`，MUST NOT 把链接路径里的 `tec_prd` 当作类型。MUST NOT 建群，MUST NOT 调用 `notify_spec_published`。没有群、产品不选或 POST 失败时跳过发信，基线仍然有效。发布结果 MUST NOT 打印该 URL。
 
 #### Scenario: 已有需求群
 
@@ -16,9 +16,16 @@
 - **AND** 变更全文仍只在飞书版本表
 - **AND** 群消息由葱明发送，本命令不把它说成已经送达
 
+#### Scenario: 多个可发送群
+
+- **WHEN** 同一需求文档命中多张项目卡，且其中至少两张有 `oc_` 群
+- **AND** `/prd-publish` 的基线写入已经成功
+- **THEN** 只展示项目卡名称，没有群的卡不可选
+- **AND** 产品多选后，每个选中的群各提交一次 webhook
+
 #### Scenario: 没有群
 
-- **WHEN** 没有项目卡、项目卡多于一张，或 `group_id` 不是 `oc_` 前缀
+- **WHEN** 没有项目卡、命中的卡都没有 `oc_` 群，或产品在多选时不选
 - **AND** `/prd-publish` 的基线写入已经成功
 - **THEN** 跳过群消息，不建群
 - **AND** 发布结果仍为成功
