@@ -25,9 +25,11 @@ description: >-
 
 - 目录名（中文或英文）
 - `metadata.name`、`metadata.id`（slug）
-- `prd.stage`、`prd.v5.status`、`prd.v9.status`、`prd.status`
-- `prd.v5.snapshot`、`prd.v9.snapshot`（如有）
+- `prd.status`、`prd.confirmed_at`
+- `prd.baseline.revision_id`、`prd.baseline.snapshot`、`prd.baseline.published_at`
+- 旧字段 `prd.stage`、`prd.v9.status`、`prd.v9.snapshot` 仅用于映射，不单列成稿次
 - `prd.risk_precheck.last_result` / `last_checked_at`（若有）
+- `consistency.status` / `checked_at`（这是 `/prd-check` 的结论，不是另一套检查）
 - `test_spec.status`
 
 ### Step 2: 输出
@@ -36,14 +38,15 @@ description: >-
 需求进度总览
 
 订单退款流程优化（id: order-refund-flow-opt）
-  PRD 5稿:  confirmed (06-10) → snapshots/prd-v5-2026-06-10.md
+  PRD:     pending
+  基线:    —
   风险预检: 需调整 (2026-09-16T12:00+08:00) → prototypes/prd-risk-precheck.md
-  PRD 9稿:  pending
+  发布前检查: unknown
   测试用例: pending
 
-contract-subject-tree（id: contract-subject-tree）  # 既有英文目录
-  PRD 5稿:  —
-  PRD 9稿:  confirmed (05-20)
+contract-subject-tree（id: contract-subject-tree）
+  PRD:     confirmed (05-20)
+  基线:    revision 681 → snapshots/prd-v9-2026-05-20.md
   测试用例: confirmed
 ```
 
@@ -51,8 +54,10 @@ contract-subject-tree（id: contract-subject-tree）  # 既有英文目录
 
 - 主标识：`name` 或目录名（中文优先）
 - 辅助：`id: <slug>`
-- 5稿/9稿：读 `prd.v5` / `prd.v9`；旧 metadata 无 v5/v9 时仅显示 `prd.status`
+- PRD：按 `references/templates.md` 的「旧稿次怎么读」判断已确认或未确认。不显示 5 稿 / 9 稿
+- 基线：`prd.baseline`，否则回落到 v9/v5 快照。没有 revision 时写「快照仍在，revision 未记录」
 - 风险预检：优先读 `prd.risk_precheck`（结论 + 时间 + 报告路径）；否则若存在 `prototypes/prd-risk-precheck.md` 则列路径与其中 `precheck_result`；都没有则 `—`
+- 发布前检查：读 `consistency.status` 与 `checked_at`。没有该字段时写 `unknown`。这是 `/prd-check` 的结论
 
 ## 约束
 

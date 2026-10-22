@@ -1,39 +1,60 @@
 ---
 name: prd-feishu-sync
 description: >-
-  将工作区需求 prd.md 与飞书文档深度绑定并同步（创建、增量推送、回收对账、状态、换绑）。
-  Use when: 同步 PRD 到飞书、创建飞书 PRD、推送 5稿/9稿、飞书回收、prd-feishu-sync、
-  feishu sync、发布飞书文档、MODULE 行同步。不做一致性结论（那是 prd-consistency-check）。
+  创建飞书需求文档、把飞书手改收回本地、查看绑定、换绑。
+  只有已经处在 /prd-publish 第 4 步时，才用本技能做增量 push。
+  Use when: 创建飞书 PRD、飞书回收、prd-feishu-sync create/reconcile/status/rebind、
+  发布流程中的增量写入。
+  用户说同步到飞书、推到飞书、发布飞书文档时，改走 /prd-publish，不要进入本技能。
 ---
 
 # /prd-feishu-sync — PRD ↔ 飞书同步
 
 ## 定位
 
-- **只做同步与绑定**，不做「能否开工 / 一致性通过」结论。
+- 用户口头说把正文同步到飞书时，改走 `/prd-publish`，不要从本技能开始。`/prd-publish` 第 4 步调用本技能时，只做增量写入，不再转回发布。
+- **写入步骤不做「能否开工 / 一致性通过」结论。**
 - 契约层准源：本地 `prd.md`；飞书为人读 / 评审面。
-- **禁止默认全文 overwrite**。XML 只是内容格式，**不等于**整篇覆盖。
+- **飞书文档已有内容时禁止整篇覆盖**。XML 只是内容格式，**不等于**整篇覆盖。空文档首次创建除外。
 - **飞书写入默认 XML**（`--doc-format xml`）；禁止默认用 markdown 创建/整段推送（会丢 callout/色表等样式）。
-- **增量失败策略 = A**：定位失败 / revision 冲突时 **STOP 询问用户**，禁止静默降级为 `overwrite`。
+- **增量失败策略 = A**：定位失败 / revision 冲突时 **STOP 询问用户**，禁止改成整篇覆盖。
 
 ## 子命令
 
 | 命令 | 用途 |
 |---|---|
-| `create` | `/req-new` 后创建飞书文档并写绑定 |
-| `push` | 契约层增量推送到飞书（`--stage skeleton\|v5\|v9`，可选 `--force`） |
-| `pull` / `reconcile` | 飞书契约/反馈 vs 本地，确认后写 md |
+| `create` | `/req-new` 后创建飞书文档并写绑定。已有文档时不要 push，提示 `/prd-publish` 或 `rebind` |
+| `push` | 只在 `/prd-publish` 第 4 步执行的增量写入。用户直接调用时改走 `/prd-publish`。`--stage` 忽略 |
+| `pull` / `reconcile` | 飞书手改收回本地。这不是发布 |
 | `status` | 绑定、门控、漂移摘要 |
 | `rebind` | 显式更换飞书文档 |
 
-用法：`/prd-feishu-sync push --stage v9`
+用户侧不使用 `/prd-feishu-sync push`。`--stage v5|v9` 会被忽略。
 
 ## 前置
 
 1. 当前为 specs 仓；定位 `requirements/<目录>/`（含 `prd.md`、`metadata.yaml`）。
 2. `lark-cli` 可用；优先 `--as user`。执行前：`lark-cli auth status`；缺 scope 时用 `lark-cli auth login --scope "..." --no-wait --json`，展示 `verification_url` 与二维码，等用户完成后再继续。
 3. 文档操作使用当前 CLI 支持的 `docs +fetch` / `+create` / `+update` 与 drive 上传能力；正文**独立配图**可用 `+media-insert`；**MODULE「图示」列 / 表格单元格 / callout 内禁止** `media-insert`（见「图片」硬规则）。参数以本机 `lark-cli docs --help` 为准。
-4. 除 `create`/`rebind` 外，必须已有 `metadata.feishu.doc_token`（可从 `feishu_doc` URL 解析后写回自愈）。
+4. 除 `create`/`rebind` 外，必须已有 `metadata.feishu.doc_token`。缺失时按「同一文档的 wiki 与 docx」从 `feishu_doc` / `doc_url` 解开后写回，禁止只取 URL path 最后一段当作 `doc_token`（知识库地址会解错）。`doc_token` 是正文 `obj_token`。`docs +fetch` / `+update` 只用它，不用知识库节点 token。
+
+## 同一文档的 wiki 与 docx
+
+知识库里打开的地址是 `/wiki/<node_token>`，正文读写地址是 `/docx/<obj_token>`。同一份文档会同时有这两个 token。项目卡「需求文档」常保存知识库地址，本地创建时先拿到 docx 地址。
+
+绑定、换绑，以及 `/prd-publish` 找项目卡之前，对当前地址执行一次：
+
+```bash
+lark-cli wiki +node-get --node-token "<url>" --format json
+```
+
+host 先转成小写，去掉 query 和 fragment。展示地址沿用这个 host。
+
+- 成功且有 `obj_token`：`doc_token` = `obj_token`。有 `node_token` 时 `wiki_token` = `node_token`，`doc_url` 与 `feishu_doc` 写成 `<host>/wiki/<node_token>`。没有 `node_token` 时 `wiki_token` 留空，展示地址写成 `<host>/docx/<obj_token>`。
+- 命令失败，且输入路径是 `/docx/` 或 `/doc/`：文档不在知识库。`wiki_token` 留空，展示地址保持这条 docx URL，`doc_token` 取 path 最后一段。
+- 命令失败，且输入路径是 `/wiki/`，或鉴权、网络失败：不要猜 token。创建和换绑停止并写明原因。发布找项目卡跳过，结果写明原因。已经在用的 `doc_token` 继续给正文读写。
+
+`doc_url`、`feishu_doc` 和本地 `prd.md` 末尾「飞书文档」写展示地址。这一节不上传。历史目录不批量改，下次创建、换绑或发布时补齐。
 
 ## 写入格式硬规则（XML）
 
@@ -41,7 +62,7 @@ description: >-
 2. **禁止**用 markdown 作为默认创建/推送格式；仅当用户明确要求「导入 Markdown」且接受样式降级时，才可例外，并在输出中标明。
 3. 本地 md 的 `> [!IMPORTANT]` / `> [!NOTE]` / `> [!WARNING]` **必须**转为飞书 `<callout>`（勿原样贴成引用段）。
 4. 表头加 `background-color="light-blue"`；关键关注用红/橙 callout；回归用蓝/灰 callout。
-5. MODULE「说明」**建议**拆成有序列表 / 分节 / 多行结构化块；验收用 checkbox 列表。出现整格纯文字墙时 **warning 告警（不阻断 push）**。
+5. MODULE「详细说明」**建议**拆成有序列表 / 分节 / 多行结构化块，按规则、状态、异常组织。**禁止**为凑格式再写一遍验收 checkbox。出现整格纯文字墙时 **warning 告警（不阻断 push）**。
 6. 复杂流程优先 `<whiteboard type="mermaid">`。**禁止**把已有画板静默降级为 `<pre>`/`<code>` 文本箭头图。
 
 ## 飞书排版与读写规程（本技能内建）
@@ -50,6 +71,8 @@ description: >-
 
 **文风**
 
+- 飞书需求文档正文写法以 `../../references/产品组PRD写作规范.md` 为准（来源 [产品组 PRD 写作规范 V1.0](https://guanghe.feishu.cn/docx/Cqtqd9BxJoUYAFxbXFocp2qYnWd)）。
+- Agent 禁令以 `../../rules/agent-hard-rules.mdc` 为准。更新飞书文档时禁止删除已有评论；查询现有实现时必须先调用 `user-codewiki-mcp` 的 `search_wiki`。
 - 用户可见正文用简体中文；专有名词/代码/路径保持英文。
 - 简洁直接；重要段结论前置（callout 或短结论段）。
 - 多维信息优先表格；流程/分支用 Mermaid 画板；风险与关键点用 callout。
@@ -64,15 +87,15 @@ description: >-
 
 **读写步骤**
 
-1. 改前：对目标范围 `docs +fetch`，需要定位时用 `--detail with-ids`；优先局部 scope。
+1. 改前：对目标范围 `docs +fetch`，需要定位时用 `--detail with-ids`。定位可以先看局部，比对和写入前必须拿到每个契约 unit 的全文，尤其每个 MODULE 详细说明整格。截断或只剩开头和结尾，视为没读完，停止，不得当成没有差异。`revision_id` 跳号不是插入图片。
 2. 改时：仅 `str_replace` / `block_replace` / `block_insert_after` / `block_delete` /（画板）`docs +whiteboard-update`；内容用 **XML**。表格/callout 内图片**不得**用 `media-insert`（见「图片」硬规则）。
-3. 结构写尽量带精确 `revision`；冲突 → **STOP**（策略 A），重新 fetch 对账后等用户决定；**禁止**改用 `latest` 盲重试，**禁止**静默 `overwrite`。
+3. 结构写尽量带精确 `revision`；冲突 → **STOP**（策略 A），重新 fetch 对账后等用户决定；**禁止**改用 `latest` 盲重试，**禁止**整篇 `overwrite`。
 4. 改后：再 fetch；确认目标存在、邻接未误删、表格/画板/callout 结构正常；并跑「写后自检」。
-5. 输出必须列出本次实际使用的 `docs +update --command …` 清单；若含 `overwrite` 且非用户刚确认的重建模式 → **判定失败**。
+5. 输出必须列出本次实际使用的 `docs +update --command …` 清单；文档已有内容时，清单中出现 `overwrite` → **判定失败**。
 
 ## 文档分区（人读优先，禁止裸 BEGIN/END）
 
-顶层顺序固定：**同步绑定 callout → 评审修改记录 → PRD 七章正文 → 可读性告警 callout → 一致性校验 callout**。
+顶层顺序固定：**写作规范正文在前，文末只有一块机器区**。变更记录只留正文里的版本表，由 `/prd-publish` 追加。不再创建「评审修改记录」。正文按写作规范组织；旧七章标题仅兼容。机器区不写「请勿手改」和操作说明。`push` 不写 ✅ / ⚠️ / ❌，也不把这块的 emoji 留成这三枚。
 
 **硬禁令**：禁止在飞书正文出现裸文本  
 `[PRD-SYNC:…:BEGIN]` / `[PRD-SYNC:…:END]`（严重影响可读性）。
@@ -81,147 +104,80 @@ description: >-
 
 | 区 | 人读形态 | 心跳码（区内一行即可） | 定位方式 |
 |---|---|---|---|
-| STATUS | 灰色 callout，标题「同步绑定」 | `prd-sync:status:v1` | callout / 心跳码 |
-| REVIEW | `h2`「评审修改记录」+ 表 | `prd-sync:review:v1` | 标题 / 心跳码 |
-| PRD_BODY | **无外层包裹**；直接七章 | — | chapter-map 语义标题 |
-| READABILITY | 橙/绿 callout，标题「可读性告警」 | `prd-sync:readability:v1` | callout / 心跳码 |
-| CONSISTENCY | 蓝/绿 callout，标题「一致性校验」 | `prd-sync:consistency:v1` | callout / 心跳码 |
+| PRD_BODY | **无外层包裹**；按写作规范正文 | — | chapter-map 语义标题 |
+| DOC_STATUS | 文末一块 callout，标题「文档状态」。emoji、底色、边框一起跟着下表变 | 块内同时有 `prd-sync:status:v1` 与 `prd-sync:check:v1` | 这一块 callout / 两个心跳码 |
+
+改这一块时，emoji、`background-color`、`border-color` 和校验行一起换。不要只改底色，也不要只改校验行文字。
+
+| 态 | emoji | background-color | border-color | 校验行 |
+|---|---|---|---|---|
+| 未校验 | 📎 | light-blue | blue | 未校验 |
+| 通过 | ✅ | light-green | green | ✅ · 日期 · 报告路径 |
+| 告警 | ⚠️ | light-orange | orange | ⚠️ · 日期 · 可读性约 N 处 · 报告路径 |
+| 失败 | ❌ | light-red | red | ❌ · 日期 · 报告路径 |
+
+通过、告警、失败只由 `/prd-check` 写入。`push`、reconcile、rebind 只能写回未校验态。
 
 ### create 时 XML 骨架（示意）
 
+标题等于 `metadata.name`。正文与 `req-new/references/templates.md` 的空骨架一致：需求概述、版本表、背景与目标、需求详情。背景、目标、本次范围只留标题。飞书版本表只有日期、版本号、PM、变更内容，不建「对应 spec / demo」。不写空的关键关注、回归范围、Feature List、关联材料、数据观察，不预置 `MODULE-N`，不写 `-` 占位，不把技能说明写进正文。
+
 ```xml
-<title>【…】PRD</title>
+<title>需求名称</title>
 
-<callout emoji="🔗" background-color="light-gray" border-color="gray">
-  <p><b>同步绑定</b>（机器维护，请勿手改）</p>
-  <p><code>prd-sync:status:v1</code></p>
-  <table>
-    <colgroup><col width="280"/><col width="900"/></colgroup>
-    <thead><tr>
-      <th background-color="light-blue">字段</th>
-      <th background-color="light-blue">值</th>
-    </tr></thead>
-    <tbody>
-      <tr><td>绑定需求</td><td>{metadata.id}</td></tr>
-      <tr><td>本地准源</td><td>requirements/…/prd.md</td></tr>
-      <tr><td>同步阶段</td><td>skeleton</td></tr>
-      <tr><td>说明</td><td>契约准源为本地 prd.md；本区请勿手改</td></tr>
-    </tbody>
-  </table>
-</callout>
+<h2>需求概述</h2>
+<!-- 概述一段 + 需求类型/影响范围表 + 版本表 + 背景与目标（三节只留标题）+ 空的需求详情表。不写 MODULE-N，不写 -。 -->
 
-<h2>评审修改记录</h2>
-<p>人工填写；普通 push 不改写本区。<code>prd-sync:review:v1</code></p>
-<table>
-  <colgroup><col width="200"/><col width="200"/><col width="780"/></colgroup>
-  <thead><tr>
-    <th background-color="light-blue">日期</th>
-    <th background-color="light-blue">评审人</th>
-    <th background-color="light-blue">修改说明</th>
-  </tr></thead>
-  <tbody><tr><td></td><td></td><td></td></tr></tbody>
-</table>
-
-<h2>一、需求概述</h2>
-<!-- …七章骨架；关键关注/回归用 callout；表头着色… -->
-
-<callout emoji="✨" background-color="light-green" border-color="green">
-  <p><b>可读性告警</b>（机器维护，不阻断；请勿手改）</p>
-  <p><code>prd-sync:readability:v1</code></p>
-  <p>状态：✅ 暂无文字墙告警 · —</p>
-  <p>说明：有告警时本区变橙并指向本地报告；细节不写在飞书</p>
-</callout>
-
-<callout emoji="⏳" background-color="light-blue" border-color="blue">
-  <p><b>一致性校验</b>（机器维护，请勿手改）</p>
-  <p><code>prd-sync:consistency:v1</code></p>
-  <p>一致性校验结果：⏳ 未校验 · —</p>
-  <p>报告：—</p>
-  <p>对应 commit：—</p>
-  <p>说明：须执行 /prd-consistency-check 或 /prd-publish 后由机器更新</p>
+<callout emoji="📎" background-color="light-blue" border-color="blue">
+  <p><b>文档状态</b></p>
+  <p><b>同步绑定</b> <code>prd-sync:status:v1</code></p>
+  <p>{metadata.id} · skeleton · requirements/…/prd.md</p>
+  <p><b>校验</b> <code>prd-sync:check:v1</code></p>
+  <p>未校验</p>
 </callout>
 ```
 
-### 可读性告警区（飞书只摘要，细节进本地报告）
+校验结论只由 `/prd-check` 按四态表改 emoji、底色、边框和校验行。可读性明细写在 `prototypes/prd-check-YYYY-MM-DD.md`，飞书只在校验行带摘要。更新时保留同步绑定行。
 
-`push` / `prd-consistency-check` / AI Review（已绑定飞书时）发现文字墙时，**必须**用 XML 局部更新本区：
-
-- **飞书**：只写状态摘要（有/无、条数、日期）+ **详情报告路径**；**禁止**在飞书罗列全部位置/改写建议。
-- **本地报告**：完整位置清单与建议写入 `prototypes/ai-review-v5.md` / `ai-review.md` / `prd-consistency-check-YYYY-MM-DD.md`（谁扫描谁写）。
-
-有告警示例：
-
-```xml
-<callout emoji="⚠️" background-color="light-orange" border-color="orange">
-  <p><b>可读性告警</b>（机器维护，不阻断；请勿手改）</p>
-  <p><code>prd-sync:readability:v1</code></p>
-  <p>状态：⚠️ 发现可读性问题（约 N 处）· YYYY-MM-DD</p>
-  <p>详情报告：prototypes/ai-review.md（或 ai-review-v5.md / prd-consistency-check-日期.md）</p>
-  <p>说明：不阻断 push / confirmed；请在本地报告中查看位置与拆分建议</p>
-</callout>
-```
-
-| 区 | create | push | reconcile 写 md | consistency-check |
+| 行 | create | push | reconcile 写 md | /prd-check |
 |---|---|---|---|---|
-| STATUS | 初始化 callout | 可更新表内同步字段 | 否 | 否 |
-| REVIEW | 空表 | **禁止** | 否 | 否 |
-| PRD_BODY | 七章骨架（XML 富样式） | 仅契约 unit；**不覆盖**已有 `narrative.*` | 契约 → 本地 | 否 |
-| READABILITY | **必须**占位（暂无告警） | **覆盖**扫描结果（有/无告警） | 否 | 若命中 W2 **覆盖**；无 W2 可保持或标暂无 |
-| CONSISTENCY | **必须**「⏳ 未校验」callout | **禁止改写** | 否 | **覆盖**为 ✅/⚠️/❌ |
+| 同步绑定 | 写入 id、阶段、路径 | 可更新这一行 | 否 | 保留，不改结论 |
+| 正文 | 空骨架 | 契约 unit 增量更新 | 契约 → 本地 | 否 |
+| 校验 | **必须**未校验态 | 改了契约正文则重置为未校验态，不写通过或失败 | 写了本地契约则同样重置为未校验态 | **覆盖**为通过、告警或失败态 |
 
-**存量兼容**：若文档仍含旧版裸 `[PRD-SYNC:…:BEGIN/END]`，下次 `push` / `rebind` / check 写区前须 **迁移**：删掉裸 marker，改为上表 callout/标题形态，保留区内业务内容。
+**存量兼容**：若文档仍含旧版裸 `[PRD-SYNC:…:BEGIN/END]`，下次 `push` / `rebind` / check 写区前须迁移：删掉裸 marker。分开的「同步绑定」和「校验」，以及旧的可读性、一致性，下次写入时合并成文末一块「文档状态」，两行心跳码都留下，删掉多余块。已有「评审修改记录」或 `prd-sync:review:v1`：表内有文字时，先把非空行摘进本次 push 结果，再删掉该区；不写入版本表。不改需求正文，禁止整篇覆盖。
 
 ## 章节与同步单元（语义优先）
 
 权威匹配表见 [`references/chapter-map.md`](references/chapter-map.md)。
 
-| sync unit key | 层 | 标题关键词（主匹配） | 常见序号（仅兼容） |
-|---|---|---|---|
-| `contract.overview` | 契约 | 需求概述 | 一、 |
-| `contract.versions` | 契约 | 版本 + 进度/跟踪 | 二、 |
-| `narrative.background` | 讲解 | 背景（非关键关注/回归） | 常 3.1 |
-| `narrative.value` | 讲解 | 价值 | 常 3.2 |
-| `contract.critical` | 契约 | 关键关注 | 常 3.3 |
-| `contract.regression` | 契约 | 回归 | 常 3.4 |
-| `contract.features` | 契约 | Feature / 功能清单 | 四、 |
-| `MODULE-N` | 契约 | `MODULE-\d+` | — |
-| `contract.details` | 契约 | 需求详情 | 五、 |
-| `contract.design` | 契约 | 设计图 | 六、 |
-| `contract.tracking` | 契约 | 埋点 | 七、 |
+完整表见 `references/chapter-map.md`。常用 unit：`contract.overview` / `versions` / `background` / `goal` / `scope` / `critical` / `regression` / `features` / `MODULE-N` / `details` / `materials` / `observability`。旧 `narrative.background` / `narrative.value` 映射为 `contract.background` / `contract.goal`，**不再删除**。
 
 **定位顺序**：unit key → 标题关键词 → 序号兼容。禁止只靠「3.1/3.2」判断。  
-讲解层（`narrative.*`）差异不参与字面对齐；push 不覆盖飞书已有讲解。契约层为权威对齐对象；不得为补洞而改写契约小节的展示序号或前移四～七。
+背景与目标是契约正文的一部分，可按用户确认后的差异增量同步。不得为补洞而改写契约小节的展示序号或前移后续章节。
 
 ## 安全硬约束
 
 违反任一条 → **停止写飞书**。
 
-1. **`push` 禁止 `overwrite`**（清空重建）。唯一例外：用户在本轮对话**明确**要求「整篇重建 / 全文覆盖」并确认风险后；此时须先说明会丢画板/评论/人工段落，再执行。  
-   **增量失败不得自动降级为 overwrite**（策略 A：STOP 询问）。
-2. 禁止静默覆盖：讲解层（`narrative.*`）、REVIEW 区、已有 whiteboard、远端与本地同 MODULE 均相对基线有改动时的任一侧。
+1. **文档已有内容时禁止整篇覆盖**，包括 `overwrite`、清空重写、用新正文替换整篇。即使用户要求「整篇重建 / 全文覆盖」也不执行，改为局部更新。空文档首次 `create` 不受此限。已有飞书评论仍禁止删除；评论或被评论的正文确实要删时，须单独说明并得到用户第二次明确确认。  
+   **增量失败不得降级为 overwrite**（策略 A：STOP 询问）。
+2. 禁止静默覆盖：用户未确认的背景/目标改动、已有 whiteboard、远端与本地同 MODULE 均相对基线有改动时的任一侧。
 3. 禁止把本地绝对路径写入飞书；禁止上传无关图片。
 4. 缺 `space:folder:create` 等必要 scope 时不得静默降级到云盘根目录（除非用户明确同意并在输出标明）。
 5. 未确认不得把 reconcile 结果写入 `prd.md`。
 6. 本技能不得输出「一致性通过 / 可开工」。
 7. **禁止**写入裸 `[PRD-SYNC:…:BEGIN/END]`；**禁止**默认 markdown 写飞书。
 8. **禁止**用 `<pre>`/`代码块箭头图` 顶替或删除已有流程图画板后宣称同步成功。
+9. **禁止**删除已有飞书评论、回复、reaction 和评论锚点。评论内容或被评论正文确实要删除时，须得到用户第二次明确确认；只同意更新或重建不够。
 
-**5/9 门控**
+**稿次**
 
-```text
-push --stage v5:
-  if feishu.v9_synced and not --force → REJECT
-     （提示：/prd-feishu-sync push --stage v5 --force）
-  if --force → 展示 diff → STOP 确认 → last_synced_stage=force_v5
+5 稿 / 9 稿已取消。`push` 不区分 `--stage v5|v9`。传入这些参数时忽略，并在结果里说明。
 
-push --stage v9（含 auto 解析为 v9）:
-  if 本地仍存在 narrative.*（标题含「背景」「价值」的讲解小节，含空壳/指针）
-     → REJECT（不得写入飞书、不得标 v9_synced）
-     提示：先完成 /pm-spec Step 4 瘦身（删讲解层）后再 push v9；
-           草稿期请用 --stage v5 或等瘦身完成
-  else → 允许继续增量 push
-push --stage v9 成功 → v9_synced=true, last_synced_stage=v9
-```
+不因为正文仍有「背景」「价值」而拒绝推送。`feishu.v9_synced=true` 只表示旧数据曾经按 9 稿同步过，不阻止本次 push。
+
+push 成功后写 `last_synced_stage=current`，并记录读到的 `feishu_revision`。这不是基线。基线只由 `/prd-publish` 写入 `prd.baseline`。
 
 ## 增量同步策略（module-row）
 
@@ -231,7 +187,7 @@ push --stage v9 成功 → v9_synced=true, last_synced_stage=v9
 - MODULE：说明拆成列表/分节；表格行级增删改；图示列走下方「图片」硬规则（**禁止**用 `media-insert` 填单元格）。
 - 单元 hash 须含图片文件 sha256，不只比路径。
 - 远端手工改动与本地同 unit 均变 → 报告冲突，不静默覆盖。
-- **定位不到目标 block / revision 冲突 / 局部写入失败** → **STOP**，展示失败 unit 与可选方案（重试 fetch / 用户手工指定 block / 用户确认整篇重建）；**默认不 overwrite**。
+- **定位不到目标 block / revision 冲突 / 局部写入失败** → **STOP**，展示失败 unit 与可选方案（重试 fetch / 用户手工指定 block）。文档已有内容时**禁止**整篇重建或 `overwrite`。
 
 ## 流程图 / 画板保活
 
@@ -242,7 +198,7 @@ push --stage v9 成功 → v9_synced=true, last_synced_stage=v9
 | Mermaid 写入/渲染失败 | **保留旧画板**（若有）+ warning；**禁止**降级为 `<pre>` 后标成功 |
 | Manifest | 记录 `unit → board_token / block_id / mermaid_hash`；hash 不变则跳过 |
 
-保护白名单（普通 `push` 永不碰）：讲解层、REVIEW、CONSISTENCY、已有 whiteboard、人工插图/评论锚点块。
+保护白名单（普通 `push` 永不碰）：已有 whiteboard、人工插图/评论锚点块。本地 `prd.md` 末尾「飞书文档」不上传，也不参与契约 diff。背景与目标按 `/prd-publish` 第 2 步已经做出的决定增量更新，不得整节清空，也不要在发布里再追问一次。已有「评审修改记录」按存量兼容删除，不再保护。「文档状态」不在白名单：契约正文有变更时必须重置为未校验态。例外只有 `/prd-publish` 追加的版本表基线行：这一行不重置，emoji、底色、边框和校验结论保持 `/prd-check` 刚写上的那一态。旧的一致性、可读性块合并进这一块后删除，不再保护。
 
 ## 图片（硬规则）
 
@@ -302,53 +258,57 @@ push --stage v9 成功 → v9_synced=true, last_synced_stage=v9
 **硬项（不通过则不得宣称同步成功）**
 
 1. 全文**无**裸 `[PRD-SYNC:` 字符串。
-2. 存在「同步绑定」callout + `prd-sync:status:v1`；存在「可读性告警」callout + `prd-sync:readability:v1`；存在「一致性校验」callout + `prd-sync:consistency:v1`。
-3. PRD 正文为七章语义结构；关键关注/回归为 **callout**（非 `> [!IMPORTANT]` 原文）。
-4. `create`/`push` 使用了 **XML** 写入路径；且本次 command 清单中**无未授权** `overwrite`。
+2. 文末只有一块「文档状态」callout，同时含 `prd-sync:status:v1` 与 `prd-sync:check:v1`。仍是两块时，本次写入须合并后再结束。旧的可读性、一致性不得残留。
+3. PRD 正文按写作规范语义结构。关键关注、回归只在有内容时出现；出现时必须是 callout，不能留下 `> [!IMPORTANT]` 原文。没有这两节不算失败，不要为了通过检查补空 callout。空骨架没有 `MODULE-N` 不算失败；正文已经写了规则、状态或异常时，缺少 `MODULE-N` 才失败。
+4. `create`/`push` 使用了 **XML** 写入路径；文档已有内容时，command 清单中**不得**出现 `overwrite`。
 5. 若本地/基线存在流程画板：飞书对应位置仍为 whiteboard（不得只剩文本箭头 `<pre>`）。
-6. 本次若扫描到文字墙：飞书 READABILITY 区已更新为**橙色摘要**（含条数 + 报告路径，无明细列表）；若无文字墙：绿色「暂无」。**区缺失或未回写 → 同步失败**（告警本身仍不阻断业务 confirmed）。明细须落在本地报告。
-7. 若本次同步含 MODULE「图示」/表格配图：目标表格片段内 `<img>` 数量 = 预期；**同名图不得残留在表格外**（有则 `block_delete` 后复读）；仅表格外有图、格内无图 → **同步失败**。
+6. 若本次同步含 MODULE「图示」/表格配图：目标表格片段内 `<img>` 数量 = 预期；**同名图不得残留在表格外**（有则 `block_delete` 后复读）；仅表格外有图、格内无图 → **同步失败**。
 
 **告警项（不阻断同步成功）**
 
-- 数据表缺表头底色（对话 warning；可不进 READABILITY 区）。
-- 文字墙：对话可点名；飞书只写摘要+报告路径；**完整位置/建议必须写入本地报告**。
+- 数据表缺表头底色（对话 warning）。
+- 文字墙不在 push 里下结论。完整位置和拆分建议由 `/prd-check` 写入本地报告。
 
 ## 意图路由
 
-1. 识别子命令；未指定则根据话术推断并复述确认。
-2. 执行下列对应流程。
-3. 结束后可建议跑 `/prd-consistency-check` 或 `/prd-publish`（本技能不代替校验）。
+1. 用户要把当前正文同步到飞书、推到飞书，或直接说 `/prd-feishu-sync push`，且当前不是 `/prd-publish` 第 4 步：不要进入 push。改走 `/prd-publish`。
+2. 「同步回来 / 按飞书改本地 / 飞书里我已经改过了」走 reconcile。贴了绑定文档并说更新需求、改范围或这条先不做了，先写入本地 `prd.md`。两条都在写完后按 `three-way-sync.md` 的「文档更新后的二次确认」引导 `/prd-publish`，不在本技能里直接发布。不要先改飞书再拉回。
+3. create、status、rebind 仍在本技能。create 结束后建议 `/pm-spec`，不要问是否发布空骨架。
+4. 已经在 `/prd-publish` 第 4 步：只执行下面的 push 写入。禁止再调用 `/prd-publish`，禁止在本步跑 `/prd-check`。
 
 ---
 
 ### create
 
-1. 已有 `doc_token` → 停止，提示 `push` 或 `rebind`。
-2. 标题用 `metadata.name`；按上文 **XML 骨架** 创建（同步绑定 + 评审区 + 七章 + **可读性告警占位** + 一致性「⏳ 未校验」）。
+1. 已有 `doc_token` → 停止，提示继续 `/pm-spec`，或二次确认后 `/prd-publish`，或 `rebind`。不要在这里 push，也不要直接进入发布。
+2. 标题用 `metadata.name`。name 里如果还套着 `【】` 或末尾 `PRD` / `prd`，先按 `req-new` Step 2 清洗并写回 `metadata.name`，不改已经建好的目录名。按上文 **XML 骨架** 创建空骨架，文末只放一块未校验态「文档状态」。不创建评审修改记录，也不再单独建同步绑定、校验、可读性、一致性多块。
 3. **`lark-cli docs +create ... --as user --doc-format xml`**（禁止默认 markdown）。
-4. 写回 `metadata.feishu.*` 与 `feishu_doc`；`last_synced_stage=skeleton`；`v9_synced=false`；`consistency.status=unknown`；初始化 manifest。
-5. `+fetch` 跑写后自检；确认可读性区与一致性区存在且无裸 BEGIN/END。
+4. 按「同一文档的 wiki 与 docx」解析刚创建的地址，再写回 `metadata.feishu.*`（含 `wiki_token`）与 `feishu_doc`。`last_synced_stage=skeleton`；`v9_synced=false`；`consistency.status=unknown`；初始化 manifest。把展示地址写到本地 `prd.md` 末尾的「飞书文档」。已有这一节就替换地址，没有就追加。不要把这一节写入飞书。
+5. `+fetch` 跑写后自检；确认校验行存在且无裸 BEGIN/END。
 
 ### push
 
-1. 解析 stage：显式参数优先；否则若 `v9_synced` 或 `prd.stage` ∈ {`v9_pending`, `confirmed`} → `v9`，否则 `v5`。
-2. 读本地 `prd.md`，执行 5/9 门控（含 **v9 + 仍有 narrative → REJECT**）。
-3. `+fetch` 飞书（with-ids）；若仍有旧裸 marker → **先迁移**再改契约（迁移也用局部替换，禁止整篇 overwrite）。
-4. 按 chapter-map **语义 unit** 与 MODULE 算 diff；顺带扫描文字墙位置清单；展示变更清单，声明不改 `narrative.*` / REVIEW / **CONSISTENCY** / 未变更 whiteboard → **STOP 确认**。
-5. 按「XML 片段 + 排版规程 + 增量策略」**局部**写入；MODULE「图示」列必须走「图片」硬规则（`block_replace` + `<img …/>`，**禁止** `media-insert`）；本地无讲解层时**不得**清空飞书 `narrative.*`；**不得**改写 CONSISTENCY；**不得** `overwrite`。
-6. 流程/Mermaid：按「画板保活」表执行；写入失败 → **STOP**（策略 A），不得文本顶替后继续。
-7. 任 unit 定位失败 / revision 冲突 → **立即 STOP**，询问用户；未获「整篇重建」确认前不得覆盖。
-8. **更新 READABILITY callout**（有告警 → 橙**摘要**：约 N 处 + 本地报告路径，禁止飞书罗列明细；无 → 绿「暂无」）；区缺失则在一致性 callout **之前** XML 插入。此步失败 → 同步失败（但告警内容本身从不构成业务硬拦）。
-9. 回读 + 写后自检（含 command 清单、飞书可读性区、以及图示位置第 7 条）；更新 `last_synced_*`、`feishu_revision`、manifest；v9 成功则 `v9_synced=true`。  
-   若缺少一致性 callout：用 XML **插入**「⏳ 未校验」占位，不假装已通过。
+0. 当前不是 `/prd-publish` 第 4 步：停止，不写入。改走 `/prd-publish`。
+1. 已经在 `/prd-publish` 第 4 步。忽略 `--stage v5|v9|auto`。发布第 2 步已经决定写入，本步不再追问，禁止再调用 `/prd-publish`，禁止跑 `/prd-check`。不因仍有背景章节而 REJECT。
+2. `+fetch` 飞书（with-ids）；若仍有旧裸 marker → **先迁移**再改契约（迁移也用局部替换，禁止整篇 overwrite）。
+3. 按 chapter-map **语义 unit** 与 MODULE 算 diff。声明不把校验行写成通过或失败，不改未变更的 whiteboard。若存在评审修改记录则按存量兼容删除。背景与目标按发布第 2 步已经确认的范围增量更新。
+4. 按「XML 片段 + 排版规程 + 增量策略」**局部**写入；MODULE「图示」列必须走「图片」硬规则（`block_replace` + `<img …/>`，**禁止** `media-insert`）；**不得**清空背景与目标；**不得**把校验行写成 ✅ / ⚠️ / ❌，也不得把 emoji 留成这三枚；**不得** `overwrite`。本次 push 不上传「对应 spec / demo」，也不写快照路径。飞书版本表还有这一列时，不论其他格子有没有变化，都删掉表头和格子。本地 `prd.md` 保留该列。
+5. 流程/Mermaid：按「画板保活」表执行；写入失败 → **STOP**（策略 A），不得文本顶替后继续。
+6. 任 unit 定位失败 / revision 冲突 → **立即 STOP**，询问用户。文档已有内容时不得整篇覆盖。
+7. 本次若改了契约正文：在同一块「文档状态」里重置为未校验态（emoji、底色、边框、校验行一起改），`metadata.consistency.status=unknown`。同步绑定行保留。若仍是分开的两块，或还有旧的可读性、一致性，先合并成这一块再重置。没有这块则在文末插入。机器区若仍在正文前，本步一并移到文末。不在本步扫描文字墙。
+8. 回读 + 写后自检（含 command 清单，以及图示位置）；更新 `last_synced_*`、`feishu_revision`、manifest；`last_synced_stage=current`。不因本次 push 把 `v9_synced` 设为 true，也不写 `prd.baseline`。  
+   不得把校验行写成已通过。
 
 ### pull / reconcile
 
-1. fetch 飞书契约区与可选评论/REVIEW。
-2. 三方：当前 Git prd、上次 baseline/manifest、当前飞书契约 → 决策项（`ED`/`CM`/`FB`）。
-3. **STOP**；用户确认接受项后，仅写入本地**契约** unit / MODULE；**不写** `narrative.*` 进 md；不改契约展示序号。
-4. 更新 metadata；建议再 `push` 对齐镜像（XML 富样式）。
+飞书 → 本地的正路，只用于拉回。用户只贴飞书链接、说「同步回来 / 按飞书改本地」且未点名本命令时，也按本节执行，不要整篇覆盖 `prd.md`。绑定文档上的新决定不走本节。
+
+1. **Read** `../../references/three-way-sync.md`，并按其中「飞书先改、贴回工作区」执行。
+2. 用绑定 `doc_token` 做 `docs +fetch`（契约区与可选评论）。聊天粘贴的正文只当线索，不能代替 fetch。评审修改记录不作为契约。
+3. 同时读本地 `prd.md`、原型（`prototypes/` / `assets/`，没有则记缺失），以及上次 baseline/manifest。形成决策项（`ED`/`CM`/`FB`），并写明是否还要改原型。
+4. **STOP**；用户确认接受项后，只写入同意的本地契约 unit / MODULE（含背景与目标）或原型；不改契约展示序号。禁止用本地旧稿再 `push` 盖掉本次飞书手改。写回版本表时不追加版本行，并保留本地「对应 spec / demo」：按版本号对上已有行的快照路径。禁止因为飞书没有这一列就删掉本地表头或已有路径。
+5. 更新 metadata：`last_synced_*`、`feishu_revision`、`consistency.status=unknown`。若写了本地契约，把同一块「文档状态」**重置为未校验态**（emoji、底色、边框、校验行一起改，不要写成通过）。不跑 `/prd-check`，不写基线。
+6. 写完停住。按 `three-way-sync.md` 的「文档更新后的二次确认」再问是否发布，并说明下一步是 `/prd-publish`。第二次明确同意之前不进入发布。不要在 reconcile 里直接 push。
 
 ### status
 
@@ -356,18 +316,18 @@ push --stage v9 成功 → v9_synced=true, last_synced_stage=v9
 
 ### rebind
 
-展示旧/新目标 → **STOP 确认** → 更新绑定；重置 sync 标记；将一致性区重置为「⏳ 未校验」callout（XML）；本地 `consistency.status=unknown`；提示全量 `push` 后再 `/prd-consistency-check`。
+展示旧/新目标 → **STOP 确认** → 按「同一文档的 wiki 与 docx」解析新地址并更新绑定（`doc_token`、`wiki_token`、展示用 `doc_url` / `feishu_doc`）；重置 sync 标记；在同一块「文档状态」里重置为未校验态（emoji、底色、边框、校验行一起改；XML，`prd-sync:check:v1`）。仍是分开的两块时先合并。本地 `consistency.status=unknown`。本地 `prd.md` 末尾「飞书文档」改成新的展示地址。换绑后停住，按 `three-way-sync.md` 二次确认并引导 `/prd-publish`。不要单独 push，也不要把校验留到下一次。
 
 ## 与工作区命令协作
 
 | 命令 | 关系 |
 |---|---|
 | `/req-new` | 末尾必调 `create` |
-| `/pm-spec-5` / `/pm-spec` | 确认后按门控 `push` |
-| `/prd-consistency-check` | 一致性校验（本技能不替代） |
-| `/prd-publish` | 编排 sync → check |
+| `/pm-spec` | 默认只改本地。写完后二次确认，再引导 `/prd-publish`。不在这里 push |
+| `/prd-check` | 内容、对齐、可读性（本技能不替代） |
+| `/prd-publish` | 第 4 步才调用本技能的 push。本技能不得再转回发布 |
 
 ## 输出
 
-子命令、目标文档、是否真实写入、是否 XML（格式）、**实际 command 清单**、变更 unit、是否触碰画板、**可读性告警（飞书已写/条数）**、门控结果、写后自检、失败项、建议下一步。  
-若因策略 A 停下：明确写出卡住的 unit、原因、请用户选「重试局部 / 指定 block / 确认整篇重建」。
+子命令、目标文档、是否真实写入、是否 XML（格式）、**实际 command 清单**、变更 unit、是否触碰画板、校验行是否仍为「未校验」、门控结果、写后自检、失败项。处在 `/prd-publish` 第 4 步时，把结果交回发布流程，不要再建议发布。  
+若因策略 A 停下：明确写出卡住的 unit、原因、请用户选「重试局部 / 指定 block」。文档已有内容时不提供整篇覆盖。

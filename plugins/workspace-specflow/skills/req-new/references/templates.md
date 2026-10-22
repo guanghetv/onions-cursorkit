@@ -12,37 +12,34 @@ created_at: <YYYY-MM-DD>
 
 # 飞书绑定与同步状态（/prd-feishu-sync 维护）
 feishu:
-  doc_url: null              # 与 feishu_doc 同步
-  doc_token: null
+  doc_url: null              # 展示地址。在知识库时为 /wiki/<node_token>，否则为 /docx/<obj_token>。与 feishu_doc 同步
+  doc_token: null            # 正文 obj_token。docs +fetch / +update 只用它
+  wiki_token: null           # 知识库 node_token。不在知识库时留空
   created_at: null
   last_synced_at: null
-  last_synced_stage: null    # skeleton | v5 | v9 | reconcile | force_v5
+  last_synced_stage: null    # skeleton | current | reconcile；旧值 v5/v9 只作历史
   last_synced_commit: null
-  feishu_revision: null
-  v9_synced: false           # true 后默认不再 push v5，除非 --force
-  narrative_owned_by: feishu # 讲解层（narrative.*：背景/价值）归属飞书
+  feishu_revision: null      # 最近一次同步读到的飞书 revision_id，不是基线
+  v9_synced: false           # 旧字段。true 只表示曾经按 9 稿同步过，不再阻止 push
 
-# 契约层一致性校验（/prd-consistency-check 维护；飞书「一致性校验」callout 同步展示）
-# create 后 status=unknown，飞书显示「⏳ 未校验」；check 后覆盖为 pass|warn|fail（XML）
+# /prd-check 的结论。字段名保持 consistency，供已有目录和 /qa-spec 读取；不要另写 prd.check
+# create 后 status=unknown。飞书文末只有一块「文档状态」，其中 prd-sync:check:v1 显示「未校验」；检查后覆盖为 pass|warn|fail
 consistency:
   status: unknown            # unknown | pass | warn | fail
   checked_at: null
-  report_path: null          # 如 prototypes/prd-consistency-check-YYYY-MM-DD.md
+  report_path: null          # 如 prototypes/prd-check-YYYY-MM-DD.md
   source_commit: null
 
 
 prd:
-  stage: v5_pending          # v5_pending | v5_confirmed | v9_pending（/pm-spec Step4 瘦身后写入）| confirmed
-  status: pending            # 仅 9稿 confirmed 后 = confirmed
+  status: pending            # 第一次 /prd-publish 成功后改为 confirmed，之后保持 confirmed
   confirmed_at: null
-  v5:
-    status: pending
-    confirmed_at: null
-    snapshot: null
-  v9:
-    status: pending
-    confirmed_at: null
-    snapshot: null
+  baseline:                  # 只由成功的 /prd-publish 前进
+    revision_id: null        # 发布最后一次写完飞书后的回读序号，不是版本表里的发布序号
+    version: null            # 版本表里的发布序号，第一次成功发布为 1，之后每次 +1
+    row_revision_id: null    # 追加版本行之前的飞书 revision_id，不写入版本表，不拿来显示
+    snapshot: null           # snapshots/prd-baseline-YYYY-MM-DD.md
+    published_at: null
   risk_precheck:             # /prd-risk 维护；报告正文不写这些字段
     last_result: null        # 规则预检通过 | 待补信息 | 需调整
     last_checked_at: null
@@ -53,99 +50,52 @@ test_spec:
   confirmed_at: null
 ```
 
-## prd.md（飞书七章空骨架）
+## 旧稿次怎么读
 
-Agent 在 `/req-new` 时从飞书标题或用户输入补齐占位。对齐模板：https://guanghe.feishu.cn/docx/S38Id4fxAofdz8xsWCVcRkHjnHg
+新建需求不再写 `prd.stage`、`prd.v5`、`prd.v9`。读到旧目录时：
+
+- 已确认：`prd.status=confirmed`，或 `prd.stage=confirmed`，或 `prd.v9.status=confirmed`
+- 基线快照：`prd.baseline.snapshot`，否则 `prd.v9.snapshot`，否则 `snapshots/` 里最新的 `prd-v9-*.md`，再否则最新的 `prd-v5-*.md`
+- 基线 revision：`prd.baseline.revision_id`。旧目录没有该字段时，不把当前飞书正文当成已发布基线
+
+
+## prd.md（空骨架）
+
+`/req-new` 只写下面这一版。飞书标题和 `metadata.name` 用同一句需求名。目录名从这句按 `SKILL.md` Step 2 清洗，最长 30 字，可以比 name 短。概述用用户原话写成一段，不写成待确认清单。
+
+不要在骨架里预置关键关注、回归范围、Feature List、关联材料、数据观察与发布约束，也不要预置 `MODULE-N`。这些等 `/pm-spec` 确认有内容再加。背景、目标、本次范围只留标题，不写 `-`。不要把版本号、`R1` / `R2` 或技能说明写进正文。下面代码块是本地 `prd.md`，保留「对应 spec / demo」。飞书空骨架的版本表只有前四列，不写这一列，也不写快照路径。飞书文末的「文档状态」只在 `/prd-feishu-sync create` 写入，不放进 `prd.md`。create 成功后把文档地址追加到 `prd.md` 末尾的「飞书文档」，这一节不上传。
 
 ```markdown
-# 【功能名称】PRD
+# <需求名称>
 
-## 一、需求概述
+## 需求概述
 
 | 项目 | 内容 |
 |------|------|
-| 当前阶段 | 5稿 |
 | 需求类型 |  |
 | 影响范围 |  |
-| 原型情况 |  |
-| 建议阅读顺序 |  |
 
-用一段话讲清楚：本次需求做什么、给谁用、在哪个场景使用、解决什么问题、上线后希望达到什么效果。
+<谁在什么场景遇到什么问题，本次要改变什么。用用户原话写一段。>
 
-> 示例：本需求在【系统/页面】新增【功能名称】，用于【目标用户】在【业务场景】下完成【核心动作】，解决当前【痛点问题】，提升【效率/体验/转化/管理能力】。
-
-## 二、版本及进度跟踪
+## 版本及进度跟踪
 
 | 日期 | 版本号 | PM | 变更内容 | 对应 spec / demo |
 |------|--------|-----|----------|------------------|
 |  |  |  |  |  |
 
-## 三、背景和价值
+## 背景与目标
 
-> 下列小节标题含展示序号仅为飞书模板兼容；sync / 瘦身 / check **按标题关键词 + unit key** 定位（见 `prd-feishu-sync/references/chapter-map.md`）。9 稿确认时按语义删除「背景」「价值」整节。
+### 背景
 
-### 3.1 背景
+### 目标
 
-- 当前现状：
-- 当前问题：
-- 影响范围：
+### 本次范围
 
-### 3.2 价值
+## 需求详情
 
-- 对用户的价值：
-- 对业务的价值：
-- 对内部协作/运营/交付的价值：
-
-### 3.3 关键关注
-
-> [!IMPORTANT]
-> - 
-
-### 3.4 回归范围
-
-> [!NOTE]
-> - **需回归**：
-> - **不纳入本次回归**：
-
-## 四、需求 Feature List
-
-| Feature | 功能点 | 需求说明 | 优先级 | MODULE | 备注 |
-|---------|--------|----------|--------|--------|------|
-| Feature 1 |  |  | P0 | MODULE-1 |  |
-
-## 五、需求详情说明
-
-### MODULE-1: <待定> [新增]
-
-| 模块/页面 | 图示 | 说明 |
+| 功能模块 | 图示 | 详细说明 |
 |-----------|------|------|
-|  |  | 1. 【功能说明】<br/>a. <br/>2. 【交互说明】<br/>a. <br/>3. 【补充规则】<br/>a.  |
-
-## 六、设计图地址
-
-| 类型 | 地址 | 说明 |
-|------|------|------|
-| 设计稿 |  |  |
-| 原型/demo |  |  |
-| 评审截图/录屏 |  |  |
-
-## 七、埋点需求
-
-本需求无埋点需求
-
-### 7.1 核心指标
-
-- 
-
-### 7.2 事件埋点
-
-| 事件名 | 触发时机 | 参数 | 备注 |
-|--------|----------|------|------|
-|  |  |  |  |
-
-### 7.3 漏斗/分析口径
-
-1. 
+|  |  |  |
 ```
 
 ## test/test-spec.md（空模板）

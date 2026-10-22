@@ -17,7 +17,10 @@ from urllib.parse import urlsplit
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = Path(__file__).resolve().parents[3]
-SOURCE_SKILLS = REPO_ROOT / "plugins" / "workspace-specflow" / "skills"
+SOURCE_PLUGIN = REPO_ROOT / "plugins" / "workspace-specflow"
+SOURCE_SKILLS = SOURCE_PLUGIN / "skills"
+SOURCE_REFERENCES = SOURCE_PLUGIN / "references"
+SOURCE_RULES = SOURCE_PLUGIN / "rules"
 SOURCE_LOCK = PLUGIN_ROOT / "source-lock.json"
 MANIFEST = PLUGIN_ROOT / ".codex-plugin" / "plugin.json"
 README = PLUGIN_ROOT / "README.md"
@@ -107,15 +110,18 @@ def sha256(path: Path) -> str:
 
 
 def make_source_lock() -> dict:
-    if not SOURCE_SKILLS.is_dir():
-        raise FileNotFoundError(f"源技能目录不存在: {SOURCE_SKILLS}")
+    roots = (SOURCE_SKILLS, SOURCE_REFERENCES, SOURCE_RULES)
+    for root in roots:
+        if not root.is_dir():
+            raise FileNotFoundError(f"源目录不存在: {root}")
     files = {
         path.relative_to(REPO_ROOT).as_posix(): sha256(path)
-        for path in iter_files(SOURCE_SKILLS)
+        for root in roots
+        for path in iter_files(root)
     }
     return {
         "version": 1,
-        "source": SOURCE_SKILLS.relative_to(REPO_ROOT).as_posix(),
+        "source": SOURCE_PLUGIN.relative_to(REPO_ROOT).as_posix(),
         "files": files,
     }
 
@@ -251,6 +257,8 @@ def build_package(work_dir: Path) -> Path:
             if destination.exists():
                 raise ValueError(f"Codex 适配 skill 与源 skill 重名: {adapter_skill.name}")
             _copy_tree(adapter_skill, destination, ADAPTER_SKILLS)
+    _copy_tree(SOURCE_REFERENCES, package_root / "references", SOURCE_REFERENCES)
+    _copy_tree(SOURCE_RULES, package_root / "rules", SOURCE_RULES)
     return package_root
 
 

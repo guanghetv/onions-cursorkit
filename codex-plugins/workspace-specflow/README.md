@@ -12,9 +12,9 @@ python3 codex-plugins/workspace-specflow/scripts/pack.py check
 python3 codex-plugins/workspace-specflow/scripts/pack.py pack
 ```
 
-默认产物为 `codex-plugins/workspace-specflow/dist/workspace-specflow.zip`。ZIP 自包含可运行资源，但不包含维护用的 `scripts/pack.py`、测试或源锁文件。
+当前版本 `2.0.1`。默认产物为 `codex-plugins/workspace-specflow/dist/workspace-specflow.zip`。ZIP 包含 `.codex-plugin/`、`skills/`、`references/`、`rules/` 和本 README，这样 skill 里的 `../../references/`、`../../rules/` 能在包内读到。不包含 `commands/`、`scripts/pack.py`、测试或源锁文件。
 
-源 skill 变化后，`check` 会因 `source-lock.json` 漂移而失败；先审阅变化，再执行 `sync` 更新锁。
+源 skill、`references/` 或 `rules/` 变化后，`check` 会因 `source-lock.json` 漂移而失败；先审阅变化，再执行 `sync` 更新锁。
 
 ## 安装
 
@@ -25,7 +25,7 @@ Codex CLI 当前不直接从 ZIP 安装插件。需要 CLI 管理时，应先把
 ## 依赖
 
 - CodeWiki MCP：跨仓代码检索首选；认证由目标 Codex 环境管理，本包不内置凭证。
-- brainstorming skill：`pm-proto`、`pm-spec-5`、`pm-spec` 和 `qa-spec` 的既有流程依赖。
+- brainstorming skill：`pm-proto`、`pm-spec` 和 `qa-spec` 的既有流程依赖。稿次已取消，不再有 `pm-spec-5`。
 - `lark-cli`、XMind MCP、Python、`curl`：按具体 workspace-specflow skill 的前置条件安装。
 
 缺少可选依赖时必须按对应 skill 的停止或降级规则处理，不能假装步骤已完成。

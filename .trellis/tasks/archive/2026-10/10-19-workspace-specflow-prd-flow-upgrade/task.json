@@ -1,0 +1,42 @@
+{
+  "id": "workspace-specflow-prd-flow-upgrade",
+  "name": "workspace-specflow-prd-flow-upgrade",
+  "title": "产品工作区插件优化",
+  "description": "",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "wenli",
+  "assignee": "wenli",
+  "createdAt": "2026-10-19",
+  "completedAt": "2026-10-22",
+  "branch": "feat/140-产品工作区插件优化方案-m-7124603134",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "10-19-prd-baseline",
+    "10-19-prd-three-way-sync",
+    "10-19-prd-writing-spec",
+    "10-19-prd-change-skill",
+    "10-19-prd-proto-core"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "onion": {
+      "version": 1,
+      "change_id": "workspace-specflow-prd-flow-upgrade",
+      "change_path": "openspec/changes/workspace-specflow-prd-flow-upgrade",
+      "tier": "3",
+      "phase": "finish",
+      "last_action": "2.0.1 已发布，OpenSpec 已归档",
+      "last_action_at": "2026-10-22T11:20:00+08:00"
+    }
+  }
+}
