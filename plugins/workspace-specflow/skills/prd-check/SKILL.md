@@ -52,14 +52,14 @@ description: >-
 | C4 | Feature 清单中的 MODULE 列与详情中的 MODULE-N 一致 |
 | C5 | 进开发前：各 MODULE 意图一致（允许措辞差）。评审前降为 warning |
 | C6 | 契约展示序号未为「补洞」而重排。存在背景与目标章节不是失败 |
-| C7 | 相对 last_synced 无未推送契约改动。两端都有、且 `feishu.feishu_revision` 已记到发布回读 `R2` 的版本表基线行，不算未推送 |
+| C7 | 相对 last_synced 无未推送契约改动。两端都有、且 `feishu.feishu_revision` 已记到发布回读 `R2` 的版本表基线行，不算未推送。正文上仅多出或少了 `<span text-color="red">` 也不算未推送 |
 
 `/prd-publish` 里调用时，阶段是进开发前，C5 与 C6 为 critical。单独自检且用户说明仍在评审前时，C5 降为 warning。
 
 ## 流程
 
 1. 确认需求目录。按 `../../references/three-way-sync.md` 区分草稿超前和另一端多出来的内容。另一端多出来的内容写进检查结果，不因为本地只是超前就先停下来。无 token → C1 fail，提示先 `/prd-feishu-sync create`。
-2. 完整读本地 `prd.md`。`lark-cli docs +fetch` 读飞书，每个 MODULE 详细说明整格读完。优先 user；失败则标明，进开发前视为未通过。中间被截掉、只剩开头和结尾，C2 失败，不得写成通过。某一句规则和本地不同，C2 失败，报告里并列两边原句。本地末尾「飞书文档」不参与对齐。版本表「对应 spec / demo」只在本地，飞书没有这一列不算不对齐。
+2. 完整读本地 `prd.md`。`lark-cli docs +fetch` 读飞书，每个 MODULE 详细说明整格读完。优先 user；失败则标明，进开发前视为未通过。中间被截掉、只剩开头和结尾，C2 失败，不得写成通过。某一句规则和本地不同，C2 失败，报告里并列两边原句。比对前去掉飞书里的 `<span text-color="red">` 和对应 `</span>`。包住的文字与本地相同，只是已发布版本更新的标红，C2 通过，不要要求改 `prd.md`，也不要把标红写成内容质量问题。本地末尾「飞书文档」不参与对齐。版本表「对应 spec / demo」只在本地，飞书没有这一列不算不对齐。
 3. 按写作规范看内容质量，按 chapter-map 做两端对齐，并扫描文字墙。
 4. 缺少旧式验收 checklist，但需求详情里的规则可判断时，不得因此判失败。用户没有明确保留时，残留未确认的 `[待定]` 视为阻断。
 5. 写入 `prototypes/prd-check-YYYY-MM-DD.md`（同日覆盖）。报告含 rubric 要求的评审范围、可开工结论、总分、可读性告警明细，以及逐条 C/W 证据。证据写 unit key 和命中标题。
