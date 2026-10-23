@@ -12,7 +12,7 @@ python3 codex-plugins/workspace-specflow/scripts/pack.py check
 python3 codex-plugins/workspace-specflow/scripts/pack.py pack
 ```
 
-当前版本 `2.0.2`。默认产物为 `codex-plugins/workspace-specflow/dist/workspace-specflow.zip`。ZIP 包含 `.codex-plugin/`、`skills/`、`references/`、`rules/` 和本 README，这样 skill 里的 `../../references/`、`../../rules/` 能在包内读到。不包含 `commands/`、`scripts/pack.py`、测试或源锁文件。
+当前版本 `2.0.3`。默认产物为 `codex-plugins/workspace-specflow/dist/workspace-specflow.zip`。ZIP 包含 `.codex-plugin/`、`skills/`、`references/`、`rules/` 和本 README，这样 skill 里的 `../../references/`、`../../rules/` 能在包内读到。不包含 `commands/`、`scripts/pack.py`、测试或源锁文件。
 
 源 skill、`references/` 或 `rules/` 变化后，`check` 会因 `source-lock.json` 漂移而失败；先审阅变化，再执行 `sync` 更新锁。
 
