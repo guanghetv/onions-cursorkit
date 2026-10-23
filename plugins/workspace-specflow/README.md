@@ -37,7 +37,7 @@
 | 产品需求风险预检 | `/prd-risk` | 报告落 `prototypes/prd-risk-precheck.md`。发布时按新鲜度自动跑；「需调整」阻止发布，「待补信息」可继续 |
 | 飞书同步 | `/prd-feishu-sync` | create / reconcile / status / rebind。用户说同步到飞书时不走这里，改走 `/prd-publish` |
 | 发布前检查 | `/prd-check` | 内容、对齐、可读性一次完成。旧命令 `/prd-consistency-check` 走这里 |
-| 发布基线 | `/prd-publish` | 本地已写完且用户第二次确认发布，或单独说「同步到飞书」时走这里。预检 → push → `/prd-check` → 快照、版本表、`revision_id`，然后发短通知并引导提交代码。第一次成功才 `confirmed`。无群时发布仍成功 |
+| 发布基线 | `/prd-publish` | 本地已写完且用户第二次确认发布，或单独说「同步到飞书」时走这里。预检 → push → `/prd-check` → 快照、版本表、`revision_id`，然后发短通知并引导提交代码。第一次成功才 `confirmed`。再次发布时，飞书里属于版本更新的正文和版本表变更内容都标红，并在后续发布中保留。无群时发布仍成功 |
 | 看进度 | `/req-status` | 是否已确认、基线 revision、测试状态 |
 
 **典型顺序**：`/req-new` → `/pm-proto` → `/pm-spec`（可多轮）→ `/prd-publish`。
@@ -182,7 +182,7 @@
 
 在 cursorkit 本仓库改插件、评审流程时，只读本目录。缓存里的 `workspace-specflow` 与本目录不一致时，以本目录为准。
 
-当前版本 `2.0.1`。Codex 分发包不跟着 Cursor 缓存走。源技能、`references/` 或 `rules/` 变了之后，在仓库根执行 `python3 codex-plugins/workspace-specflow/scripts/pack.py sync`，再 `check`。未 sync 之前，Codex 的 `source-lock.json` 会落后于本目录。
+当前版本 `2.0.2`。Codex 分发包不跟着 Cursor 缓存走。源技能、`references/` 或 `rules/` 变了之后，在仓库根执行 `python3 codex-plugins/workspace-specflow/scripts/pack.py sync`，再 `check`。未 sync 之前，Codex 的 `source-lock.json` 会落后于本目录。
 
 ---
 

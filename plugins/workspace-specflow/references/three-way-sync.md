@@ -42,7 +42,7 @@
 2. 用绑定文档的 `doc_token` 做 `lark-cli docs +fetch`。聊天粘贴的正文只当线索，不能代替 fetch。
 3. 同时读 `prd.md` 和原型，展示差异与建议写回项。
 4. 用户确认前，不改 `prd.md`，不改原型，也不用本地旧稿 `push` 盖掉飞书手改。
-5. 本步只用于拉回和 reconcile。第一次确认后只写用户同意的本地或原型差异。写回版本表时不追加版本行，并保留本地「对应 spec / demo」：按版本号对上已有行的快照路径。禁止因为飞书没有这一列就删掉本地表头或已有路径。随后把 `metadata.consistency.status` 标成 `unknown`。若写了本地契约，飞书文末「文档状态」重置为未校验态：emoji `📎`、`background-color="light-blue"`、`border-color="blue"`、校验行「未校验」。不要只改文字，不要写成通过。不跑 `/prd-check`，不写基线。写完停住，按「文档更新后的二次确认」引导 `/prd-publish`。发布里的 `/prd-check` 仍由该命令执行。
+5. 本步只用于拉回和 reconcile。第一次确认后只写用户同意的本地或原型差异。写回版本表时不追加版本行，并保留本地「对应 spec / demo」：按版本号对上已有行的快照路径。禁止因为飞书没有这一列就删掉本地表头或已有路径。写回 `prd.md` 时去掉 `<span text-color="red">` 和对应 `</span>`，不把飞书标红留在本地。随后把 `metadata.consistency.status` 标成 `unknown`。若写了本地契约，飞书文末「文档状态」重置为未校验态：emoji `📎`、`background-color="light-blue"`、`border-color="blue"`、校验行「未校验」。不要只改文字，不要写成通过。不跑 `/prd-check`，不写基线。写完停住，按「文档更新后的二次确认」引导 `/prd-publish`。发布里的 `/prd-check` 仍由该命令执行。
 
 正式入口是 `/prd-feishu-sync reconcile`（或 `pull`）。用户没说命令名、只贴了链接要求同步回来时，同样按本条执行，不要直接整篇覆盖 `prd.md`。用户是在绑定文档上给出新的产品决定时，不走本条。
 

@@ -29,6 +29,7 @@ TBD - created by archiving change workspace-specflow-prd-flow-upgrade. Update Pu
 - **THEN** 状态变为 `confirmed`
 - **AND** 写入基线快照、飞书版本表新行，以及版本表写入完成之后回读到的 `revision_id`
 - **AND** 版本号写 `1`，变更内容留空。`revision_id` 不写入版本号单元格
+- **AND** 正文不因首次发布标红
 
 #### Scenario: 再次发布
 
@@ -36,6 +37,7 @@ TBD - created by archiving change workspace-specflow-prd-flow-upgrade. Update Pu
 - **THEN** 状态仍是 `confirmed`
 - **AND** 基线指针改为新快照、新版本表行和新的 `revision_id`
 - **AND** 版本号在上一次发布序号上加 `1`。变更内容写入相对上一份快照的规则差异，飞书单元格为红色文字
+- **AND** 飞书正文中，相对版本 1 有变化的规则句子为红色，此前版本更新的红色保留；与版本 1 相同的文字为默认色。本地 `prd.md` 不含颜色标记
 
 ### Requirement: 漂移时下游读基线
 
