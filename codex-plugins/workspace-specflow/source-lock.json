@@ -4,14 +4,14 @@
   "files": {
     "plugins/workspace-specflow/skills/pm-proto/SKILL.md": "3771b9541d6985fc0059f6936fcb98e9738aba85c89ca47cd950c43305e8a3f3",
     "plugins/workspace-specflow/skills/pm-spec/SKILL.md": "b79dce6f67ed890f71a1f25972b30257469c0f25977acf3ac1ed42381122201e",
-    "plugins/workspace-specflow/skills/pm-spec/references/prd-template.md": "10f9f36aafd2589d77c22cef243ad2aafa0625130a6190f4c4dfac367bceaaa1",
+    "plugins/workspace-specflow/skills/pm-spec/references/prd-template.md": "35a842fb8a5ca818009b78f17d6fee8c3bd63b66e74e038e545a62a05ab27b50",
     "plugins/workspace-specflow/skills/prd-change/SKILL.md": "750ee33968da421d5d8596febe3cd7257ff643983cc02d7fac99f7c76e183dac",
     "plugins/workspace-specflow/skills/prd-check/SKILL.md": "851335eb395730420695e8c892a271838c3ad76e05c5c866dee921b9dc3639b3",
-    "plugins/workspace-specflow/skills/prd-check/references/ai-review-rubric.md": "f31448a1962ef0036aae4927fd78e9bc996f8394f0a9b39dabf63c8581c7a871",
+    "plugins/workspace-specflow/skills/prd-check/references/ai-review-rubric.md": "4a94e8cbc2808b5aef4b7018b422ef02f8459663ef520257b78eb8b888226e06",
     "plugins/workspace-specflow/skills/prd-consistency-check/SKILL.md": "36db71cc2cd1701da784da9cd64930ac04368fe875a960244d1e81ce3d9bc01d",
-    "plugins/workspace-specflow/skills/prd-feishu-sync/SKILL.md": "c7121042d49d4e9583e7e0044e8bdfeb066ff5036f181bad60cdc4b5989442ad",
+    "plugins/workspace-specflow/skills/prd-feishu-sync/SKILL.md": "f9bc74d4fea6bc14b9fc02efd8b7a7104276a3b4dd0d46a7a1733062a703bee7",
     "plugins/workspace-specflow/skills/prd-feishu-sync/references/chapter-map.md": "42a82ab15afc626f49a7ca31be4e5d3613bbc25f4fcf235d4247dda432130fab",
-    "plugins/workspace-specflow/skills/prd-publish/SKILL.md": "dc0095722a0c569c2369d3cba0b21b2113ae38d011dd2dd99552b43980953b4d",
+    "plugins/workspace-specflow/skills/prd-publish/SKILL.md": "32f11a2827a5d658e3bf51a30c6a55c69fd438598b1023d8a6273eb461b3d2e2",
     "plugins/workspace-specflow/skills/prd-risk/SKILL.md": "0af1a6011ee664e7103336118eb90c265412ae3ff065b858310016dd3b8d424d",
     "plugins/workspace-specflow/skills/product-requirement-risk-gate/SKILL.md": "5140ec23ed2e6fef805d3e675ce1b7e30186b1f496e9ea4fb38f51647dca71ab",
     "plugins/workspace-specflow/skills/product-requirement-risk-gate/agents/openai.yaml": "ff8283072a7a8ba24ee1f068f04dbd63a320d87fe85d35a70fb0d558570b58fb",
@@ -33,7 +33,7 @@
     "plugins/workspace-specflow/skills/req-status/SKILL.md": "908a741361f25a378568b61d153bd0128b445616bb89dba525838bd7e162b104",
     "plugins/workspace-specflow/references/three-way-sync.md": "f4987f7784cfb4d5fc0bbd4ca79fa89a36298e8f1ce9a8496aa7b4f3dab309f8",
     "plugins/workspace-specflow/references/产品组PRD写作规范.md": "a6d0ff0c4c5a0a66400c0d150b9048a0899b96d425ee2848f664d2f40a1429dd",
-    "plugins/workspace-specflow/rules/agent-hard-rules.mdc": "baf2a1d064f52e44c46c656fe4b586870622735d4ed3bfbf4a287df53f6673b7",
+    "plugins/workspace-specflow/rules/agent-hard-rules.mdc": "a9c82f037af7e8b1929c8c0d1bd9be382c977ef7fb9f59483fd496d9a79b5fbd",
     "plugins/workspace-specflow/rules/workspace-awareness.mdc": "9eae54cf878e73b3a3cf68d3d45f23e4fc5190e867d0a7b6b73b724d6f4157f9"
   }
 }
